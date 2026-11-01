@@ -1,0 +1,155 @@
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<div id="bar">
+  <nav id="nav" aria-label="Что вы ищете">
+    <span class="nq">Ищете <a href="#rabota" data-go="rabota"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>работу</a>, <a href="#lyudi" data-go="lyudi"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>людей</a> или <a href="#klienty" data-go="klienty"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>клиентов</a>?</span>
+    <button type="button" id="contact-open">Напишите нам</button>
+  </nav>
+  <a id="logo" href="#top" aria-label="GLOBAL TRIUMPH: к началу"><img class="lg-f" src="{{LOGO}}" alt="GLOBAL TRIUMPH" width="132" height="76"><img class="lg-m" src="{{MARK}}" alt=""></a>
+</div>
+
+<section id="home" class="world" aria-label="Начало">
+  <p id="say" class="voice" aria-live="polite">Прямо сейчас кто-то ищет вас.</p>
+  <p id="hint"><i></i><span id="hint-t">Нажмите и держите</span></p>
+  <p id="what">Вакансии, подбор персонала и маркетинг</p>
+  <button id="skip" type="button">Пропустить</button>
+  <img class="fallback-mark" src="{{MARK}}" alt="">
+  <div id="choice">
+    <p id="ask" class="voice">А что ищете вы?</p>
+    <div class="words">
+      <a class="pick" href="#rabota" data-go="rabota" data-t="0"><b class="dsp">Работу</b><span>Вакансии и помощь с трудоустройством</span></a>
+      <a class="pick" href="#lyudi" data-go="lyudi" data-t="1"><b class="dsp">Людей</b><span>Подбор персонала для вашей компании</span></a>
+      <a class="pick" href="#klienty" data-go="klienty" data-t="2"><b class="dsp">Клиентов</b><span>Сайты, реклама, SMM, брендбук и логотип</span></a>
+    </div>
+    <div id="thesis"><h1>GLOBAL TRIUMPH сводит тех, кто ищет друг друга: человека с работой, компанию с сотрудниками, бизнес с клиентами.</h1></div>
+  </div>
+</section>
+
+<section id="rabota" class="world" hidden aria-labelledby="w-t" tabindex="-1">
+  <div id="jobs" hidden></div>
+  <div id="w-wall">
+    <h1 id="w-t" class="vh">Вакансии: кто вас ищет</h1>
+    <ul id="w-list" class="vh" aria-label="Профессии"></ul>
+    <div id="w-stage">
+      <div id="w-rows" aria-hidden="true"></div>
+      <div id="w-hits"></div>
+    </div>
+    <div id="w-foot">
+      <div class="w-s1">
+        <div class="w-find">
+          <label for="q">Кем вас ищут?</label>
+          <input id="q" type="search" placeholder="ричтрак, стикеры, склад">
+          <div class="chips" role="group" aria-label="Подобрать работу">
+            <button class="chip" type="button" data-f="noexp" aria-pressed="false">Без опыта</button>
+            <button class="chip" type="button" data-f="train" aria-pressed="false">С обучением</button>
+            <button class="chip" type="button" data-f="pair" aria-pressed="false">Можно парой</button>
+            <button class="chip" type="button" data-f="sit" aria-pressed="false">Сидячая работа</button>
+          </div>
+          <div id="none" hidden>
+            <button class="linkbtn" type="button" id="none-talk">Написать, когда появится</button>
+            <button class="linkbtn" type="button" id="none-clear">Показать все</button>
+          </div>
+        </div>
+        <button type="button" id="end-talk"><span>Себя не узнали? </span>Опишите работу →</button>
+      </div>
+      <p id="count" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<section id="lyudi" class="world" hidden aria-labelledby="ly-t" tabindex="-1">
+  <div class="ly-page">
+    <div class="ly-pin" aria-hidden="true"><div class="ly-im"><img data-i="p1" alt=""><img data-i="p2" alt=""><img data-i="p3" alt=""><img data-i="p4" alt=""></div></div>
+    <div class="ly-f">
+      <h1 id="ly-t" class="ly-h sg">Вы ищете<br>человека.</h1>
+      <div class="ly-low"><p class="ly-sub">Подбор персонала: от разговора о задаче до выхода человека на работу.</p><button id="ly-skip" class="btn" type="button">Написать заявку ↓</button></div>
+    </div>
+    <div class="ly-f">
+      <h2 class="ly-h sg">Разберём<br>задачу.</h2>
+      <div class="ly-low"><p class="ly-sub">Что человек будет делать, с кем работать и сколько получать.</p><div class="st5" aria-hidden="true"><i class="a"></i><i></i><i></i><i></i><i></i></div></div>
+    </div>
+    <div class="ly-f">
+      <h2 class="ly-h sg">Напишем<br>объявление<br>на языке<br>кандидата.</h2>
+      <div class="ly-low"><p class="ly-sub">Кандидат спросит, сколько на руки, кто руководитель и что здесь сложного. В тексте будут ответы. Вы проверите его.</p><div class="st5" aria-hidden="true"><i></i><i class="a"></i><i></i><i></i><i></i></div></div>
+    </div>
+    <div class="ly-f">
+      <h2 class="ly-h sg">Сами<br>поговорим<br>с людьми.</h2>
+      <div class="ly-low"><p class="ly-sub">[Каналы уточняет компания.]</p><div class="st5" aria-hidden="true"><i></i><i></i><i class="a"></i><i></i><i></i></div></div>
+    </div>
+    <div class="ly-f">
+      <h2 class="ly-h sg">Покажем<br>подходящих.<br>Объясним<br>почему.</h2>
+      <div class="ly-low"><div class="st5" aria-hidden="true"><i></i><i></i><i></i><i class="a"></i><i></i></div></div>
+    </div>
+    <div class="ly-f">
+      <h2 class="ly-h sg">Поможем<br>договориться<br>до выхода<br>на работу.</h2>
+      <div class="ly-low"><p class="ly-sub">[Условия и сроки уточняет компания.]</p><div class="st5" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="a"></i></div></div>
+    </div>
+    <div class="ly-f ly-end">
+      <form id="ly-mine" novalidate aria-label="Заявка на подбор">
+        <p id="my-letter"></p>
+        <div class="my-foot">
+          <div class="my-msg">
+            <p class="err" id="my-err" role="alert" hidden></p>
+            <p id="my-note" aria-live="polite"></p>
+            <p class="demo-note" id="my-demo">Прототип: заявка никуда не уйдёт.</p>
+          </div>
+          <div class="my-go">
+            <button class="btn" id="my-go" type="submit">Искать →</button>
+            <button class="linkbtn" id="my-sample" type="button">Заполнить примером</button>
+          </div>
+          <div id="my-done" hidden role="status">
+            <p>Черновик у нас. [Кто] напишет вам [когда]. Прототип: заявка никуда не ушла.</p>
+            <button class="btn" id="my-see" type="button">Глазами кандидата →</button>
+            <button class="linkbtn" id="my-again" type="button">Написать другое</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section id="klienty" class="world" hidden aria-labelledby="st-name">
+  <div id="air-noise" aria-hidden="true"></div>
+  <div id="air">
+    <p id="air-top" class="voice"><span>Покупатель слышит всех сразу. Значит, никого. Поверните ручку и найдите частоту, на которой слышно вас.</span></p>
+    <div id="air-main">
+      <h1 id="st-name" class="dsp" aria-live="polite">Шум</h1>
+      <p id="st-line" class="voice"></p>
+      <div id="st-more">
+        <p id="st-get"></p>
+        <p id="st-need"></p>
+        <button class="go" id="st-cta" type="button" style="--go-ink:#fff"><span>Обсудить эту частоту</span></button>
+      </div>
+    </div>
+    <div id="air-foot">
+      <button id="sound" type="button">Включить звук</button>
+      <button type="button" data-go="lyudi">Ищете людей?</button>
+      <button type="button" data-go="rabota">Ищете работу?</button>
+      <span style="font-weight:500">Кейсы: [эфир появится, когда будут материалы клиентов]</span>
+    </div>
+    <div id="dial">
+      <div id="presets" role="group" aria-label="Услуги"></div>
+      <div id="scale"><input id="tun" type="range" min="0" max="100" step="0.5" value="1" aria-label="Настройка частоты: услуги маркетинга"></div>
+    </div>
+  </div>
+</section>
+
+<svg id="wipe" viewBox="-1 -1 2 2" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path id="wipe-p" d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>
+
+<dialog id="talk" aria-labelledby="talk-t">
+  <div id="talk-in">
+    <button id="talk-x" type="button">Закрыть</button>
+    <h2 id="talk-t" class="dsp">Кого вы ищете?</h2>
+    <form class="form" id="talk-f" novalidate>
+      <div class="fld"><label for="t-what">Коротко о задаче</label><textarea id="t-what"></textarea></div>
+      <div class="fld"><label for="t-contact">Телефон или почта</label><input id="t-contact"><p class="err" id="t-contact-e" hidden>Укажите, куда вам ответить.</p></div>
+      <button class="go" type="submit"><span>Отправить</span></button>
+      <p class="demo-note">Прототип: данные никуда не отправляются.</p>
+    </form>
+    <div id="talk-done" hidden role="status" style="display:grid;gap:10px">
+      <p class="dsp" style="font-size:44px">Услышали</p>
+      <p>[кто] свяжется с вами [когда]. Прототип: сообщение никуда не ушло.</p>
+    </div>
+    <p class="small" style="color:#c9c9c9">[телефон] · [почта] · [адрес]<br>[юридическое название и реквизиты]</p>
+  </div>
+</dialog>

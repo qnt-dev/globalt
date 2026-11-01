@@ -1,0 +1,133 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GLOBAL TRIUMPH: макет вакансий</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@1,500&family=Montserrat:wght@400;500;600;700&display=swap">
+<style>
+@font-face{font-family:"Science Gothic";font-weight:100 900;font-stretch:50% 200%;src:url(../assets/science-gothic-2axis.woff2) format("woff2")}
+:root{--or:#ff5c0a;--g:#878787;--gut:clamp(18px,3vw,48px);--d:"Science Gothic","Arial Narrow",sans-serif;--t:Montserrat,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
+body{background:#222;font:500 16px/1.4 var(--t);color:#fff;-webkit-font-smoothing:antialiased}
+.f{position:relative;width:100%;height:100vh;overflow:hidden;background:#000;display:flex;flex-direction:column}
+.sg{font-family:var(--d);font-weight:640;text-transform:uppercase;font-variation-settings:"wdth" 50;line-height:.92;letter-spacing:.002em}
+.bar{position:absolute;inset:0 0 auto 0;z-index:5;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px var(--gut) 0;font:italic 500 clamp(15px,1.45vw,21px) Cormorant,serif}
+.bar img{width:clamp(92px,8vw,118px);display:block}.bar .r{justify-self:end}.bar .s{color:var(--or);font-style:normal;font-size:.7em;margin-right:2px;vertical-align:.1em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:60px;padding:6px 34px;background:var(--or);color:#000;font:700 clamp(20px,1.9vw,27px)/1 var(--d);font-variation-settings:"wdth" 62;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap}
+
+/* стена */
+.rows{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;padding-top:clamp(56px,7.4vh,70px)}
+.row{flex:1;min-height:0;display:flex;align-items:center;overflow:hidden;white-space:nowrap;font:640 min(12.8vh,15vw)/1 var(--d);font-variation-settings:"wdth" 50;text-transform:uppercase;color:var(--g)}
+.row:nth-child(even){color:transparent;-webkit-text-stroke:1.5px #6e6e6e}
+.row div{display:flex;align-items:center;flex:none}
+.row i{font-style:normal;font-size:.42em;margin:0 .22em;color:#4a4a4a;-webkit-text-stroke:0}
+.dim .row{color:#191919;-webkit-text-stroke:0}.dim .row:nth-child(even){color:transparent;-webkit-text-stroke:1.5px #232323}.dim .row i{color:#191919}
+.hits{position:absolute;left:0;right:0;top:calc(50% - 40px);transform:translateY(-50%);display:flex;flex-direction:column;z-index:2}
+.hit{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:.05em var(--gut);background:#000;color:var(--or);font-size:min(calc(62vw/(var(--n)*.56)),var(--hs,12.4vh))}
+.hit .sg{font-size:1em;line-height:1;white-space:nowrap}
+.hit small{font:600 clamp(14px,1.25vw,18px)/1.3 var(--t);color:#fff;text-align:right;flex:none}
+.hit small b{font-weight:700;font-size:1.2em}
+.strip{flex:none;padding:8px var(--gut) 10px;border-top:1px solid #333;background:#000;position:relative;z-index:3}
+.s1{display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,32px)}
+.s1 .l{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);min-width:0;flex:1}
+.s1 b{font:700 clamp(21px,2.1vw,30px)/1 var(--d);font-variation-settings:"wdth" 56;text-transform:uppercase;white-space:nowrap}
+.s1 em{font-style:normal;flex:0 1 13em;min-width:90px;border-bottom:1px solid #aaa;padding:9px 0 7px;color:#c8c8c8;font-size:16px;white-space:nowrap}.s1 em.on{border-color:var(--or);color:#fff}
+.s1 em u{text-decoration:none;display:inline-block;width:2px;height:1.1em;background:var(--or);vertical-align:-.18em;margin-left:2px}
+.chips{display:flex;gap:6px;flex:none}
+.chips span{padding:7px 13px;border:1px solid #555;font-size:13.5px;font-weight:600;white-space:nowrap}
+.chips span.on{background:var(--or);border-color:var(--or);color:#000}
+.s1>a{font-weight:600;font-size:14.5px;white-space:nowrap;text-decoration:underline;text-decoration-color:#777;text-underline-offset:5px;flex:none}
+.s2{margin-top:6px;font-size:12.5px;color:#a8a8a8}
+
+/* вакансия */
+.hero .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.74),rgba(0,0,0,.36) 42%,transparent 58%,transparent 62%,rgba(0,0,0,.9))}
+.hero h1{position:relative;margin-top:clamp(58px,7.6vh,76px);padding:0 var(--gut);font-size:min(calc(92vw/(var(--n)*.575)),31vh);white-space:nowrap}
+.foot{position:absolute;inset:auto var(--gut) 30px var(--gut);display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+.foot h2{font-weight:700;font-variation-settings:"wdth" 56;font-size:clamp(30px,3.2vw,50px);line-height:1}
+.foot p{margin-top:8px;font-size:clamp(14px,1.25vw,18px);color:#ddd}
+.foot p b{color:#fff;font-weight:700}
+
+/* табло */
+.tb{padding-top:clamp(58px,7.4vh,72px)}
+.tb-h{flex:none;display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:0 var(--gut) 8px}
+.tb-h h2{font-size:min(5.2vw,8.6vh)}.tb-h p{font-size:13px;color:#a8a8a8;text-align:right}
+.tb-c,.rw{display:grid;grid-template-columns:calc(min(5.8vw,9.4vh)*2.7) calc(min(3.1vw,5vh)*12.8) minmax(0,1.2fr) minmax(0,1fr) minmax(0,.8fr) 30px;gap:clamp(10px,1.8vw,28px);align-items:center;padding:0 var(--gut)}
+.tb-c{flex:none;padding-bottom:6px;font-size:12.5px;font-weight:600;color:#9a9a9a;border-bottom:1px solid #444}
+.rws{flex:1;min-height:0;display:flex;flex-direction:column}
+.rw{flex:1;min-height:0;border-bottom:1px solid #2c2c2c;font-size:clamp(14px,1.25vw,18px);font-weight:500}
+.rw .m{font:640 min(5.8vw,9.4vh)/1 var(--d);font-variation-settings:"wdth" 50;white-space:nowrap}
+.rw .m small{display:none;font:500 13px var(--t);font-variation-settings:normal;color:#b8b8b8;margin-left:7px;white-space:nowrap}
+.rw .o{font:640 min(3.1vw,5vh)/1 var(--d);font-variation-settings:"wdth" 50;text-transform:uppercase;white-space:nowrap}
+.rw .a{font:700 clamp(22px,2.2vw,32px)/1 var(--d);text-align:right}
+.rw.on{background:var(--or);color:#000;border-color:var(--or)}.rw.on .m small{color:#000}
+.ml{display:none}
+
+/* объект */
+.ob{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);padding:0}
+.ob .lf{display:flex;flex-direction:column;justify-content:space-between;gap:clamp(12px,2.4vh,28px);padding:clamp(66px,9vh,86px) clamp(18px,3vw,44px) clamp(22px,3.6vh,36px) var(--gut);min-height:0}
+.ob .k{font-size:clamp(13px,1.05vw,15px);font-weight:600;color:#b8b8b8}
+.ob h2{font-size:min(5.8vw,10.4vh);margin-top:6px}
+.ob .pay{display:flex;align-items:baseline;gap:12px;color:var(--or);font-size:min(12vw,22vh);margin-top:4px;line-height:.95;white-space:nowrap}
+.ob .pay small{white-space:normal;font:500 clamp(14px,1.2vw,17px) var(--t);color:#ddd;text-transform:none;font-variation-settings:normal}
+.an{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:clamp(10px,2vh,20px) clamp(14px,2vw,30px)}
+.an div{border-top:1px solid #444;padding-top:8px;display:flex;flex-direction:column;min-height:0}
+.an dt{font-size:clamp(13px,1.05vw,15px);font-weight:600;color:#a8a8a8}
+.an b{display:block;margin-top:auto;font-size:min(4.2vw,7.6vh)}
+.an dd{font-size:clamp(13.5px,1.1vw,16px);font-weight:500;line-height:1.3;margin:6px 0 0;color:#ddd}
+.ob .rt{position:relative;min-height:0}.ob .rt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ob .rt::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 62%,rgba(0,0,0,.72))}
+.ob .rt .in{position:absolute;z-index:2;left:clamp(16px,2vw,30px);right:clamp(16px,2vw,30px);bottom:clamp(16px,2.6vh,28px);display:grid;gap:12px}
+.ob .rt .in .btn{width:100%}
+.ob .rt small{font-size:13.5px;font-weight:600}
+.ob .back{position:absolute}
+
+@media (max-width:760px){
+ .bar{grid-template-columns:auto 1fr}.bar img{width:96px}.bar .r{display:none}.bar .q2{justify-self:end;font-size:14.5px;grid-column:2;grid-row:1}
+ .row{font-size:min(8.8vh,23vw)}
+ .hits{top:44%}.hit{flex-direction:column;align-items:flex-start;gap:2px;font-size:min(calc(86vw/(var(--n)*.56)),var(--hm,8.6vh));padding-top:5px;padding-bottom:7px}.hit small{text-align:left;font-size:14px}
+ .s1{flex-direction:column;align-items:stretch;gap:8px}.s1 .l{flex-wrap:wrap;gap:0 12px}.s1 b{font-size:21px}.s1 em{flex:1 1 100%}.s1>a{font-size:13.5px;align-self:flex-start}
+ .chips{flex:1 1 100%;min-width:0;flex-wrap:wrap;gap:4px;margin-top:6px}.chips span{font-size:12px;padding:5px 7px}
+ .s2{font-size:11.5px}
+ .hero h1{white-space:normal;font-size:min(calc(84vw/(var(--w)*.575)),17vh);line-height:.88}
+ .hero .veil{background:linear-gradient(rgba(0,0,0,.66),rgba(0,0,0,.2) 26%,transparent 34%,transparent 54%,rgba(0,0,0,.94) 72%)}
+ .foot{flex-direction:column;align-items:stretch}.foot .btn{width:100%}.foot h2{font-size:30px}
+ .tb-h h2{font-size:11vw}.tb-h p{display:none}.tb-c{display:none}
+ .rw{grid-template-columns:minmax(0,1fr) auto;gap:0 10px;align-content:center;padding-top:4px;padding-bottom:4px}
+ .rw .m small{display:inline}.rw .m{font-size:8.6vw;grid-column:1;grid-row:1}.rw .o{font-size:5.6vw;grid-column:1/-1;grid-row:2}.rw .h1,.rw .h2,.rw .h3{display:none}
+ .rw .a{grid-column:2;grid-row:1}
+ .ml{display:block;grid-column:1/-1;grid-row:3;font-size:12.5px;color:#c4c4c4}.rw.on .ml{color:#000}
+ .ob{grid-template-columns:1fr;grid-template-rows:auto 1fr}.ob .rt{order:1}.ob .lf{padding-bottom:10px;gap:10px}
+ .ob h2{font-size:10vw}.ob .pay{font-size:15vw;flex-wrap:wrap;gap:0 8px}.ob .pay small{font-size:12px}.ob .lf{padding-top:56px}
+ .an{grid-template-columns:1fr 1fr;gap:6px 12px}.an div{padding-top:4px}.an dt{font-size:11.5px}.an b{font-size:6.2vw;margin-top:1px}.an dd{font-size:11.5px;margin-top:1px;line-height:1.2}
+ .ob .rt small{display:none}
+}
+</style></head><body>
+<script>
+const G=['Комплектовщик','Стикеровщик, упаковщик','Кладовщик','Грузчик','ВВШ, погрузчик','Фасовщик','Оператор линии','Сборщик','Бригадир','Менеджер по клиентам'];
+const row=r=>{const s=G.map((_,i)=>G[(i+r*3)%G.length]).map(x=>x+'<i>✦</i>').join('');return `<div class="row" style="margin-left:-${(r*1.3)%3.1+.3}em"><div>${s}${s}</div></div>`};
+const wall=(dim,hits)=>`<div class="rows${dim?' dim':''}">${[0,1,2,3,4,5].map(row).join('')}${hits?`<div class="hits">${hits}</div>`:''}</div>`;
+const bar=`<div class="bar"><span class="q2">Ищете <span class="s">✦</span>работу, людей или клиентов?</span><img src="../assets/logo-white.svg" alt="GLOBAL TRIUMPH"><span class="r">Напишите нам</span></div>`;
+const NOTE='Вахта на склады и производства. Менеджер по клиентам: удалённо. Примеры: объекты, суммы и условия выдуманы.';
+const strip=(q,on,note)=>`<div class="strip"><div class="s1"><div class="l"><b>Кем вас ищут?</b>${q?`<em class="on">${q}<u></u></em>`:'<em>ричтрак, стикеры, склад</em>'}<div class="chips">${['Без опыта','С обучением','Можно парой','Сидячая работа'].map(x=>`<span class="${x===on?'on':''}">${x}</span>`).join('')}</div></div><a>Себя не узнали? Опишите работу →</a></div><p class="s2">${note||NOTE}</p></div>`;
+const hit=(n,t,c)=>`<div class="hit" style="--n:${n.length}"><span class="sg">${n}</span><small><b>${t}</b> за смену<br>${c}</small></div>`;
+const OBJ=[['6 000','Маркетплейс','Хостел','Обед','30 смен'],['5 200','Распределительный центр','Общежитие','2 раза в день','45 смен'],['4 600','Склад электроники','Квартира на 4 человека','Нет','30 смен'],['4 200','Логистический склад','Хостел','Обед','60 смен'],['3 900','Пищевое производство','Общежитие','3 раза в день','30 смен'],['3 700','Кондитерская фабрика','Коттедж','2 раза в день','45 смен'],['3 500','Завод фурнитуры','Хостел','Обед','30 смен']];
+const rw=(o,i)=>`<div class="rw${i===0?' on':''}"><div class="m">${o[0]}<small>за смену</small></div><div class="o">${o[1]}</div><div class="h1">${o[2]}</div><div class="h2">${o[3]}</div><div class="h3">${o[4]}</div><div class="a">→</div><p class="ml">${o[2]} · ${o[3]} · ${o[4]}</p></div>`;
+const hero=(id,img,pos,title,h2,p,btn)=>`<section class="f hero" id="${id}">${bar.replace('работу,','работу,')}<img class="bg" src="img/${img}.jpg" alt="" style="object-position:${pos}"><div class="veil"></div><h1 class="sg" style="--n:${title.length};--w:${Math.max(8,...title.split(' ').map(x=>x.length))}">${title}</h1><div class="foot"><div><h2 class="sg">${h2}</h2><p>${p}</p></div><span class="btn">${btn}</span></div></section>`;
+document.body.insertAdjacentHTML('beforeend',
+`<section class="f" id="st">${bar}${wall(0)}${strip()}</section>`+
+`<section class="f" id="st2">${bar}${wall(1,hit('ВВШ, погрузчик','4 000 – 6 500','3 объекта. Открыть →'))}${strip('ричтрак')}</section>`+
+`<section class="f" id="st3" style="--hs:9.6vh;--hm:6.4vh">${bar}${wall(1,hit('Комплектовщик','3 500 – 6 000','7 объектов')+hit('Стикеровщик, упаковщик','3 300 – 4 200','5 объектов')+hit('Грузчик','3 500 – 4 500','4 объекта')+hit('Фасовщик','3 500 – 4 200','3 объекта'))}${strip('','Без опыта')}</section>`+
+hero('h2','g_komplekt2','50% 40%','Вас ищут заказы.','Комплектовщик','<b>3 500 – 6 000 за смену.</b> 7 объектов. Вахта. Можно без опыта.','Выбрать объект ↓')+
+`<section class="f tb" id="tb">${bar}<div class="tb-h"><h2 class="sg">Комплектовщик: 7 объектов</h2><p>Примеры: объекты, суммы и условия выдуманы.<br>Сначала самые высокие ставки.</p></div><div class="tb-c"><div>За смену</div><div>Объект</div><div>Где живу</div><div>Что ем</div><div>Вахта</div><div></div></div><div class="rws">${OBJ.map(rw).join('')}</div></section>`+
+`<section class="f ob" id="ob">${bar}<div class="lf"><div><p class="k">Комплектовщик, объект:</p><h2 class="sg">Маркетплейс</h2><p class="pay sg">6 000<small>за смену. Пример, сумму уточнит компания.</small></p></div><dl class="an"><div><dt>Где живу</dt><b class="sg">Хостел</b><dd>4 человека в комнате. Бесплатно.</dd></div><div><dt>Что ем</dt><b class="sg">Обед</b><dd>На объекте.</dd></div><div><dt>Какой график</dt><b class="sg">30 смен</b><dd>По 12 часов.</dd></div><div><dt>Когда деньги</dt><b class="sg">Раз в неделю</b><dd>Аванс.</dd></div><div><dt>Как доеду</dt><b class="sg">[Билет]</b><dd>[Оплачивает компания или нет.]</dd></div><div><dt>Что нужно</dt><b class="sg">Без опыта</b><dd>Сканеру обучат на месте.</dd></div></dl></div><div class="rt"><img src="img/g_komplekt2.jpg" alt="" style="object-position:50% 40%"><div class="in"><small>Здесь же нужны: упаковщик, грузчик.</small><span class="btn">Это я →</span></div></div></section>`+
+hero('h4','g_upak3','50% 50%','Вас ищут посылки.','Стикеровщик, упаковщик','<b>3 300 – 4 200 за смену.</b> 5 объектов. Вахта. Можно без опыта.','Выбрать объект ↓')+
+hero('h5','sklad','50% 70%','Вас ищет склад.','Кладовщик','<b>3 600 – 4 500 за смену.</b> 4 объекта. Вахта.','Выбрать объект ↓')+
+hero('h6','g_gruzchik','50% 55%','Вас ищут паллеты.','Грузчик','<b>3 500 – 4 500 за смену.</b> 4 объекта. Вахта.','Выбрать объект ↓')+
+hero('h1','g_vvsh2','50% 14%','Вас ищет погрузчик.','ВВШ, водитель погрузчика','<b>4 000 – 6 500 за смену.</b> 3 объекта. Вахта. Нужно удостоверение.','Выбрать объект ↓')+
+hero('h7','g_fasov2','74% 45%','Вас ищет цех.','Фасовщик','<b>3 500 – 4 200 за смену.</b> 3 объекта. Вахта. Питание на объекте.','Выбрать объект ↓')+
+hero('h8','g_liniya','50% 50%','Вас ищет линия.','Оператор линии','<b>3 500 – 4 200 за смену.</b> 2 объекта. Вахта. С обучением.','Выбрать объект ↓')+
+hero('h9','g_sborka','50% 50%','Вас ищет сборка.','Сборщик','<b>3 600 – 4 000 за смену.</b> 2 объекта. Вахта. Сидячая работа.','Выбрать объект ↓')+
+hero('h10','g_brigada2','50% 50%','Вас ищет бригада.','Бригадир','<b>[Сумма] за смену.</b> 3 объекта. Вахта. Нужен опыт руководства.','Выбрать объект ↓')+
+hero('h3','g_menedzher2','50% 50%','Вас ищут клиенты.','Менеджер по клиентам','<b>Удалённо, это не вахта.</b> [Зарплата] · Полный день. Отвечать клиентам и вести новые обращения.','Это я →'));
+</script>
+</body></html>

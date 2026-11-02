@@ -593,7 +593,7 @@ const FS_RADIO = COMMON + `
 uniform float Q,W0;uniform vec3 C;
 void main(){
   float mn=min(R.x,R.y);vec2 uv=gl_FragCoord.xy/R;vec2 p=(gl_FragCoord.xy-.5*R)/mn;
-  float t=floor(T*24.);
+  float t=mod(floor(T*24.),64.);
   vec2 cell=floor(gl_FragCoord.xy/max(1.,mn/480.));
   float s=hash(cell+t*vec2(3.1,1.7));
   float band=smoothstep(.0,.12,sin(uv.y*7.-T*2.3))*.22+smoothstep(.97,1.,sin(uv.y*90.+T*30.))*.3;
@@ -1161,7 +1161,8 @@ function updateAir(dt) {
 function drawAir(time) {
   if (!gl) return;
   const { p, u } = P.radio; gl.useProgram(p);
-  gl.uniform2f(u.R, cv.width, cv.height); gl.uniform1f(u.T, time); gl.uniform1f(u.Q, air.q); gl.uniform1f(u.W0, (innerHeight - $('#air-foot').getBoundingClientRect().top + 36) / Math.min(innerWidth, innerHeight)); gl.uniform3f(u.C, air.col[0], air.col[1], air.col[2]);
+  /* время по кругу: большие числа шейдер округляет, и шум гаснет. За 20π секунд все волны шейдера делают целое число оборотов, стыка не видно */
+  gl.uniform2f(u.R, cv.width, cv.height); gl.uniform1f(u.T, time % (20 * Math.PI)); gl.uniform1f(u.Q, air.q); gl.uniform1f(u.W0, (innerHeight - $('#air-foot').getBoundingClientRect().top + 36) / Math.min(innerWidth, innerHeight)); gl.uniform3f(u.C, air.col[0], air.col[1], air.col[2]);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 

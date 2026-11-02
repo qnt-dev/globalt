@@ -1,4 +1,5 @@
-import sys; sys.stdout.reconfigure(encoding="utf-8")
+import io, sys; sys.stdout.reconfigure(encoding="utf-8")
+from PIL import Image, ImageStat
 from playwright.sync_api import sync_playwright
 U='http://127.0.0.1:4391/index.html'
 ARGS=['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--enable-webgl']
@@ -153,6 +154,11 @@ with sync_playwright() as pw:
     p.click('#st-cta'); check('talk opens',p.is_visible('#talk') and 'сайт' in p.input_value('#t-what').lower()); p.click('#talk-f button[type=submit]'); check('talk error',p.is_visible('#t-contact-e'))
     p.fill('#t-contact','t@example.test'); p.click('#talk-f button[type=submit]'); check('talk done',p.is_visible('#talk-done')); p.click('#talk-x')
     check('no err air',not p.E,p.E); c.close()
+    # белый шум не гаснет, когда страница открыта долго
+    for hours in (0,1,48):
+        c,p=page(1000,640,'#klienty',init="(()=>{const r=requestAnimationFrame.bind(window);window.requestAnimationFrame=f=>r(t=>f(t+%d))})()"%(hours*3600000)); p.wait_for_timeout(600)
+        p.evaluate("['#air-noise','#air','#bar'].forEach(s=>document.querySelector(s).style.visibility='hidden')"); p.wait_for_timeout(100)
+        g=ImageStat.Stat(Image.open(io.BytesIO(p.screenshot())).convert('L')); check(f'noise stays after {hours} h',g.mean[0]>80 and g.stddev[0]>30,(g.mean[0],g.stddev[0])); c.close()
     # без анимации
     c,p=page(1000,640,rm='reduce'); p.wait_for_timeout(300); check('reduced: choice at once',p.is_visible('.pick[data-t="0"]')); p.click('.pick[data-t="2"]'); p.wait_for_timeout(200); check('reduced: instant world',p.is_visible('#st-name')); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(300); check('reduced: tuned',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
     p.evaluate("window.__gt.show('rabota')"); p.wait_for_timeout(200); check('reduced: wall is still',p.evaluate("getComputedStyle(document.querySelector('.w-track')).animationName")=='none')

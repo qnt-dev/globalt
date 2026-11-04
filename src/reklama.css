@@ -1,0 +1,222 @@
+/* «Реклама»: поиск, лента и сайт кофейни на станции «Реклама». Всё лежит внутри #x2, чтобы стили примера и сайта не мешали друг другу.
+   Поиск и лента идут на своём фоне: по умолчанию тёмном, переключатель в углу даёт светлый (класс lt). */
+#x2{position:absolute;inset:0;z-index:0;pointer-events:none;visibility:hidden;font-family:var(--text);line-height:normal;--lime:#e8ff1a;--red:#df1f12;--hot:#ff6a1a;
+  --bg:#09090b;--ink:#fff;--ink2:#ffffffb8;--nz:#ffffff33;--rule:#ffffff59;--sig:var(--lime);--tagbg:var(--lime);--tagink:#000;
+  --chipbg:#09090b;--chipink:#ffffffd0;--chipbd:#ffffff38;--ln:#ffffff59;--dot:#ffffff80;--hit:var(--lime);
+  --poink:#fff;--potx:#ffffffb3;--ponz:#ffffff4d;--pobd:#ffffff0f;--poav:#ffffff1f;--poac:#ffffff4d;--pomd:linear-gradient(160deg,#26262b,#151518);--poln:#ffffff08;color:var(--ink)}
+#x2.lt{--bg:#f3f3f1;--ink:#000;--ink2:#000000c4;--nz:#00000040;--rule:#000;--sig:#000;--tagbg:#000;--tagink:#fff;
+  --chipbg:#fff;--chipink:#000;--chipbd:#0000002e;--ln:#00000059;--dot:#000;--hit:var(--red);
+  --poink:#000;--potx:#000000b3;--ponz:#00000059;--pobd:#0000000f;--poav:#0000001a;--poac:#00000040;--pomd:linear-gradient(160deg,#e2e2de,#d2d2cd);--poln:#0000000a}
+#x2.on{visibility:visible}
+#x2 a,#x2 button{pointer-events:auto;color:inherit;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font:inherit}
+#x2 h2,#x2 h3,#x2 p,#x2 ol,#x2 ul{margin:0;padding:0}
+#x2-bg{position:absolute;inset:0;background:var(--bg);opacity:0;visibility:hidden;transition:background-color .4s}
+#x2-find,#x2-feed,#x2-land,#x2-open{opacity:0;visibility:hidden}
+#x2-find{overflow:hidden}
+#x2-find,#x2-feed{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr);gap:clamp(24px,5vw,90px);align-items:center;padding:0 var(--gutr) 0 var(--gut);pointer-events:auto;touch-action:none;will-change:transform}
+
+/* Подписи сцен: номер, слово станции, фраза голосом сайта */
+.x2-cap{opacity:0;visibility:hidden}
+.x2-cap small{display:block;font:500 12px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:clamp(10px,1.6vh,16px);color:var(--sig)}
+.x2-cap h3{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:clamp(44px,6.6vw,108px);line-height:.86;font-variation-settings:"wdth" 70}
+.x2-cap p{font-family:var(--voice);font-style:italic;font-weight:500;font-size:clamp(22px,2.3vw,36px);line-height:1.1;margin-top:.45em;max-width:12em;color:var(--ink2)}
+
+/* Переключатель фона, как «Вид кнопок» у примера «Сайт» */
+#x2-th{position:absolute;left:var(--gut);bottom:calc(var(--bot) + 14px);z-index:2;user-select:none;pointer-events:auto;opacity:0;visibility:hidden}
+#x2-th .sl{display:flex;justify-content:space-between;gap:18px;font:400 10px "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);margin-bottom:8px}
+#x2-th .sl b{font-weight:400;color:var(--ink)}
+#x2-th .sk{position:relative;display:grid;grid-template-columns:repeat(2,52px);border:1px solid var(--chipbd)}
+#x2-th button{position:relative;z-index:1;height:40px;display:grid;place-items:center;color:var(--ink2)}
+#x2-th button+button{border-left:1px solid var(--chipbd)}
+#x2-th svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+#x2-th button:hover,#x2-th button[aria-checked=true]{color:var(--ink)}
+#x2-th .k{position:absolute;left:0;bottom:-1px;width:52px;height:2px;background:var(--sig);transform:translateX(calc(var(--i,0)*52px));transition:transform .4s cubic-bezier(.6,.05,.25,1)}
+
+/* 1. Поиск без чужих логотипов */
+#x2-sr{max-width:700px;width:100%}
+#x2-sr .lb{font:500 11px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+#x2-fld{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--rule);padding:8px 0 12px;font-weight:500;font-size:clamp(20px,2.1vw,31px);line-height:1.2;min-height:1.2em}
+#x2-fld svg{width:.8em;height:.8em;flex:none;fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round}
+#x2-fld .cr{width:2px;height:1.05em;background:var(--sig);margin-left:-11px}
+#x2.typed #x2-fld .cr{animation:x2blink 1s steps(1) infinite}
+@keyframes x2blink{50%{opacity:0}}
+#x2-res{list-style:none;margin-top:clamp(14px,3vh,30px)!important;display:grid;gap:clamp(12px,2.3vh,24px)}
+#x2-res li{opacity:0;white-space:nowrap;overflow:hidden}
+#x2-res .u{font:400 12px/1.3 "JetBrains Mono",monospace;display:flex;align-items:center;gap:8px}
+#x2-res .t{font-weight:700;font-size:clamp(16px,1.35vw,20px);line-height:1.3;margin-top:3px}
+#x2-res .d{font-size:14px;line-height:1.4;margin-top:2px}
+#x2-res .nz{color:var(--nz)}
+/* реклама сначала такая же серая, как шум, и проявляется вместе с настройкой */
+#x2-ad .t,#x2-ad .d,#x2-ad .u span{opacity:calc(.3 + .7*var(--q,0))}
+#x2-ad .u b{font-weight:500;background:var(--tagbg);color:var(--tagink);padding:2px 6px;opacity:var(--q,0);letter-spacing:.04em}
+#x2-ad.lit .t{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-color:var(--sig)}
+
+/* 2. Лента без рамки телефона: посты идут столбцом и тают у краёв. К посту ZERNO сходятся признаки, по которым он нашёл человека. */
+#x2-stage{position:relative;height:100%;min-height:0}
+#x2-ph{position:absolute;left:50%;top:0;bottom:0;width:min(360px,26vw);transform:translateX(-50%);will-change:transform}
+#x2-ph .scr{position:relative;height:100%;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 16%,#000 84%,transparent);mask-image:linear-gradient(transparent,#000 16%,#000 84%,transparent)}
+#x2-roll{position:absolute;left:0;right:0;top:0;padding-top:40%;will-change:transform}
+.po{padding:12px 14px 16px;border-bottom:1px solid var(--pobd);color:var(--poink);font-size:12.5px}
+.po .ph{display:flex;align-items:center;gap:10px}
+.po .ph i{width:30px;height:30px;border-radius:50%;background:var(--poav);flex:none;display:grid;place-items:center}
+.po .nm{white-space:nowrap;overflow:hidden}
+.po .md{margin:12px 0 0;aspect-ratio:1}
+.po.nz .md{background:repeating-linear-gradient(0deg,var(--poln) 0 2px,transparent 2px 5px),var(--pomd)}
+.po .ac{display:flex;gap:12px;margin:12px 0 8px}
+.po .ac i{width:19px;height:19px;border:1.5px solid var(--poac);border-radius:50%}
+.po .tx{line-height:1.4;color:var(--potx);overflow:hidden;max-height:2.8em;margin-top:8px}
+.po.nz .nm,.po.nz .tx{color:var(--ponz)}
+.po.ad .lg{background:var(--red);color:#ff9a6a}
+.po.ad .lg svg{width:18px;height:18px}
+.po.ad .nm b{font-weight:600}
+.po.ad .nm small{display:block;font-size:10.5px;color:var(--potx)}
+.x2-md{position:relative;overflow:hidden;background:#19181d;container-type:inline-size}
+#x2-pgl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.x2-md .word{cursor:default}
+.x2-md span{position:absolute;left:8%;bottom:9%;font-size:max(9px,3.7cqw);color:#ff5a45;letter-spacing:.06em}
+/* в конце ленты гаснет всё, кроме картинки поста */
+#x2-feed .po.nz,#x2-post .ph,#x2-post .by,#x2-post .tx,#x2-tags,#x2-ln{opacity:var(--rest,1)}
+.po.ad .by{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:var(--red);color:#08080a;font:500 12px Mussels,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.po.ad .by i{font-style:normal}
+#x2-tags{list-style:none;position:absolute;inset:0;pointer-events:none}
+#x2-tags li{position:absolute;left:0;top:0;max-width:170px;padding:7px 10px;border:1px solid var(--chipbd);background:var(--chipbg);color:var(--chipink);font:500 12px/1.25 "JetBrains Mono",monospace;letter-spacing:.02em;opacity:0;visibility:hidden}
+#x2-ln{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:var(--dot);stroke:var(--ln);stroke-width:1}
+#x2-ln .hit{fill:var(--hit);stroke:none}
+
+/* 3. Пост раскрывается в сайт кофейни */
+/* тёмный фон сайта растекается от картинки поста */
+#x2-open{position:absolute;inset:0;background:#19181d}
+#x2-gl,#x2-px{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#x2-land{position:absolute;inset:0;color:#fff;font-family:Mussels,Montserrat,sans-serif;font-weight:500;pointer-events:auto;touch-action:none;overflow:hidden}
+/* Поля сайта кофейни: как у референса, контент в ширине 1313 пикселей по центру */
+#x2-land{--cx:max(clamp(16px,4.2vw,62px),calc((100% - 1313px) / 2))}
+/* Шапка со стеклом, как у референса: тонкая рамка, размытие 16 пикселей, полупрозрачный тёмный фон */
+#x2-hd{position:absolute;left:var(--cx);right:var(--cx);top:calc(var(--top) + 8px);display:flex;justify-content:space-between;align-items:center;padding:15px 25px;border:1px solid #5c5c5c;border-radius:8px;background:rgba(39,40,45,.2);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);z-index:3}
+#x2-hd b{display:block;font-size:clamp(22px,2.1vw,32px);font-weight:500;letter-spacing:.5em;line-height:1}
+#x2-hd small{display:block;font-size:clamp(9px,.8vw,12px);letter-spacing:.26em;margin-top:.7em;opacity:.85;text-transform:uppercase}
+#x2-hd nav{display:grid;justify-items:end;gap:10px;font-family:var(--text);text-transform:uppercase}
+#x2-hd nav .t,#x2-hd nav .m,#x2-hd nav .bx{display:flex;align-items:center}
+#x2-hd nav .t{gap:22px;font-size:11px;font-weight:500;letter-spacing:.05em}
+#x2-hd nav .m{gap:22px;font-size:12px;font-weight:600;letter-spacing:.02em}
+#x2-hd nav .m>button{padding:3px 0}
+#x2-hd nav .on{box-shadow:inset 0 -2px var(--red)}
+#x2-hd nav .bx{gap:0}
+#x2-hd nav .k,#x2-hd nav .in{padding:2px 6px}
+#x2-hd nav .k{background:#000}
+#x2-hd nav .in{background:var(--red);color:#000}
+#x2-hero{position:absolute;inset:0;will-change:transform}
+#x2 .word{position:absolute;cursor:crosshair}
+#x2 .word canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#x2-meta{position:absolute;left:var(--cx);font-size:clamp(14px,1.1vw,16px);line-height:1.55;color:var(--red);letter-spacing:.06em}
+#x2-meta b{display:block;font-size:clamp(20px,1.6vw,24px);font-weight:500;letter-spacing:.03em;margin-bottom:.45em}
+#x2 .cta{display:flex;align-items:center;justify-content:space-between;gap:1.6em;padding:1em 1em 1em 1.7em;background:var(--red);color:#08080a;font:500 clamp(13px,1vw,15px)/1.15 Mussels,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.04em;transition:background .2s;width:100%;text-align:left}
+#x2 .cta i{width:2.5em;height:2.5em;flex:none;background:#0a0a0c;color:#fff;display:grid;place-items:center;font-style:normal;transition:transform .2s}
+#x2 .cta:hover{background:var(--hot)}
+#x2 .cta:hover i{transform:translateX(3px)}
+#x2-see{position:absolute;right:var(--cx);width:min(288px,30vw)!important;min-height:78px}
+#x2-rule{position:absolute;height:3px;background:var(--red);transform-origin:0 50%}
+#x2-fil{position:absolute;left:var(--cx);right:var(--cx);bottom:calc(var(--bot) + 10px);display:flex;justify-content:space-between;align-items:flex-end;font-size:13px;border-bottom:1px solid #ffffff2b}
+#x2-fil .tb{display:flex}
+#x2-fil .tb span{padding:.5em 3.4em;color:#c4c4cc}
+#x2-fil .tb span:first-child{background:var(--red);color:#120605}
+#x2-fil .ck{display:flex;gap:clamp(20px,4vw,70px);padding-bottom:.5em;color:#c4c4cc}
+#x2-fil .ck b{font-weight:500;color:var(--red)}
+#x2-lots{position:absolute;left:0;right:0;top:calc(var(--top) + var(--hh,70px) + 8px);bottom:var(--bot);will-change:transform;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,min(34vw,470px));grid-template-rows:minmax(0,1fr);gap:clamp(20px,4vw,70px);align-items:center;padding:clamp(10px,3vh,40px) var(--cx)}
+#x2-lots h2{font-weight:500;font-size:clamp(23px,2.6vw,40px);line-height:1.08;text-transform:uppercase;margin-bottom:clamp(12px,2.4vh,24px)}
+/* Меню словами, как вывеска: серые слова в один набор, цена маленькой цифрой у слова, выбранное слово красное */
+#x2-wall{display:flex;flex-wrap:wrap;gap:.04em .42em;font-size:clamp(26px,2.75vw,48px);max-width:24em}
+#x2-wall button{display:inline-flex;align-items:flex-start;gap:.14em;color:#5d5c64;transition:color .2s,text-shadow .2s}
+#x2-wall small{display:none}
+#x2-wall b{font-weight:500;font-size:1em;line-height:1.08;text-transform:uppercase;white-space:nowrap}
+#x2-wall em{font:normal 400 .3em/1 "JetBrains Mono",monospace;margin-top:.3em;color:#ff5a45}
+#x2-wall button:hover{color:#fff}
+#x2-wall button.on{color:var(--red);text-shadow:0 0 14px #df1f1280}
+#x2-pick{display:flex;flex-direction:column;gap:clamp(8px,1.6vh,16px);max-height:100%;min-height:0}
+#x2-pick small{font-size:13px;color:#ff5a45;letter-spacing:.08em}
+/* название напитка мельче, над фото */
+#x2-w3{position:relative!important;width:100%;height:clamp(38px,5vh,58px)}
+/* Фото напитка: вырезанный напиток стоит прямо над лентами, под ним тень */
+/* фото сжимается первым, чтобы кнопка «Заказать» всегда стояла над подвалом сайта */
+#x2-pic{position:relative;width:100%;flex:0 1 clamp(200px,38vh,430px);min-height:100px}
+#x2-pic canvas{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 26px 30px rgba(0,0,0,.7))}
+/* цена и кнопка: на компьютере друг под другом, на телефоне в один ряд */
+.x2-order{display:contents}
+#x2-price{font-size:clamp(20px,1.9vw,28px)}
+#x2-price em{display:block;font-style:normal;font-size:12px;color:#b6b6bf;margin-top:.35em;font-family:var(--text)}
+#x2-land .tag{position:absolute;right:var(--cx);top:calc(var(--top) + var(--hh,70px) + 18px);font:500 11px var(--text);opacity:.5}
+#x2-px{z-index:5}
+#x2-sd{position:absolute;inset:0;z-index:30;display:grid;place-items:center;background:#000000a8;backdrop-filter:blur(6px);pointer-events:auto}
+#x2-sd[hidden]{display:none}
+#x2-sd .bx{width:min(440px,calc(100vw - 32px));padding:26px 26px 22px;border:1px solid #ffffff26;background:#0b0b10;color:#e8e8ee;font-family:var(--text)}
+#x2-sd small{font:400 11px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:#8d8fa6}
+#x2-sd h3{font-weight:600;font-size:21px;margin:.5em 0 .4em}
+#x2-sd p{font-size:14px;line-height:1.5;color:#a8a9b6}
+#x2-sd .bt{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+#x2-sd button{padding:.7em 1.3em;border:1px solid #ffffff40;font-size:14px}
+#x2-sd button:hover{background:#fff;color:#000}
+#x2-sd #x2-sd-go{background:var(--red);border-color:var(--red);color:#fff}
+#x2.nogl #x2-gl{display:none}
+
+/* Надпись станции «Реклама» как у «Сайта»: чёрный фон, белые буквы, вопрос и подсказка, без кнопок.
+   Салатовая только отметка станции на шкале. Работает, только когда пример подключён. */
+#klienty[data-st="1"]{background:#000}
+#klienty[data-st="1"] #air{z-index:1}
+#klienty[data-st="1"] #st-more{display:none}
+#klienty[data-st="1"] #presets button[aria-pressed=true]{color:#e8ff1a}
+#klienty[data-st="1"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
+#klienty[data-st="1"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
+#klienty[data-st="1"].exd #st-hint{display:none}
+@media (min-width:761px) and (max-height:780px){#klienty[data-st="1"] #st-name{font-size:min(18vh,14.4vw)}#klienty[data-st="1"] #st-hint{margin-top:6px}}
+
+@media (max-width:760px){
+  #x2-find,#x2-feed{grid-template-columns:1fr;grid-template-rows:auto 1fr;align-items:start;gap:14px;padding-top:12px}
+  .x2-cap h3{font-size:clamp(34px,11vw,46px)}
+  .x2-cap p{font-size:clamp(19px,5.6vw,24px)}
+  .x2-cap small{margin-bottom:8px}
+  #x2-th{left:auto;right:12px;bottom:auto;top:calc(var(--top) + 6px)}
+  #x2-th .sl{display:none}
+  #x2-th .sk{grid-template-columns:repeat(2,40px)}
+  #x2-th button{height:28px}
+  #x2-th svg{width:16px;height:16px}
+  #x2-th .k{width:40px;transform:translateX(calc(var(--i,0)*40px))}
+  #x2-res .nz:nth-child(n+5){display:none}
+  #x2-res .d{font-size:13px}
+  #x2-ad .d{white-space:normal}
+  #x2-fld{font-size:20px}
+  #x2-stage{display:flex;flex-direction:column;gap:10px}
+  #x2-tags{position:static;display:flex;flex-wrap:wrap;gap:6px}
+  #x2-tags li{position:static;max-width:none;padding:5px 8px;font-size:11px}
+  #x2-ln{display:none}
+  #x2-ph{position:relative;left:auto;top:auto;bottom:auto;flex:1;min-height:0;margin:0 auto;width:min(340px,100%);transform:none}
+  #x2-roll{padding-top:30%}
+  #x2-hd nav{display:none}
+  #x2-hd{padding:12px 16px}
+  #x2-meta{bottom:calc(var(--bot) + 104px)}
+  #x2-see{top:auto!important;bottom:calc(var(--bot) + 16px);left:12px;right:12px;width:auto!important}
+  #x2-rule,#x2-fil{display:none}
+  #x2-lots{display:flex;flex-direction:column;align-items:stretch;padding:12px 12px 10px;overflow:hidden}
+  #x2-lots>div:first-child{flex:none}
+  #x2-lots h2{font-size:20px;margin-bottom:10px}
+  #x2-wall{font-size:clamp(20px,6.2vw,26px)}
+  #x2-pick{flex:1 1 auto;max-height:none;margin-top:12px;gap:6px}
+  #x2-w3{width:100%;height:34px;flex:none}
+  #x2-pic{flex:0 1 260px;min-height:0}
+  .x2-order{display:flex;align-items:center;gap:14px}
+  #x2-price{flex:1;min-width:0;font-size:18px}
+  #x2-price em{font-size:11px;line-height:1.35}
+  #x2 #x2-take{width:auto;flex:none;gap:.9em;padding:.7em .7em .7em 1.1em}
+  #x2 #x2-take i{width:2.2em;height:2.2em}
+  #x2-land .tag{display:none}
+}
+@media (max-width:760px) and (max-height:700px){
+  #x2-res .nz:nth-child(n+4){display:none}
+  #x2-wall{font-size:18px}
+  #x2-wall button:nth-child(n+9){display:none}
+  #x2-pick small,#x2-price em{display:none}
+  #x2-w3{height:28px}
+  .x2-cap p{display:none}
+}
+@media (max-width:760px) and (max-height:800px){#x2-pick small{display:none}}
+@media (max-width:760px) and (max-height:620px){#x2-lots h2,#x2-w3{display:none}}
+@media (min-width:761px) and (max-height:780px){#x2-res .nz:nth-child(n+5){display:none}}
+@media (prefers-reduced-motion:reduce){#x2 *{transition:none!important;animation:none!important}}

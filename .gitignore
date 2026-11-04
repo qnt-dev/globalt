@@ -7,3 +7,7 @@ maket/*.png
 artifact.html
 # шрифт TT Mussels для прототипов, нужна лицензия, в репозиторий не кладём
 maket/fonts/
+# прототип «Рекламы» собирает src/build.py
+maket/reklama.html
+# прототип «SMM» тоже
+maket/smm.html

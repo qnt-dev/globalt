@@ -28,6 +28,8 @@ python src/test.py
 
 - `src/app.js`, `src/style.css`, `src/body.html`: код страницы. Вакансии и объекты записаны в начале раздела «МИР 1» в `app.js`.
 - `src/sayt.js`, `src/sayt.css`: пример сайта на станции «Сайт» мира «Клиенты». Сборка ставит их перед `app.js` и `style.css`.
+- `src/reklama.js`, `src/reklama.css`: пример на станции «Реклама» (поиск, лента, сайт кофейни). Пока они идут только в прототип `maket/reklama.html`, его тоже собирает `build.py`. В `index.html` пример войдёт после одобрения.
+- `src/smm.js`, `src/smm.css`: пример на станции SMM (профиль кофейни за три месяца, серия постов складывается в одну картину). Идёт только в прототип `maket/smm.html` вместе с «Рекламой», его собирает `build.py`. В `index.html` пример войдёт после одобрения.
 - `src/build.py`: сборка в `index.html`.
 - `src/test.py`, `src/look.py`, `src/motion.py`: проверки и снимки в Chrome.
 - `assets/`: логотип, знак, шрифт, фото.

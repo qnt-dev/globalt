@@ -466,11 +466,12 @@ function drawRing(A, calm, splash, tint, T, o = S) {
 /* остановки щелчка стоят чуть внутри каждой формы: бык, магнит, ключ, снова круг, конец */
 const U0 = -.18, STOPS = [0, .19, .39, .59, .79, 1];
 const X = { on: false, u: U0, uc: U0, boost: 0, zone: -1, call: null, edge: 0, clean: false, run: false, tw: 0, auto: false, ph: 0 };
+/* Телефон забирается из кучи вместе с его вращением и возвращается туда с тем же углом */
 function grabCall(p) {
-  if (p && p.body) { X.call = { x: p.body.x, y: p.body.y, s: p.pw * p.s, e: p.e }; p.e.style.visibility = 'hidden'; }
-  else X.call = { x: G.W * .78, y: G.H * .34, s: 84, e: null };
+  if (p && p.body) { X.call = { x: p.body.x, y: p.body.y, s: p.pw * p.s, e: p.e, p, a: p.spin ? p.spin.a : 0, v: p.spin ? p.spin.v : 2.2 }; p.e.style.visibility = 'hidden'; }
+  else X.call = { x: G.W * .78, y: G.H * .34, s: 84, e: null, p: null, a: 0, v: 2.2 };
 }
-function dropCall() { if (X.call && X.call.e) X.call.e.style.visibility = ''; X.call = null; }
+function dropCall() { if (X.call && X.call.e) { X.call.e.style.visibility = ''; if (X.call.p && X.call.p.spin) X.call.p.spin.a = X.call.a; } X.call = null; }
 function reset() {
   dropCall();
   Object.assign(X, { on: false, u: U0, uc: U0, boost: 0, zone: -1, edge: 0, clean: false, run: false, tw: 0, auto: false, ph: 0 });
@@ -497,20 +498,25 @@ function step(dt, c) {
   X.ph = ph;
   const z = 1.53 + Math.max(0, X.uc) * 5.02, td = ip * 1.8;
 
-  /* Куча уходит под пол кадра и не заезжает на шкалу, телефон падает в глубину, как камень в воду */
-  const drop = clamp(td / .7), dr = drop * drop * drop, birth = clamp((td - .7) / 1.1), sink = ss(0, .6, td), junk = document.getElementById('junk');
+  /* Куча уходит под пол кадра и не заезжает на шкалу. Крутящийся серый круг с телефоном поднимается из кучи на место воды и растёт.
+     Круг тает, его край становится кольцом воды. */
+  const lift = ss(0, 1.15, td), grow = ss(.15, 1.3, td), birth = clamp((td - .7) / 1.1), sink = ss(0, .6, td), junk = document.getElementById('junk');
   if (ph >= 1) { junk.style.opacity = c.alpha * (1 - sink); junk.style.transform = `translateY(${sink * G.H * .3}px)`; junk.style.clipPath = `inset(0 0 ${Math.max(0, innerHeight - G.H + sink * G.H * .3)}px 0)`; }
   else { junk.style.transform = ''; junk.style.clipPath = ''; }
-  const call = $('#x1-call');
-  if (ph >= 1 && drop < 1 && X.call) {
-    const k = X.call.s / 84;
-    call.style.visibility = 'visible';
-    call.style.transform = `translate(${lerp(X.call.x, G.cx, drop * drop)}px,${lerp(X.call.y, G.cy, dr)}px) scale(${lerp(k, k * .1, dr)})`;
-    call.firstChild.style.opacity = 1 - ss(0, .43, drop);
+  const call = $('#x1-call'), ex = ss(5.8, 6.2, z);
+  const k0 = (X.call ? X.call.s : 84) / 84, cx = X.call ? lerp(X.call.x, G.cx, lift) : G.cx, cy = X.call ? lerp(X.call.y, G.cy, lift) - Math.sin(Math.PI * lift) * G.R * .25 : G.cy;
+  const cR = lerp(k0 * 42, G.R, grow), fade = 1 - ss(.75, 1.35, td);
+  if (ph >= 1 && fade > 0 && X.call) {
+    if (!RM) X.call.a += X.call.v * dt;
+    /* круг остаётся серым, как обломки в куче: зелёного на этом шаге нет */
+    call.style.visibility = 'visible'; call.style.opacity = fade; call.style.filter = 'grayscale(1) brightness(.5)';
+    call.style.transform = `translate(${cx}px,${cy}px) scale(${cR / 42})`;
+    call.firstChild.style.opacity = 1 - ss(.2, .7, td); call.firstChild.style.transform = `rotate(${X.call.a}rad)`;
   } else call.style.visibility = 'hidden';
-  const back = 1 + 2.2 * Math.pow(birth - 1, 3) + 1.2 * Math.pow(birth - 1, 2), ex = ss(5.8, 6.2, z);
-  S.cx = G.cx; S.cyGl = G.H - G.cy; S.r = Math.max(4, G.R * back * (birth > 0 ? 1 : .01) * lerp(1, .2, ex));
-  const splash = 1 - ss(.05, .9, birth), tint = 1 - ss(0, .42, birth);
+  /* кольцо воды рождается на краю зелёного круга и дальше стоит на месте воды */
+  S.cx = birth < 1 ? cx : G.cx; S.cyGl = G.H - (birth < 1 ? cy : G.cy); S.r = Math.max(4, (birth > 0 ? cR : 4) * lerp(1, .2, ex));
+  /* вода рождается сразу своего цвета, без зелёного оттенка */
+  const splash = (1 - ss(.05, .6, birth)) * .3, tint = 0;
 
   /* Пример. Формы сменяются по ходу колеса. Кнопка меняет форму до следующей смены. */
   const s1v = ss(.6, 1, birth) * (1 - ss(5.7, 6, z)) * c.alpha;

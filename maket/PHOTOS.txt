@@ -13,3 +13,21 @@
 Менеджер по клиентам: https://unsplash.com/photos/grayscale-photo-of-person-using-macbook-_UeY8aTI6d0
 Портрет в разделе «Люди»: https://unsplash.com/photos/grayscale-photography-of-man-in-crew-neck-shirt-RFFR1JjkJx8
 Экран «Сайт», макет: https://unsplash.com/photos/man-facing-on-left-side-co2Nn11OP3k
+
+Меню кофейни ZERNO в примере «Реклама» (maket/img/zerno, лицензия Unsplash, подпись не обязательна):
+Эспрессо: https://unsplash.com/photos/white-ceramic-teacup-filled-with-brown-coffee-niAkR1H24tE (автор @gabimirandan)
+Американо: https://unsplash.com/photos/a-cup-of-coffee-with-steam-coming-out-of-it-3AHgFYnujOk (автор @pariwatt)
+Капучино: https://unsplash.com/photos/a-cappuccino-with-a-heart-in-it-WJp_QjM537Q (автор @pariwatt)
+Латте: https://unsplash.com/photos/a-cup-of-coffee-sitting-on-top-of-a-wooden-tray-djWJLL91_KQ (автор @muverrihhanim)
+Флэт уайт: https://unsplash.com/photos/a-cappuccino-with-a-leaf-on-top-of-it-lIeM9Hpw2HA (автор @onlysiamak)
+Раф: https://unsplash.com/photos/a-person-pours-milk-into-a-cup-of-coffee-nFKrsMJ0vmg (автор @pariwatt)
+Колд брю: https://unsplash.com/photos/glass-of-iced-coffee-placed-on-brown-stone-_Wm6mhXO9rk (автор @nate_dumlao)
+Матча: https://unsplash.com/photos/iced-matcha-latte-with-milk-and-ice-5TTA0ghtF0k (автор @juansaavma)
+Какао: https://unsplash.com/photos/chocolate-with-marshmallows-on-top-in-drinking-glass-Jmo7NgH0Q10 (автор @rudyirudyk)
+Чай: https://unsplash.com/photos/a-glass-cup-filled-with-liquid-sitting-on-top-of-a-saucer-NOU_wT-jJpM (автор @demin_nikol)
+Круассан: https://unsplash.com/photos/two-brown-croissants-m9pzwmxm2rk (автор @picoftasty)
+Сырники: https://unsplash.com/photos/brown-and-white-pastry-on-white-ceramic-plate-hrGZ8nQD3QM (автор @maxniceman)
+Раф без фона (maket/img/zerno-cut/raf.webp): https://unsplash.com/photos/a-cup-of-coffee-sitting-in-front-of-a-toaster-oven-h7SvnWztBOo (автор @pariwatt). Остальные фото без фона вырезаны из тех же фото, что в maket/img/zerno.
+Все напитки без фона (maket/img/zerno-cut) вырезаны нейросетью rembg, модель isnet-general-use. Латте и флэт уайт заменены: тёмная чашка на тёмном столе не вырезалась.
+Эспрессо, колд брю и какао заменены по просьбе заказчика: прежние выглядели некрасиво. Эспрессо заменён ещё раз: белая чашка с блюдцем сбоку.
+Пример SMM (maket/img/smm/espresso-grid.webp): квадрат 1080×1080 вырезан из того же фото эспрессо (https://unsplash.com/photos/white-ceramic-teacup-filled-with-brown-coffee-niAkR1H24tE, автор @gabimirandan). Посты первого месяца берут напитки без фона из maket/img/zerno-cut.

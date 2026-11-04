@@ -17,7 +17,7 @@ mark = 'data:image/svg+xml;base64,' + b64(os.path.join(AS, 'mark-white.svg'))
 sdf = 'data:image/png;base64,' + b64(os.path.join(AS, 'mark-sdf.png'))
 imgs = json.dumps({n[:-5]: 'data:image/webp;base64,' + b64(os.path.join(AS, 'photo', n)) for n in sorted(os.listdir(os.path.join(AS, 'photo')))})
 body = body.replace('{{LOGO}}', logo).replace('{{MARK}}', mark)
-html = f'''<title>GLOBAL TRIUMPH</title>
+def page(face, css, js): return f'''<title>GLOBAL TRIUMPH</title>
 <meta name="description" content="Вакансии, подбор персонала и маркетинг. GLOBAL TRIUMPH сводит тех, кто ищет друг друга.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -28,7 +28,21 @@ html = f'''<title>GLOBAL TRIUMPH</title>
 <script>
 {js}</script>
 '''
+def full(html): return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}</style></head><body>' + html + '</body></html>'
+html = page(face, css, js)
 open(os.path.join(ROOT, 'artifact.html'), 'w', encoding='utf8').write(html)
 # готовая страница с тем же каркасом, который артефакт добавляет при публикации
-open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf8').write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}</style></head><body>' + html + '</body></html>')
+open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf8').write(full(html))
 print('index', os.path.getsize(os.path.join(ROOT, 'index.html')) // 1024, 'KB')
+# Прототип «Рекламы»: тот же сайт, на станции «Реклама» идёт пример reklama.*. В index.html он войдёт после одобрения.
+# Шрифт TT Mussels лежит только локально в maket/fonts, для запуска нужна лицензия или другой шрифт.
+rk_face = face + '@font-face{font-family:Mussels;src:url(fonts/TTMussels_Medium.ttf);font-weight:500;font-display:swap}\n'
+rk_css = css + open(os.path.join(HERE, 'reklama.css'), encoding='utf8').read()
+rk_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'app.js'))
+open(os.path.join(ROOT, 'maket', 'reklama.html'), 'w', encoding='utf8').write(full(page(rk_face, rk_css, rk_js)))
+print('maket/reklama', os.path.getsize(os.path.join(ROOT, 'maket', 'reklama.html')) // 1024, 'KB')
+# Прототип «SMM»: весь сайт, примеры «Реклама» и «SMM». Фото напитков и картина серии берутся из maket/img.
+sm_css = rk_css + open(os.path.join(HERE, 'smm.css'), encoding='utf8').read()
+sm_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'app.js'))
+open(os.path.join(ROOT, 'maket', 'smm.html'), 'w', encoding='utf8').write(full(page(rk_face, sm_css, sm_js)))
+print('maket/smm', os.path.getsize(os.path.join(ROOT, 'maket', 'smm.html')) // 1024, 'KB')

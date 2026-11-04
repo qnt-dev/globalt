@@ -346,6 +346,8 @@ body.jk #logo{visibility:hidden}
 .jp.back{transition:transform .35s cubic-bezier(.2,.9,.2,1)}
 .jp.fell{filter:grayscale(1) brightness(.5);transition:filter .8s .1s;cursor:grab;touch-action:none}
 @media (hover:hover){.jp.fell:hover{filter:none;transition:filter .15s}}
+/* круг с телефоном и под мышью остаётся серым */
+@media (hover:hover){.jp.fell.j-call:hover{filter:grayscale(1) brightness(.5)}}
 .jp.held{filter:none;cursor:grabbing;transition:filter .15s}
 .jp b{font-weight:700}
 .fade{background:rgba(10,20,50,.55);transition:opacity .3s;pointer-events:none}
@@ -365,6 +367,7 @@ body.jk #logo{visibility:hidden}
 .j-cookie{background:#2a2f3a;color:#fff;padding:0 calc(var(--u)*14);border-radius:calc(var(--u)*5)}
 .j-chat{flex-direction:column;align-items:stretch;gap:calc(var(--u)*7);padding:calc(var(--u)*10);background:#fff;border:1px solid #9ab;border-top:calc(var(--u)*30) solid #14912d;border-radius:calc(var(--u)*8) calc(var(--u)*8) 0 0}
 .j-call{border-radius:50%;background:#14c13a;color:#fff;font-size:calc(var(--u)*38);box-shadow:0 0 0 calc(var(--u)*8) rgba(20,193,58,.3)}
+.j-call i{display:block;font-style:normal;line-height:1}
 .j-rib{background:#ee3b34;color:#fff;font-weight:700;writing-mode:vertical-rl;letter-spacing:.1em;font-size:calc(var(--u)*18)}
 .j-star{flex-direction:column;background:#ffd400;color:#c81616;clip-path:polygon(50% 0,61% 13%,79% 7%,82% 25%,100% 30%,90% 50%,100% 70%,82% 75%,79% 93%,61% 87%,50% 100%,39% 87%,21% 93%,18% 75%,0 70%,10% 50%,0 30%,18% 25%,21% 7%,39% 13%);font-size:calc(var(--u)*14);font-weight:700}
 .j-star b{font-size:calc(var(--u)*38);line-height:1}

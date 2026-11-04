@@ -521,10 +521,9 @@ function enterPeople() {
 
 /* ---------- МИР 3: эфир ---------- */
 const ST = [
-  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [0, 0, 0], line: 'Это лицо компании.', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
-  { wd: 66, v: 31, name: 'Контекст', full: 'Контекстная реклама', col: [.91, 1, .102], line: 'Человек ввёл запрос, и первыми ответили вы.', get: 'Подбор запросов, объявления, настройка и отчёт.', need: 'Адрес сайта и список услуг.' },
-  { wd: 84, v: 50, name: 'Таргет', full: 'Таргетированная реклама', col: [1, .36, .8], line: 'Человек ничего не искал, но это было про него.', get: 'Настройка кампаний, объявления и отчёт.', need: 'Доступ к рекламным кабинетам.' },
-  { wd: 120, v: 69, name: 'SMM', full: 'Ведение соцсетей', col: [.208, .949, .608], line: 'Человек зашёл проверить вас, и вам поверили.', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
+  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
+  { wd: 72, v: 37, name: 'Реклама', full: 'Контекстная и таргетированная реклама', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?', get: 'Подбор запросов и аудиторий, объявления, настройка кампаний и отчёт.', need: 'Адрес сайта, список услуг и доступ к рекламным кабинетам.' },
+  { wd: 120, v: 63, name: 'SMM', full: 'Ведение соцсетей', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
   { wd: 100, v: 88, name: 'Бренд', full: 'Брендбук и логотип', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
 ];
 const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
@@ -541,13 +540,14 @@ function buildAir() {
   const t = $('#tun'); t.addEventListener('input', () => { air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
   $('#klienty').addEventListener('wheel', e => {
     if (e.target.closest('#st-more')) return;
-    /* На станции «Сайт» колесо сначала ведёт пример, потом ручку */
-    if (air.cur === 0 && window.GTSAYT && GTSAYT.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
+    /* На станциях с примером колесо сначала ведёт пример, потом ручку */
+    const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : null;
+    if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
     air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
   $('#st-cta').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
   $('#sound').addEventListener('click', toggleSound);
 }
-function enterAir() { buildAir(); air.v = air.target = +$('#tun').value; }
+function enterAir() { buildAir(); air.v = air.target = +$('#tun').value; J.done = false; }
 function toggleSound() {
   const b = $('#sound');
   if (air.snd) { air.snd.ctx.close(); air.snd = null; b.textContent = 'Включить звук'; return; }
@@ -573,7 +573,10 @@ function updateAir(dt) {
   const s = ST[best], W = $('#klienty');
   const near = bd < 9;
   W.classList.toggle('tuned', q > .92);
-  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99), dark = q > .55 && best !== 0;
+  if (window.GTREK) GTREK.step(dt, { near: best === 1 && bd < 9, tuned: air.cur === 1, alpha: q });
+  if (window.GTSMM) GTSMM.step(dt, { near: best === 2 && bd < 9, tuned: air.cur === 2, alpha: q });
+  /* На тёмном сайте из примера «Реклама» буквы сайта снова белые */
+  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99, air.v - ST[0].v), dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark);
   if (window.GTSAYT) GTSAYT.step(dt, { near: best === 0 && bd < 9, alpha: J.alpha, clean: J.clean, call: J.p.find(p => p.e.classList.contains('j-call')), v: air.v });
   document.body.classList.toggle('ink', dark || js);
   document.body.classList.toggle('jk', js);
@@ -584,13 +587,13 @@ function updateAir(dt) {
   if (near) { scramble($('#st-name'), s.name, Math.min(1, q * 1.6), best + 1); scramble($('#st-line'), s.line, q, best + 3); }
   else { if ($('#st-name').textContent !== 'Шум') $('#st-name').textContent = 'Шум'; if ($('#st-line').textContent) $('#st-line').textContent = ''; }
   if (q > .92 && air.cur !== best) {
-    air.cur = best; W.dataset.st = best; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`;
+    air.cur = best; W.dataset.st = best; if (s.ask) $('#st-ask').textContent = s.ask; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`;
     $('#st-name').setAttribute('aria-label', s.full);
     $$('#presets button').forEach((b, i) => b.setAttribute('aria-pressed', i === best));
   }
   if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
   if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + best * 55, c, .05); }
-  air.col = s.col;
+  air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : s.col;
 }
 function drawAir(time) {
   if (!gl) return;
@@ -664,7 +667,7 @@ const JUNK_W = () => [
   ['j-modal', 470, 150, 500, 250, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите скидку 10% на первый заказ. Только для новых клиентов!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ СКИДКУ</span>'],
   ['j-cookie', 40, 700, 560, 56, 'Мы используем файлы cookie <span class="j-btn j-mini">Принять</span>'],
   ['j-chat', 1120, 540, 280, 170, '<b>Онлайн-консультант</b><p>Здравствуйте! Чем могу помочь?</p><span class="j-in">Введите сообщение…</span>'],
-  ['j-call', 1340, 440, 84, 84, '☎'],
+  ['j-call', 1340, 440, 84, 84, '<i>☎</i>'],
   ['j-rib', 0, 270, 50, 190, 'ПОДАРОК'],
   ['j-star', 1120, 180, 170, 170, '<b>−70%</b><span>только<br>сегодня</span>'],
   ['j-count', 410, 462, 620, 40, 'Только сегодня! До конца акции <b>00:14:59</b>'],
@@ -679,14 +682,14 @@ const JUNK_N = () => [
   ['fade', 0, 54, 390, 900, '', { ghost: 1 }],
   ['j-modal', 28, 130, 334, 232, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите скидку 10% на первый заказ!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ СКИДКУ</span>'],
   ['j-cookie', 12, 590, 366, 50, 'Мы используем cookie <span class="j-btn j-mini">Принять</span>'],
-  ['j-call', 306, 500, 66, 66, '☎'], ['j-star', 262, 116, 112, 112, '<b>−70%</b><span>только<br>сегодня</span>'],
+  ['j-call', 306, 500, 66, 66, '<i>☎</i>'], ['j-star', 262, 116, 112, 112, '<b>−70%</b><span>только<br>сегодня</span>'],
   ['j-count', 12, 318, 366, 36, 'До конца акции <b>00:14:59</b>'], ['j-btn j-big', 24, 262, 156, 42, 'Подробнее'],
   ['j-card', 12, 362, 178, 104, '<i>★</i><b>Команда профессионалов</b>'], ['j-card', 200, 362, 178, 104, '<i>◆</i><b>Высокое качество</b>'],
   ['j-card', 12, 474, 178, 104, '<i>✔</i><b>Лучшие цены</b>'], ['j-card', 200, 474, 100, 104, '<i>♥</i><b>Лидер рынка</b>'],
   ['j-logo', 12, 58, 240, 46, '<b>ВАША КОМПАНИЯ</b><span>Динамично развиваемся</span>'], ['j-btn j-green', 262, 62, 116, 36, 'Звонок'],
   ['j-head', 24, 126, 240, 130, 'Заезженный дизайн, как у всех!', { ghost: 1 }], ['j-hero', 0, 108, 390, 206, '', { ghost: 1 }]
 ];
-const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, drag: null };
+const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, drag: null, done: false };
 function junkFloor() { return $('#air-foot').getBoundingClientRect().top - $('#klienty').getBoundingClientRect().top; }
 function junkBuild() {
   const box = $('#junk'), W = innerWidth, wide = W > 760, F = junkFloor(), list = wide ? JUNK_W() : JUNK_N(), u = wide ? Math.min(W / 1440, F / 770) : Math.min(W / 390, F / 650), ox = wide ? (W - 1440 * u) / 2 : (W - 390 * u) / 2;
@@ -707,21 +710,31 @@ function junkFall(p, seed) {
   b.vx = (seed - .5) * 260; b.vy = -60 - seed * 120; b.va = (seed - .5) * 3.2; PH.b.push(b); b.p = p;
   if (p.e.classList.contains('fade')) p.e.style.opacity = 0; else if (!p.ghost) p.e.classList.add('fell');
   p.e.classList.remove('back');
+  /* обломки задевают круг с телефоном: он раскручивается и потом крутится ровно, не останавливаясь */
+  if (p.e.classList.contains('j-call') && !p.spin) p.spin = { a: 0, v: 9 };
 }
-function junkBack(p) { PH.b.splice(PH.b.indexOf(p.body), 1); p.body = null; p.s = 1; p.e.classList.remove('fell'); p.e.classList.add('back'); if (p.e.classList.contains('fade')) p.e.style.opacity = ''; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`; }
+function junkBack(p) { if (p.spin) { p.spin = null; p.e.firstChild.style.transform = ''; } PH.b.splice(PH.b.indexOf(p.body), 1); p.body = null; p.s = 1; p.e.classList.remove('fell'); p.e.classList.add('back'); if (p.e.classList.contains('fade')) p.e.style.opacity = ''; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`; }
 function junkDraw() { for (const p of J.p) { const b = p.body; if (!b || b.asleep && b.drawn) continue; p.e.style.transform = `translate(${b.x - p.pw / 2}px,${b.y - p.ph / 2}px) rotate(${b.a}rad) scale(${p.s})`; b.drawn = b.asleep; } }
 function junkSim(dt) { PH.acc = Math.min(.05, PH.acc + dt); while (PH.acc >= PH.tick) { phStep(PH.tick); PH.acc -= PH.tick; } for (let i = PH.b.length - 1; i >= 4; i--) { const b = PH.b[i]; if (b.ghost && b.y - Math.hypot(b.hw, b.hh) > J.floor + 900) { b.asleep = true; } } }
 function junkNow() { J.p.forEach((p, i) => { if (!p.body) junkFall(p, ((i * 37) % 100) / 100); }); for (let i = 0; i < 420; i++) phStep(PH.tick); junkDraw(); J.k = 1; }
-function junkStep(dt, d) {
+/* side: ручка правее «Сайта» (больше нуля) или левее. Развалившийся сайт не собирается, когда ручка уходит вправо к следующим станциям,
+   и при возвращении справа сразу лежит кучей. Собирается он только при повороте ручки назад, левее «Сайта». */
+function junkStep(dt, d, side = 0) {
   const box = $('#junk'), W = $('#klienty'), near = d < 9;
   if (!near) { if (J.on) { J.on = false; box.style.display = 'none'; J.built = false; PH.b = []; W.classList.remove('clean', 'junk'); $('#j-sheet').classList.remove('drop'); } return false; }
-  if (!J.on) { J.on = true; box.style.display = 'block'; if (!J.built) junkBuild(); if (RM) junkNow(); }
+  if (!J.on) {
+    J.on = true; box.style.display = 'block'; if (!J.built) junkBuild();
+    if (RM || (J.done && side > 0)) { junkNow(); J.clean = true; $('#j-sheet').classList.add('drop'); W.classList.add('clean'); }
+  }
   J.alpha = sstep(9, 7.8, d); box.style.opacity = J.alpha;
   J.hold += dt;
-  const want = J.hold > 1 ? sstep(8.4, 1.6, d) : 0;
+  let want = J.hold > 1 ? sstep(8.4, 1.6, d) : 0;
+  if (side > 0) want = Math.max(want, J.k);
   if (!RM) J.k += clamp(want - J.k, -2 * dt, .56 * dt); else J.k = want > 0 || d < 8 ? 1 : J.k;
   J.p.forEach((p, i) => { if (!p.body && J.k > p.thr) junkFall(p, ((i * 37) % 100) / 100); else if (p.body && J.k < p.thr - .02 && !RM) junkBack(p); });
   if (!RM) { junkSim(dt); junkDraw(); }
+  for (const p of J.p) if (p.spin && !RM) { p.spin.v = lerp(p.spin.v, 2.2, clamp(dt * .6)); p.spin.a += p.spin.v * dt; p.e.firstChild.style.transform = `rotate(${p.spin.a}rad)`; }
+  if (J.k > .84) J.done = true; else if (J.k < .02) J.done = false;
   const clean = J.k > .84; if (clean !== J.clean) { J.clean = clean; $('#j-sheet').classList.toggle('drop', clean); W.classList.toggle('clean', clean); }
   W.classList.toggle('junk', J.alpha > .4 && !clean);
   return J.alpha > .4 && !clean;
@@ -750,6 +763,8 @@ function openTalk(topic) {
 }
 $('#contact-open').addEventListener('click', () => openTalk(''));
 if (window.GTSAYT) GTSAYT.onTalk = () => openTalk(ST[0].full);
+if (window.GTREK) GTREK.onTalk = () => openTalk(ST[1].full);
+if (window.GTSMM) GTSMM.onTalk = () => openTalk(ST[2].full);
 $('#talk-x').addEventListener('click', () => talk.close());
 $('#talk-f').addEventListener('submit', e => {
   e.preventDefault(); const c = !$('#t-contact').value.trim(); $('#t-contact-e').hidden = !c; if (c) { $('#t-contact').focus(); return; }

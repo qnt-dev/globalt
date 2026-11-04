@@ -21,9 +21,9 @@ float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*noise(p);p=p*2.03+7.
 float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}
 `;
 const FS_RADIO = COMMON + `
-uniform float Q,W0;uniform vec3 C;
+uniform float Q;uniform vec3 C;
 void main(){
-  float mn=min(R.x,R.y);vec2 uv=gl_FragCoord.xy/R;vec2 p=(gl_FragCoord.xy-.5*R)/mn;
+  float mn=min(R.x,R.y);vec2 uv=gl_FragCoord.xy/R;
   float t=mod(floor(T*24.),64.);
   vec2 cell=floor(gl_FragCoord.xy/max(1.,mn/480.));
   float s=hash(cell+t*vec2(3.1,1.7));
@@ -31,10 +31,6 @@ void main(){
   vec3 stat=vec3(s*.62+band*.55+.06);
   vec3 c=mix(stat,C,smoothstep(.0,1.,Q));
   c=mix(c,stat,(1.-Q)*.85);
-  float y0=-.5*R.y/mn+W0;
-  float yy=sin(p.x*18.+T*2.6)*.03*smoothstep(.2,1.,Q)+(hash(vec2(floor(gl_FragCoord.x/2.),t))-.5)*.11*(1.-Q);
-  float l=smoothstep(.0035,.001,abs(p.y-y0-yy));
-  c=mix(c,Q>.5?vec3(0.):vec3(1.),l*.9);
   o=vec4(c,1.);
 }`;
 /* Большой знак: чёрная форма на фоне белого света. При наведении на слово свет принимает цвет мира. */
@@ -525,7 +521,7 @@ function enterPeople() {
 
 /* ---------- МИР 3: эфир ---------- */
 const ST = [
-  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [1, .231, .078], line: 'Человек зашёл и сразу понял, что вы делаете.', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
+  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [0, 0, 0], line: 'Это лицо компании.', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
   { wd: 66, v: 31, name: 'Контекст', full: 'Контекстная реклама', col: [.91, 1, .102], line: 'Человек ввёл запрос, и первыми ответили вы.', get: 'Подбор запросов, объявления, настройка и отчёт.', need: 'Адрес сайта и список услуг.' },
   { wd: 84, v: 50, name: 'Таргет', full: 'Таргетированная реклама', col: [1, .36, .8], line: 'Человек ничего не искал, но это было про него.', get: 'Настройка кампаний, объявления и отчёт.', need: 'Доступ к рекламным кабинетам.' },
   { wd: 120, v: 69, name: 'SMM', full: 'Ведение соцсетей', col: [.208, .949, .608], line: 'Человек зашёл проверить вас, и вам поверили.', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
@@ -543,7 +539,11 @@ function buildAir() {
   $('#presets').innerHTML = ST.map((s, i) => `<button type="button" style="left:${s.v}%" data-i="${i}" aria-pressed="false" aria-label="${s.full}">${s.name}</button>`).join('');
   $$('#presets button').forEach(b => b.addEventListener('click', () => { const v = ST[+b.dataset.i].v; air.target = v; if (RM) air.v = v; $('#tun').value = v; dirty = true; }));
   const t = $('#tun'); t.addEventListener('input', () => { air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
-  $('#klienty').addEventListener('wheel', e => { if (e.target.closest('#st-more')) return; air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
+  $('#klienty').addEventListener('wheel', e => {
+    if (e.target.closest('#st-more')) return;
+    /* На станции «Сайт» колесо сначала ведёт пример, потом ручку */
+    if (air.cur === 0 && window.GTSAYT && GTSAYT.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
+    air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
   $('#st-cta').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
   $('#sound').addEventListener('click', toggleSound);
 }
@@ -573,19 +573,22 @@ function updateAir(dt) {
   const s = ST[best], W = $('#klienty');
   const near = bd < 9;
   W.classList.toggle('tuned', q > .92);
-  document.body.classList.toggle('ink', q > .55);
-  $('#air').style.setProperty('--air', q > .55 ? '#000' : '#fff');
-  W.style.setProperty('--air', q > .55 ? '#000' : '#fff');
+  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99), dark = q > .55 && best !== 0;
+  if (window.GTSAYT) GTSAYT.step(dt, { near: best === 0 && bd < 9, alpha: J.alpha, clean: J.clean, call: J.p.find(p => p.e.classList.contains('j-call')), v: air.v });
+  document.body.classList.toggle('ink', dark || js);
+  document.body.classList.toggle('jk', js);
+  $('#air').style.setProperty('--air', dark ? '#000' : '#fff');
+  W.style.setProperty('--air', dark ? '#000' : '#fff');
   $('#air-noise').style.opacity = (1 - q) * .95;
   $('#st-name').style.setProperty('--wd', q > .92 ? (innerWidth <= 760 ? Math.max(50, s.wd * .6) : s.wd) : (innerWidth <= 760 ? 60 : 70));
   if (near) { scramble($('#st-name'), s.name, Math.min(1, q * 1.6), best + 1); scramble($('#st-line'), s.line, q, best + 3); }
   else { if ($('#st-name').textContent !== 'Шум') $('#st-name').textContent = 'Шум'; if ($('#st-line').textContent) $('#st-line').textContent = ''; }
   if (q > .92 && air.cur !== best) {
-    air.cur = best; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`;
+    air.cur = best; W.dataset.st = best; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`;
     $('#st-name').setAttribute('aria-label', s.full);
     $$('#presets button').forEach((b, i) => b.setAttribute('aria-pressed', i === best));
   }
-  if (q <= .92 && air.cur !== -1) { air.cur = -1; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
+  if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
   if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + best * 55, c, .05); }
   air.col = s.col;
 }
@@ -593,9 +596,150 @@ function drawAir(time) {
   if (!gl) return;
   const { p, u } = P.radio; gl.useProgram(p);
   /* время по кругу: большие числа шейдер округляет, и шум гаснет. За 20π секунд все волны шейдера делают целое число оборотов, стыка не видно */
-  gl.uniform2f(u.R, cv.width, cv.height); gl.uniform1f(u.T, time % (20 * Math.PI)); gl.uniform1f(u.Q, air.q); gl.uniform1f(u.W0, (innerHeight - $('#air-foot').getBoundingClientRect().top + 36) / Math.min(innerWidth, innerHeight)); gl.uniform3f(u.C, air.col[0], air.col[1], air.col[2]);
+  gl.uniform2f(u.R, cv.width, cv.height); gl.uniform1f(u.T, time % (20 * Math.PI)); gl.uniform1f(u.Q, air.q); gl.uniform3f(u.C, air.col[0], air.col[1], air.col[2]);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
+
+/* ---------- «Сайт»: плохой сайт разваливается от поворота ручки ---------- */
+/* Физика прямоугольников: столкновения по разделяющей оси, импульсы, сон */
+const PH = { b: [], g: 2600, tick: 1 / 60, acc: 0 };
+function phBody(x, y, w, h, fixed) { const m = fixed ? 0 : w * h / 900, I = fixed ? 0 : m * (w * w + h * h) / 12; return { x, y, a: 0, vx: 0, vy: 0, va: 0, hw: w / 2, hh: h / 2, im: fixed ? 0 : 1 / m, iI: fixed ? 0 : 1 / I, fixed: !!fixed, ghost: false, still: 0, asleep: !!fixed }; }
+function phAxes(b) { const c = Math.cos(b.a), s = Math.sin(b.a); return [[c, s], [-s, c]]; }
+function phHits(A, B) {
+  const ax = phAxes(A), bx = phAxes(B), dx = B.x - A.x, dy = B.y - A.y; let best = 1e9, nx = 0, ny = 0, ref = 0;
+  const tests = [[ax[0], A.hw, 0], [ax[1], A.hh, 1], [bx[0], B.hw, 2], [bx[1], B.hh, 3]];
+  for (const [n, , k] of tests) {
+    const ra = A.hw * Math.abs(n[0] * ax[0][0] + n[1] * ax[0][1]) + A.hh * Math.abs(n[0] * ax[1][0] + n[1] * ax[1][1]), rb = B.hw * Math.abs(n[0] * bx[0][0] + n[1] * bx[0][1]) + B.hh * Math.abs(n[0] * bx[1][0] + n[1] * bx[1][1]);
+    const d = n[0] * dx + n[1] * dy, o = ra + rb - Math.abs(d); if (o <= 0) return null;
+    if (o < best - (k > 1 ? .5 : 0)) { best = o; const sg = d < 0 ? -1 : 1; nx = n[0] * sg; ny = n[1] * sg; ref = k; }
+  }
+  // опорная грань на одном теле, ребро-жертва на другом: обрезаем ребро гранью
+  const R = ref < 2 ? A : B, I = ref < 2 ? B : A, fn = ref < 2 ? [nx, ny] : [-nx, -ny], ix = ref < 2 ? bx : ax, rx = ref < 2 ? ax : bx;
+  const dots = [ix[0][0] * fn[0] + ix[0][1] * fn[1], ix[1][0] * fn[0] + ix[1][1] * fn[1]], useX = Math.abs(dots[0]) > Math.abs(dots[1]);
+  const eN = useX ? ix[0] : ix[1], eT = useX ? ix[1] : ix[0], eH = useX ? I.hw : I.hh, tH = useX ? I.hh : I.hw, sign = (useX ? dots[0] : dots[1]) > 0 ? -1 : 1;
+  const cx = I.x + eN[0] * eH * sign, cy = I.y + eN[1] * eH * sign, p = [[cx - eT[0] * tH, cy - eT[1] * tH], [cx + eT[0] * tH, cy + eT[1] * tH]];
+  const rIsX = ref % 2 === 0, sT = rIsX ? rx[1] : rx[0], sH = rIsX ? R.hh : R.hw, fH = rIsX ? R.hw : R.hh, out = [];
+  const pr = q => (q[0] - R.x) * sT[0] + (q[1] - R.y) * sT[1], a = pr(p[0]), b = pr(p[1]);
+  [[p[0], a], [p[1], b]].forEach(([q, t], i) => {
+    let c = q; const o = i ? a : b;
+    if (t > sH) { if (o >= sH) return; const k = (sH - o) / (t - o), r = i ? p[0] : p[1]; c = [r[0] + (q[0] - r[0]) * k, r[1] + (q[1] - r[1]) * k]; }
+    else if (t < -sH) { if (o <= -sH) return; const k = (-sH - o) / (t - o), r = i ? p[0] : p[1]; c = [r[0] + (q[0] - r[0]) * k, r[1] + (q[1] - r[1]) * k]; }
+    const dep = fH - ((c[0] - R.x) * fn[0] + (c[1] - R.y) * fn[1]); if (dep >= 0) out.push({ x: c[0], y: c[1], d: dep });
+  });
+  return out.length ? { nx, ny, pts: out } : null;
+}
+function phStep(h) {
+  const B = PH.b;
+  for (const b of B) { if (b.asleep) continue; b.vy += PH.g * h; b.vx *= .999; b.va *= .995; }
+  const C = [];
+  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) {
+    const a = B[i], c = B[j]; if (a.ghost || c.ghost || (a.asleep && c.asleep)) continue;
+    const ra = Math.hypot(a.hw, a.hh), rc = Math.hypot(c.hw, c.hh); if (!a.fixed && !c.fixed && (Math.abs(a.x - c.x) > ra + rc || Math.abs(a.y - c.y) > ra + rc)) continue;
+    const m = phHits(a, c); if (!m) continue;
+    const fast = q => !q.asleep && !q.fixed && Math.hypot(q.vx, q.vy) > 60;
+    if (fast(a)) { c.asleep = c.fixed; c.still = 0; } if (fast(c)) { a.asleep = a.fixed; a.still = 0; }
+    for (const p of m.pts) {
+      const rax = p.x - a.x, ray = p.y - a.y, rcx = p.x - c.x, rcy = p.y - c.y, rn1 = rax * m.ny - ray * m.nx, rn2 = rcx * m.ny - rcy * m.nx;
+      const tx = -m.ny, ty = m.nx, rt1 = rax * ty - ray * tx, rt2 = rcx * ty - rcy * tx;
+      C.push({ a, c, nx: m.nx, ny: m.ny, tx, ty, rax, ray, rcx, rcy, mn: 1 / (a.im + c.im + a.iI * rn1 * rn1 + c.iI * rn2 * rn2), mt: 1 / (a.im + c.im + a.iI * rt1 * rt1 + c.iI * rt2 * rt2), bias: .22 / h * Math.max(0, p.d - .6), jn: 0, jt: 0 });
+    }
+  }
+  for (let it = 0; it < 10; it++) for (const k of C) {
+    const { a, c } = k, dvx = c.vx - c.va * k.rcy - a.vx + a.va * k.ray, dvy = c.vy + c.va * k.rcx - a.vy - a.va * k.rax;
+    const vn = dvx * k.nx + dvy * k.ny; let dj = k.mn * (-vn + k.bias), nj = Math.max(k.jn + dj, 0); dj = nj - k.jn; k.jn = nj;
+    let ix = dj * k.nx, iy = dj * k.ny;
+    const vt = dvx * k.tx + dvy * k.ty, lim = .55 * k.jn; let tj = k.mt * -vt, tn = clamp(k.jt + tj, -lim, lim); tj = tn - k.jt; k.jt = tn;
+    ix += tj * k.tx; iy += tj * k.ty;
+    a.vx -= ix * a.im; a.vy -= iy * a.im; a.va -= a.iI * (k.rax * iy - k.ray * ix); c.vx += ix * c.im; c.vy += iy * c.im; c.va += c.iI * (k.rcx * iy - k.rcy * ix);
+  }
+  for (const b of B) {
+    if (b.asleep) { b.vx = b.vy = b.va = 0; continue; }
+    b.x += b.vx * h; b.y += b.vy * h; b.a += b.va * h;
+    if (!b.ghost && !b.drag && Math.hypot(b.vx, b.vy) < 14 && Math.abs(b.va) < .25) { if (++b.still > 45) { b.asleep = true; b.vx = b.vy = b.va = 0; } } else b.still = 0;
+  }
+}
+/* Плохой сайт. Всё выдумано нарочно: это пародия на шаблон, компании нет. Порядок в списке это порядок падения */
+const JUNK_W = () => [
+  ['fade', 0, 58, 1440, 800, '', { ghost: 1 }],
+  ['j-modal', 470, 150, 500, 250, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите скидку 10% на первый заказ. Только для новых клиентов!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ СКИДКУ</span>'],
+  ['j-cookie', 40, 700, 560, 56, 'Мы используем файлы cookie <span class="j-btn j-mini">Принять</span>'],
+  ['j-chat', 1120, 540, 280, 170, '<b>Онлайн-консультант</b><p>Здравствуйте! Чем могу помочь?</p><span class="j-in">Введите сообщение…</span>'],
+  ['j-call', 1340, 440, 84, 84, '☎'],
+  ['j-rib', 0, 270, 50, 190, 'ПОДАРОК'],
+  ['j-star', 1120, 180, 170, 170, '<b>−70%</b><span>только<br>сегодня</span>'],
+  ['j-count', 410, 462, 620, 40, 'Только сегодня! До конца акции <b>00:14:59</b>'],
+  ['j-btn j-big', 150, 392, 190, 46, 'Подробнее'],
+  ['j-card', 90, 520, 300, 150, '<i>★</i><b>Команда профессионалов</b><span>Индивидуальный подход</span>'], ['j-card', 400, 520, 300, 150, '<i>◆</i><b>Высокое качество</b><span>Гарантия результата</span>'],
+  ['j-card', 710, 520, 300, 150, '<i>✔</i><b>Лучшие цены</b><span>Лидер рынка</span>'],
+  ...['Главная', 'О компании', 'Услуги', 'Цены', 'Акции', 'Отзывы', 'Контакты'].map((t, i) => ['j-nav', 100 + i * 178, 130, 160, 36, t]),
+  ['j-tel', 880, 72, 240, 40, '8 (000) 000-00-00'], ['j-btn j-green', 1130, 72, 200, 42, 'Заказать звонок'], ['j-logo', 100, 66, 340, 54, '<b>ВАША КОМПАНИЯ</b><span>Динамично развиваемся</span>'],
+  ['j-head', 150, 210, 800, 170, 'Заезженный дизайн, как у всех!', { ghost: 1 }], ['j-hero', 90, 176, 1260, 276, '', { ghost: 1 }], ['j-bar', 0, 124, 1440, 48, '', { ghost: 1 }]
+];
+const JUNK_N = () => [
+  ['fade', 0, 54, 390, 900, '', { ghost: 1 }],
+  ['j-modal', 28, 130, 334, 232, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите скидку 10% на первый заказ!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ СКИДКУ</span>'],
+  ['j-cookie', 12, 590, 366, 50, 'Мы используем cookie <span class="j-btn j-mini">Принять</span>'],
+  ['j-call', 306, 500, 66, 66, '☎'], ['j-star', 262, 116, 112, 112, '<b>−70%</b><span>только<br>сегодня</span>'],
+  ['j-count', 12, 318, 366, 36, 'До конца акции <b>00:14:59</b>'], ['j-btn j-big', 24, 262, 156, 42, 'Подробнее'],
+  ['j-card', 12, 362, 178, 104, '<i>★</i><b>Команда профессионалов</b>'], ['j-card', 200, 362, 178, 104, '<i>◆</i><b>Высокое качество</b>'],
+  ['j-card', 12, 474, 178, 104, '<i>✔</i><b>Лучшие цены</b>'], ['j-card', 200, 474, 100, 104, '<i>♥</i><b>Лидер рынка</b>'],
+  ['j-logo', 12, 58, 240, 46, '<b>ВАША КОМПАНИЯ</b><span>Динамично развиваемся</span>'], ['j-btn j-green', 262, 62, 116, 36, 'Звонок'],
+  ['j-head', 24, 126, 240, 130, 'Заезженный дизайн, как у всех!', { ghost: 1 }], ['j-hero', 0, 108, 390, 206, '', { ghost: 1 }]
+];
+const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, drag: null };
+function junkFloor() { return $('#air-foot').getBoundingClientRect().top - $('#klienty').getBoundingClientRect().top; }
+function junkBuild() {
+  const box = $('#junk'), W = innerWidth, wide = W > 760, F = junkFloor(), list = wide ? JUNK_W() : JUNK_N(), u = wide ? Math.min(W / 1440, F / 770) : Math.min(W / 390, F / 650), ox = wide ? (W - 1440 * u) / 2 : (W - 390 * u) / 2;
+  box.style.setProperty('--u', u + 'px'); box.querySelectorAll('.jp').forEach(e => e.remove());
+  const sheet = $('#j-sheet'); sheet.style.height = F + 'px';
+  J.floor = F; J.shrink = wide ? .54 : .46;
+  J.p = list.map(([cls, x, y, w, h, html, o = {}], i) => {
+    const e = document.createElement('div'); e.className = 'jp ' + cls; e.innerHTML = html; e.style.zIndex = 100 - i;
+    const full = cls === 'fade' || cls === 'j-bar', pw = full ? W : w * u, ph = cls === 'fade' ? F : h * u, hx = full ? W / 2 : ox + x * u + pw / 2, hy = cls === 'fade' ? F / 2 : y * u + ph / 2; e.style.width = pw + 'px'; e.style.height = ph + 'px';
+    e.style.transform = `translate(${hx - pw / 2}px,${hy - ph / 2}px)`; box.appendChild(e);
+    return { e, hx, hy, pw, ph, ghost: !!o.ghost, thr: .03 + .78 * i / (list.length - 1), body: null, s: 1 };
+  });
+  PH.b = []; [[W / 2, F + 200, W + 800, 400], [-200, F / 2, 400, 2 * F + 800], [W + 200, F / 2, 400, 2 * F + 800], [W / 2, -200, W + 800, 400]].forEach(([x, y, w, h]) => PH.b.push(phBody(x, y, w, h, true)));
+  J.built = true; J.k = 0; J.hold = 0; J.clean = false; $('#klienty').classList.remove('clean', 'junk'); sheet.classList.remove('drop');
+}
+function junkFall(p, seed) {
+  const s = p.ghost ? 1 : J.shrink, b = phBody(p.hx, p.hy, p.pw * s, p.ph * s); b.ghost = p.ghost; p.s = s; p.body = b;
+  b.vx = (seed - .5) * 260; b.vy = -60 - seed * 120; b.va = (seed - .5) * 3.2; PH.b.push(b); b.p = p;
+  if (p.e.classList.contains('fade')) p.e.style.opacity = 0; else if (!p.ghost) p.e.classList.add('fell');
+  p.e.classList.remove('back');
+}
+function junkBack(p) { PH.b.splice(PH.b.indexOf(p.body), 1); p.body = null; p.s = 1; p.e.classList.remove('fell'); p.e.classList.add('back'); if (p.e.classList.contains('fade')) p.e.style.opacity = ''; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`; }
+function junkDraw() { for (const p of J.p) { const b = p.body; if (!b || b.asleep && b.drawn) continue; p.e.style.transform = `translate(${b.x - p.pw / 2}px,${b.y - p.ph / 2}px) rotate(${b.a}rad) scale(${p.s})`; b.drawn = b.asleep; } }
+function junkSim(dt) { PH.acc = Math.min(.05, PH.acc + dt); while (PH.acc >= PH.tick) { phStep(PH.tick); PH.acc -= PH.tick; } for (let i = PH.b.length - 1; i >= 4; i--) { const b = PH.b[i]; if (b.ghost && b.y - Math.hypot(b.hw, b.hh) > J.floor + 900) { b.asleep = true; } } }
+function junkNow() { J.p.forEach((p, i) => { if (!p.body) junkFall(p, ((i * 37) % 100) / 100); }); for (let i = 0; i < 420; i++) phStep(PH.tick); junkDraw(); J.k = 1; }
+function junkStep(dt, d) {
+  const box = $('#junk'), W = $('#klienty'), near = d < 9;
+  if (!near) { if (J.on) { J.on = false; box.style.display = 'none'; J.built = false; PH.b = []; W.classList.remove('clean', 'junk'); $('#j-sheet').classList.remove('drop'); } return false; }
+  if (!J.on) { J.on = true; box.style.display = 'block'; if (!J.built) junkBuild(); if (RM) junkNow(); }
+  J.alpha = sstep(9, 7.8, d); box.style.opacity = J.alpha;
+  J.hold += dt;
+  const want = J.hold > 1 ? sstep(8.4, 1.6, d) : 0;
+  if (!RM) J.k += clamp(want - J.k, -2 * dt, .56 * dt); else J.k = want > 0 || d < 8 ? 1 : J.k;
+  J.p.forEach((p, i) => { if (!p.body && J.k > p.thr) junkFall(p, ((i * 37) % 100) / 100); else if (p.body && J.k < p.thr - .02 && !RM) junkBack(p); });
+  if (!RM) { junkSim(dt); junkDraw(); }
+  const clean = J.k > .84; if (clean !== J.clean) { J.clean = clean; $('#j-sheet').classList.toggle('drop', clean); W.classList.toggle('clean', clean); }
+  W.classList.toggle('junk', J.alpha > .4 && !clean);
+  return J.alpha > .4 && !clean;
+}
+/* обломки можно хватать и бросать */
+function junkPointer() {
+  const box = $('#junk'); let drag = null, tx = 0, ty = 0, raf = 0;
+  const pull = () => { if (!drag) return; const b = drag, dx = tx - (b.x + Math.cos(b.a) * b.lx - Math.sin(b.a) * b.ly), dy = ty - (b.y + Math.sin(b.a) * b.lx + Math.cos(b.a) * b.ly); b.vx = clamp(dx * 14, -1800, 1800); b.vy = clamp(dy * 14, -1800, 1800); b.va *= .86; b.asleep = false; b.still = 0; raf = requestAnimationFrame(pull); };
+  box.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.fell'); if (!el) return; const p = J.p.find(q => q.e === el); if (!p || !p.body) return;
+    e.preventDefault(); const b = p.body, rx = e.clientX - b.x, ry = e.clientY - b.y, c = Math.cos(-b.a), s = Math.sin(-b.a); b.lx = c * rx - s * ry; b.ly = s * rx + c * ry; b.drag = true; drag = b; tx = e.clientX; ty = e.clientY; el.classList.add('held'); el.setPointerCapture(e.pointerId); cancelAnimationFrame(raf); pull();
+  });
+  box.addEventListener('pointermove', e => { if (drag) { tx = e.clientX; ty = e.clientY; } });
+  const end = () => { if (!drag) return; drag.drag = false; drag.p.e.classList.remove('held'); drag = null; };
+  box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+  addEventListener('resize', () => { if (!J.on) return; const was = J.clean; J.built = false; junkBuild(); if (was || RM) { junkNow(); J.clean = true; $('#j-sheet').classList.add('drop'); $('#klienty').classList.add('clean'); } });
+}
+junkPointer();
 
 /* ---------- Разговор ---------- */
 const talk = $('#talk');
@@ -605,6 +749,7 @@ function openTalk(topic) {
   $('#t-what').focus();
 }
 $('#contact-open').addEventListener('click', () => openTalk(''));
+if (window.GTSAYT) GTSAYT.onTalk = () => openTalk(ST[0].full);
 $('#talk-x').addEventListener('click', () => talk.close());
 $('#talk-f').addEventListener('submit', e => {
   e.preventDefault(); const c = !$('#t-contact').value.trim(); $('#t-contact-e').hidden = !c; if (c) { $('#t-contact').focus(); return; }
@@ -617,7 +762,7 @@ function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now; const time = (now - T0) / 1000;
   if (!document.hidden) {
     if (world === 'home') { updateHome(RM ? 0 : dt); if (!RM || dirty) drawHome(RM ? 2 : time); }
-    else if (world === 'klienty') { updateAir(dt); if (!RM || dirty) drawAir(RM ? 2 : time); }
+    else if (world === 'klienty') { updateAir(dt); const drew = !RM || dirty; if (drew) drawAir(RM ? 2 : time); }
     dirty = false;
     if (!RM && gl && !window.__fixed) { acc += now - (frame.p || now); cnt++; frame.p = now; if (cnt > 40) { const ms = acc / cnt; acc = 0; cnt = 0; if (ms > 34 && scale > .6) { scale = Math.max(.6, scale * .8); resize(); } } }
   }

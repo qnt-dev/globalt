@@ -5,3 +5,5 @@ review/
 maket/*.png
 # та же страница, что index.html, без каркаса
 artifact.html
+# шрифт TT Mussels для прототипов, нужна лицензия, в репозиторий не кладём
+maket/fonts/

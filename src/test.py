@@ -1,4 +1,4 @@
-import io, sys; sys.stdout.reconfigure(encoding="utf-8")
+import io, re, sys; sys.stdout.reconfigure(encoding="utf-8")
 from PIL import Image, ImageStat
 from playwright.sync_api import sync_playwright
 U='http://127.0.0.1:4391/index.html'
@@ -67,7 +67,8 @@ with sync_playwright() as pw:
         m=p.evaluate(BAR); check(f'bar over air {w}x{h}',not m['clash'],m)
         for i in range(5):
             p.click(f'#presets button[data-i="{i}"]'); p.wait_for_timeout(1800 if w>800 else 1200)
-            r=p.evaluate(CLIP%"'#st-name,#st-line,#st-get,#st-need,#presets button'"); check(f'air clip st{i} {w}x{h}',not r['out'],r)
+            if i==0: p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(300)
+            r=p.evaluate(CLIP%"'#st-name,#st-line,#st-ask,#st-hint,#st-get,#st-need,#presets button'"); check(f'air clip st{i} {w}x{h}',not r['out'],r)
             m=p.evaluate("(()=>{const a=document.querySelector('#st-more').getBoundingClientRect(),d=document.querySelector('#air-foot').getBoundingClientRect(),n=document.querySelector('#st-name').getBoundingClientRect();return [Math.round(a.bottom),Math.round(d.top),Math.round(n.top)]})()")
             check(f'air fits st{i} {w}x{h}',m[0]<=m[1]+1 and m[2]>=40,m)
         check(f'no errors {w}x{h}',not p.E,p.E); c.close()
@@ -149,9 +150,9 @@ with sync_playwright() as pw:
     p.click('#logo'); p.wait_for_timeout(1600); check('home shows mark again',p.evaluate("getComputedStyle(document.querySelector('#gl')).display")=='block' and p.is_visible('.pick[data-t="0"]'))
     check('no err people',not p.E,p.E); c.close()
     # эфир с клавиатуры
-    c,p=page(1000,640,'#klienty'); p.focus('#tun'); [p.keyboard.press('ArrowRight') for _ in range(22)]; p.wait_for_timeout(1500)
+    c,p=page(1000,640,'#klienty'); p.focus('#tun'); [p.keyboard.press('ArrowRight') for _ in range(22)]; p.wait_for_selector('#klienty.clean',state='attached',timeout=40000)
     check('keyboard tunes to station',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
-    p.click('#st-cta'); check('talk opens',p.is_visible('#talk') and 'сайт' in p.input_value('#t-what').lower()); p.click('#talk-f button[type=submit]'); check('talk error',p.is_visible('#t-contact-e'))
+    p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1600); p.click('#st-cta'); check('talk opens',p.is_visible('#talk') and 'реклам' in p.input_value('#t-what').lower()); p.click('#talk-f button[type=submit]'); check('talk error',p.is_visible('#t-contact-e'))
     p.fill('#t-contact','t@example.test'); p.click('#talk-f button[type=submit]'); check('talk done',p.is_visible('#talk-done')); p.click('#talk-x')
     check('no err air',not p.E,p.E); c.close()
     # белый шум не гаснет, когда страница открыта долго
@@ -159,6 +160,51 @@ with sync_playwright() as pw:
         c,p=page(1000,640,'#klienty',init="(()=>{const r=requestAnimationFrame.bind(window);window.requestAnimationFrame=f=>r(t=>f(t+%d))})()"%(hours*3600000)); p.wait_for_timeout(600)
         p.evaluate("['#air-noise','#air','#bar'].forEach(s=>document.querySelector(s).style.visibility='hidden')"); p.wait_for_timeout(100)
         g=ImageStat.Stat(Image.open(io.BytesIO(p.screenshot())).convert('L')); check(f'noise stays after {hours} h',g.mean[0]>80 and g.stddev[0]>30,(g.mean[0],g.stddev[0])); c.close()
+    # «Сайт»: плохой сайт разваливается, куча лежит, колесо роняет телефон в воду, из воды встаёт пример
+    ST="window.GTSAYT.state"
+    for w,h in SIZES:
+        c,p=page(w,h,'#klienty'); p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.junk',state='attached',timeout=20000)
+        check(f'junk page first {w}',p.is_visible('.j-modal') and not p.is_visible('#st-ask'))
+        check(f'no GT logo over junk {w}',p.evaluate("getComputedStyle(document.querySelector('#logo')).visibility")=='hidden')
+        check(f'junk says worn design {w}','Заезженный дизайн' in p.text_content('#junk'))
+        p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(2500)
+        r=p.evaluate("(()=>{const P=[...document.querySelectorAll('#junk .jp.fell')].map(e=>e.getBoundingClientRect()),f=document.querySelector('#air-foot').getBoundingClientRect(),a=document.querySelector('#st-hint').getBoundingClientRect();return {n:P.length,out:P.filter(q=>q.left<-3||q.right>innerWidth+3||q.bottom>f.top+8).length,top:Math.round(Math.min(...P.map(q=>q.top))),hint:Math.round(a.bottom),sheet:getComputedStyle(document.querySelector('#j-sheet')).visibility}})()")
+        check(f'junk pile on floor {w}x{h}',r['n']>=10 and r['out']==0,r); check(f'junk sheet gone {w}',r['sheet']=='hidden',r); check(f'junk leaves text {w}x{h}',r['top']>=r['hint']-30,r)
+        check(f'site station: face and question, no buttons {w}',p.is_visible('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-cta') and p.locator('#st-x').count()==0 and 'лицо компании' in p.text_content('#st-line'))
+        check(f'logo back after junk {w}',p.evaluate("getComputedStyle(document.querySelector('#logo')).visibility")=='visible')
+        r=p.evaluate("(()=>{const q=document.querySelector('#junk .jp.j-modal').getBoundingClientRect();return [q.left+q.width/2,q.top+q.height/2]})()"); y0=r[1]; p.mouse.move(r[0],r[1]); p.mouse.down(); p.mouse.move(r[0],max(90,r[1]-160),steps=5); p.wait_for_timeout(500)
+        y1=p.evaluate("(()=>{const q=document.querySelector('#junk .jp.j-modal').getBoundingClientRect();return q.top+q.height/2})()"); p.mouse.up(); check(f'junk can be grabbed {w}',y1<y0-40,(y0,y1)); p.wait_for_timeout(300)
+        check(f'pile waits for the visitor {w}',p.evaluate(ST)['ph']==0)
+        # колесо вниз: телефон падает в воду, встаёт пример
+        p.mouse.move(w/2,h/2)
+        for _ in range(6): p.mouse.wheel(0,100); p.wait_for_timeout(40)
+        p.wait_for_timeout(1500); s=p.evaluate(ST)
+        check(f'wheel starts example {w}',s['ph']==2 and p.is_visible('#x1-cap') and not p.is_visible('#st-name'),s)
+        r=p.evaluate(CLIP%"'#x1-cap h2,#x1-cap p,#x1-forms .lb,#x1-forms .t,#x1-hd .ix button,#x1-tag'"); check(f'example clip {w}x{h}',not r['out'] and r['sw']<=r['W'],r)
+        r=p.evaluate("(()=>{const f=document.querySelector('#air-foot').getBoundingClientRect(),q=s=>document.querySelector(s).getBoundingClientRect(),c=q('#x1-cap'),m=q('#x1-forms'),hd=q('#x1-hd'),b=q('#bar');return {forms:Math.round(m.bottom),foot:Math.round(f.top),cap:Math.round(c.top),hd:Math.round(hd.top),bar:Math.round(b.bottom)}})()")
+        check(f'example fits {w}x{h}',r['forms']<=r['foot'] and r['cap']>=r['hd'] and r['hd']>=r['bar']-1,r)
+        # колесо проводит по формам и обратно теми же шагами
+        seen=set()
+        for _ in range(30): p.mouse.wheel(0,100); p.wait_for_timeout(60); seen.add(p.evaluate(ST)['shape'])
+        p.wait_for_timeout(1200); s=p.evaluate(ST)
+        check(f'wheel walks all forms {w}',seen>={1,2,3} and s['u']==1,(seen,s))
+        check(f'station text after example {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#st-hint'))
+        back=set()
+        for _ in range(32): p.mouse.wheel(0,-100); p.wait_for_timeout(60); back.add(p.evaluate(ST)['shape'])
+        p.wait_for_timeout(1200); s=p.evaluate(ST)
+        check(f'wheel goes back the same steps {w}',back>={1,2,3} and s['ph']==0 and abs(float(p.evaluate('__gt.air.v'))-12)<1.5,(back,s))
+        check(f'phone back in the pile {w}',p.evaluate("getComputedStyle(document.querySelector('#junk .j-call')).visibility")=='visible' and not p.is_visible('#x1-call'))
+        # щелчок по пустому месту: вступление, затем следующая форма
+        p.mouse.click(w*.5,h*.45); p.wait_for_timeout(2600); s=p.evaluate(ST); check(f'click starts example {w}',s['ph']==2,s)
+        p.mouse.click(*s['c']); p.wait_for_timeout(1200); s=p.evaluate(ST); check(f'click shows next form {w}',s['shape']==1,s)
+        if w>760: p.click('#x1-hd .h3c'); check(f'example contact opens talk {w}',p.is_visible('#talk') and 'сайт' in p.input_value('#t-what').lower()); p.click('#talk-x')
+        check(f'site no err {w}',not p.E,p.E); c.close()
+    c,p=page(1000,640,'#klienty'); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1300); check('other stations keep their text',p.is_visible('#st-get') and p.is_visible('#st-cta') and not p.is_visible('#st-ask')); check('junk hidden on other stations',not p.is_visible('#junk'))
+    p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000)
+    p.evaluate("(()=>{const t=document.querySelector('#tun');t.value=6;t.dispatchEvent(new Event('input'))})()"); p.wait_for_timeout(1400); check('dial back restores junk',p.evaluate("document.querySelector('#klienty').classList.contains('junk')"))
+    p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(7500); check('example starts by itself',p.evaluate(ST)['ph']==2); check('site no err idle',not p.E,p.E); c.close()
+    c,p=page(1000,640,'#klienty',rm='reduce'); p.click('#presets button[data-i="0"]'); p.wait_for_timeout(300); check('reduced: junk already fallen',p.evaluate("document.querySelector('#klienty').classList.contains('clean') && document.querySelectorAll('#junk .jp.fell').length>=10"))
+    p.mouse.move(500,320); [p.mouse.wheel(0,100) for _ in range(8)]; p.wait_for_timeout(300); check('reduced: example by wheel',p.evaluate(ST)['ph']==2); check('no err rm site',not p.E,p.E); c.close()
     # без анимации
     c,p=page(1000,640,rm='reduce'); p.wait_for_timeout(300); check('reduced: choice at once',p.is_visible('.pick[data-t="0"]')); p.click('.pick[data-t="2"]'); p.wait_for_timeout(200); check('reduced: instant world',p.is_visible('#st-name')); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(300); check('reduced: tuned',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
     p.evaluate("window.__gt.show('rabota')"); p.wait_for_timeout(200); check('reduced: wall is still',p.evaluate("getComputedStyle(document.querySelector('.w-track')).animationName")=='none')

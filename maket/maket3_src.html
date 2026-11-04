@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Макет: экран «Сайт»</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap">
+<style>
+@font-face{font-family:"Science Gothic";font-weight:100 900;font-stretch:50% 200%;font-display:swap;src:url({{FONT}}) format("woff2")}
+:root{color-scheme:dark;--disp:"Science Gothic","Arial Narrow",Impact,sans-serif;--text:Montserrat,"Segoe UI",Arial,sans-serif;--voice:Cormorant,"Times New Roman",Georgia,serif;--gut:clamp(18px,3vw,48px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:#000;color:#fff;overflow:hidden;font:400 16px/1.5 var(--text);-webkit-font-smoothing:antialiased}
+h1,p{margin:0}button{font:inherit;color:inherit}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#bg{z-index:0}#fg{z-index:3}
+#noise{position:fixed;inset:0;z-index:1;overflow:hidden;pointer-events:none;font-family:var(--disp);text-transform:uppercase;font-weight:800}
+#noise span{position:absolute;white-space:nowrap;line-height:.9;color:rgba(255,255,255,.34);font-variation-settings:"wdth" var(--wd,80);animation:jit .42s infinite steps(3)}
+@keyframes jit{0%{transform:translate(0,0) skewX(0)}33%{transform:translate(-5px,2px) skewX(-3deg)}66%{transform:translate(6px,-3px) skewX(2deg)}}
+#w{position:fixed;z-index:2;left:var(--gut);top:var(--wy);font:800 var(--ws)/.84 var(--disp);font-variation-settings:"wdth" 100;text-transform:uppercase;white-space:nowrap;color:#fff;will-change:transform}
+#ui{position:fixed;inset:0;z-index:4;display:flex;flex-direction:column;padding:0 var(--gut);pointer-events:none}
+#ui button{pointer-events:auto}
+#bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding-top:10px;min-height:54px}
+#bar .q{font:italic 500 clamp(17px,1.45vw,22px) var(--voice);white-space:nowrap}
+#bar .q i{color:#ff5c0a;font-style:normal;font-size:.7em;margin:0 .1em}
+#bar img{display:block;width:clamp(92px,8vw,118px);height:auto}
+#bar img.m{display:none;width:34px}
+#bar .c{justify-self:end;font:italic 500 clamp(17px,1.45vw,22px) var(--voice);white-space:nowrap}
+#top{position:absolute;left:var(--gut);top:max(70px,9vh);font:italic 500 clamp(25px,3.1vw,48px)/1.16 var(--voice);max-width:19em}
+#top span{background:#000;padding:.02em .28em .08em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+#main{flex:1;min-height:0;position:relative}
+#line{position:absolute;left:0;top:var(--ly);font:italic 500 clamp(25px,3.1vw,52px)/1.08 var(--voice);max-width:min(14.5em,54vw);text-wrap:pretty;text-shadow:0 0 18px rgba(0,0,0,.45)}
+#btns{position:absolute;left:0;bottom:56px;display:flex;flex-wrap:wrap;gap:8px 12px}
+.go{min-height:54px;padding:12px 26px;border:0;border-radius:99px;font-weight:700;font-size:15px;cursor:pointer;background:#fff;color:#000}
+.go.o{background:none;color:#fff;box-shadow:inset 0 0 0 2px #fff}
+#tuned{transition:opacity .35s}
+#foot{display:flex;flex-wrap:wrap;gap:0 22px;align-items:center;font-size:13px;font-weight:600;min-height:44px}
+#foot u{text-underline-offset:4px}
+#presets{position:relative;height:44px}
+#presets button{position:absolute;top:0;transform:translateX(-50%);min-height:44px;padding:0 6px;background:none;border:0;font:800 clamp(13px,1.45vw,21px) var(--disp);font-variation-settings:"wdth" 80;text-transform:uppercase;white-space:nowrap;cursor:pointer}
+#presets button:not(:first-child){opacity:.45;cursor:default}
+#presets button.on{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:5px}
+#scale{position:relative;height:52px;margin-bottom:12px;background-image:repeating-linear-gradient(90deg,#fff 0 1.5px,transparent 1.5px calc(100%/50));background-size:100% 42%;background-repeat:no-repeat;background-position:0 100%}
+#tun{position:absolute;inset:0;width:100%;height:100%;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:ew-resize;pointer-events:auto}
+#tun::-webkit-slider-runnable-track{height:52px;background:transparent}
+#tun::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:52px;background:linear-gradient(90deg,transparent 13px,#fff 13px 17px,transparent 17px)}
+#tun::-moz-range-track{height:52px;background:transparent}
+#tun::-moz-range-thumb{width:30px;height:52px;border:0;border-radius:0;background:linear-gradient(90deg,transparent 13px,#fff 13px 17px,transparent 17px)}
+#note{position:fixed;z-index:5;right:var(--gut);bottom:112px;font-size:11px;font-weight:500;opacity:.6}
+@media (max-width:760px){
+  #bar{grid-template-columns:auto 1fr;gap:10px}
+  #bar img.f,#bar .c{display:none}#bar img.m{display:block}#bar .l{order:-1}
+  #bar .q{font-size:clamp(14px,4.4vw,18px);justify-self:end}
+  #btns{bottom:6px}
+  #top{font-size:21px;top:64px}
+  #line{font-size:clamp(22px,6.6vw,29px);max-width:none;right:0;top:auto;bottom:calc(54px*2 + 26px)}
+  #btns{flex-direction:column;align-items:stretch}
+  .go{min-height:50px}
+  #foot span{display:none}
+  #presets button{font-size:11.5px;padding:0;font-variation-settings:"wdth" 56}
+  #note{bottom:auto;top:58px}
+}
+@media (max-width:760px) and (max-height:700px){#btns{flex-direction:row}.go{padding:10px 14px;font-size:13px;min-height:44px;flex:1}#line{bottom:72px}#foot{display:none}}
+@media (prefers-reduced-motion:reduce){#noise span{animation:none}}
+</style></head><body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="noise" aria-hidden="true"></div>
+<h1 id="w" aria-live="polite">Шум</h1>
+<canvas id="fg" aria-hidden="true"></canvas>
+<div id="ui">
+  <div id="bar"><span class="q">Ищете работу, людей или<i>✦</i>клиентов?</span><span class="l"><img class="f" src="{{LOGO}}" alt="GLOBAL TRIUMPH"><img class="m" src="{{MARK}}" alt=""></span><span class="c">Напишите нам</span></div>
+  <p id="top"><span>Покупатель слышит всех сразу. Значит, никого. Поверните ручку и найдите частоту, на которой слышно вас.</span></p>
+  <div id="main">
+    <div id="tuned">
+      <p id="line">Человек зашёл и сразу понял, что вы делаете.</p>
+      <div id="btns"><button class="go" type="button" title="В макете не работает">Разобрать эту страницу</button><button class="go o" type="button" title="В макете не работает">Обсудить эту частоту</button></div>
+    </div>
+  </div>
+  <div id="foot"><u>Включить звук</u><u>Ищете людей?</u><u>Ищете работу?</u><span style="font-weight:500">Кейсы: [эфир появится, когда будут материалы клиентов]</span></div>
+  <div id="presets"></div>
+  <div id="scale"><input id="tun" type="range" min="0" max="100" step="0.5" value="1" aria-label="Настройка частоты"></div>
+</div>
+<p id="note">Макет. Снимок временный.</p>
+<script>
+(() => {
+const $ = s => document.querySelector(s), clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x)), sstep = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const RM = matchMedia('(prefers-reduced-motion:reduce)').matches, QS = new URLSearchParams(location.search);
+const ST = [{ v: 12, n: 'Сайт' }, { v: 31, n: 'Контекст' }, { v: 50, n: 'Таргет' }, { v: 69, n: 'SMM' }, { v: 88, n: 'Бренд' }], C = [1, .231, .078];
+$('#presets').innerHTML = ST.map((s, i) => `<button type="button" style="left:${s.v}%" ${i ? 'aria-disabled="true" title="В макете только «Сайт»"' : ''}>${s.n}</button>`).join('');
+const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
+$('#noise').innerHTML = NOISE.map((t, i) => `<span style="left:${(i * 37) % 70 - 8}vw;top:${(i * 8.2 + 2) % 92}vh;font-size:${6 + (i * 5) % 9}vw;--wd:${50 + (i * 23) % 90};animation-delay:-${i * .07}s">${t}</span>`).join('');
+const VS = `#version 300 es
+in vec2 a;void main(){gl_Position=vec4(a,0.,1.);}`;
+const FS = `#version 300 es
+precision highp float;out vec4 o;
+uniform vec2 R,OFF;uniform float T,Q,FG,LY;uniform vec3 C;uniform vec4 BOX;uniform sampler2D P,M;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+void main(){
+  vec2 fc=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);float mn=min(R.x,R.y);float t=mod(floor(T*24.),64.);float j=1.-Q;
+  float row=floor(fc.y/max(2.,R.y/110.));
+  float tear=(hash(vec2(row,t))-.5)*.34*j*j+sin(fc.y/R.y*9.+T*3.1)*.03*j;
+  float rl=fract(T*.23);float roll=smoothstep(.07,.0,abs(fc.y/R.y-rl))*smoothstep(.0,.35,j)*.09;
+  vec2 uv=(fc-BOX.xy-OFF)/BOX.zw;uv.x+=tear+roll;
+  /* левый край снимка тёмный: слева от середины фона снимок растягивается, а не обрывается */
+  float lo=min(-BOX.x/BOX.z,.0)-.04;vec2 us=uv;if(uv.x<.3)us.x=mix(.14,.3,clamp((uv.x-lo)/(.3-lo),0.,1.));
+  float g=texture(P,clamp(us,vec2(.001),vec2(.999))).r,m=texture(M,clamp(uv,vec2(.001),vec2(.999))).r;
+  g*=mix(.3,1.,smoothstep(lo,.32,uv.x));
+  float fb=smoothstep(1.02,.8,uv.y),ft=smoothstep(-1.1,.25,uv.y);
+  float a=clamp(Q*Q*1.15+step(hash(vec2(row,floor(T*9.))),Q*1.25-.2)*.8,0.,1.);
+  vec2 cell=floor(gl_FragCoord.xy/max(1.,mn/480.));float s=hash(cell+t*vec2(3.1,1.7));
+  vec2 uvs=gl_FragCoord.xy/R;
+  float band=smoothstep(.0,.12,sin(uvs.y*7.-T*2.3))*.22+smoothstep(.97,1.,sin(uvs.y*90.+T*30.))*.3;
+  vec3 stat=vec3(s*.62+band*.55+.06);
+  float grain=(s-.5)*.13;
+  vec3 col=C*pow(g,1.25)*1.12;col+=vec3(1.,.8,.7)*smoothstep(.82,1.,g)*.16;
+  if(FG>.5){vec3 cf=(C*pow(g,1.05)*1.1+vec3(1.)*smoothstep(.55,1.,g)*.6)*(1.+grain);float A=m*fb*smoothstep(.2,.8,a);o=vec4(cf*A,A);return;}
+  col*=fb*ft;col*=mix(1.,.42,smoothstep(.62,1.,fc.y/R.y));col*=1.+grain;
+  vec3 c=mix(stat,col,a);
+  float yy=sin(fc.x/mn*18.+T*2.6)*.03*mn;float l=smoothstep(2.4,.9,abs(fc.y-LY-yy))*smoothstep(.75,1.,Q);
+  c=mix(c,vec3(1.),l*.8);
+  o=vec4(c,1.);
+}`;
+const cvs = [$('#bg'), $('#fg')], ctx = [], tex = [];
+function setup(cv, fg) {
+  const gl = cv.getContext('webgl2', { antialias: false, alpha: !!fg, premultipliedAlpha: true }); if (!gl) return null;
+  const sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(x)); return x; };
+  const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS)); gl.bindAttribLocation(p, 0, 'a'); gl.linkProgram(p); gl.useProgram(p);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const u = {}; ['R', 'OFF', 'T', 'Q', 'FG', 'LY', 'C', 'BOX', 'P', 'M'].forEach(n => { u[n] = gl.getUniformLocation(p, n); });
+  gl.uniform1i(u.P, 0); gl.uniform1i(u.M, 1); gl.uniform1f(u.FG, fg ? 1 : 0); gl.uniform3f(u.C, C[0], C[1], C[2]);
+  return { gl, u, ready: 0 };
+}
+cvs.forEach((c, i) => { ctx[i] = setup(c, i); });
+const load = (src, unit) => new Promise(res => { const im = new Image(); im.onload = () => { ctx.forEach(x => { if (!x) return; const g = x.gl, t = g.createTexture(); g.activeTexture(g.TEXTURE0 + unit); g.bindTexture(g.TEXTURE_2D, t); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE); g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, im); }); res(); }; im.src = src; });
+let dpr = Math.min(devicePixelRatio || 1, 1.5), box = [0, 0, 1, 1];
+const PH = 1600 / 1066;
+function layout() {
+  const W = innerWidth, H = innerHeight, wide = W > 760;
+  cvs.forEach(c => { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }); ctx.forEach(x => x && x.gl.viewport(0, 0, cvs[0].width, cvs[0].height));
+  const r = document.documentElement.style; let bw, bh, bx, by, ws, wy, ly;
+  if (wide) {
+    bh = Math.max(H * 1.02, W * .96 / PH); bw = bh * PH; by = H * -.02;
+    ws = Math.min(W * .178, H * .36); wy = H * .3; ly = wy + ws * .8 - 54 + 14;
+    // нос на снимке стоит на 44,5% ширины: слово заходит за лицо на треть своей высоты
+    const gut = parseFloat(getComputedStyle($('#w')).left); bx = Math.max(gut + ws * 3.62 - ws * .36 - bw * .445, W - bw);
+  } else {
+    bw = W * 1.55; bh = bw / PH; bx = W * .64 - bw * .68; by = H * .22;
+    ws = (W - 36) / 3.62; wy = H * .22 - ws * .55; ly = 0;
+  }
+  box = [bx, by, bw, bh].map(v => v * dpr);
+  r.setProperty('--ws', ws + 'px'); r.setProperty('--wy', wy + 'px'); r.setProperty('--ly', ly + 'px');
+}
+addEventListener('resize', layout); layout();
+const tun = $('#tun'), w = $('#w'), S = { v: +(QS.get('v') || 1), target: +(QS.get('v') || 1), q: 0, mx: 0, my: 0, tx: 0, ty: 0, auto: !QS.has('v') && !RM };
+tun.value = S.v;
+addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { S.tx = e.clientX / innerWidth - .5; S.ty = e.clientY / innerHeight - .5; } });
+tun.addEventListener('input', () => { S.auto = false; S.target = +tun.value; });
+$('#presets button').addEventListener('click', () => { S.auto = false; S.target = 12; });
+addEventListener('wheel', e => { S.auto = false; S.target = clamp(S.target + Math.sign(e.deltaY) * 1.2, 0, 100); tun.value = S.target; }, { passive: true });
+const GLY = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЫЭЮЯ#%/*+=';
+function scr(text, q) { let s = ''; for (let i = 0; i < text.length; i++) s += q > ((i * 37 + 11) % 100) / 100 * .9 + .05 ? text[i] : GLY[Math.floor(Math.random() * GLY.length)]; return s; }
+let last = performance.now(), T0 = last, t0a = last + 1400;
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; const time = (now - T0) / 1000 % (20 * Math.PI);
+  if (S.auto && now > t0a) { const k = clamp((now - t0a) / 2400); S.target = 1 + 11 * (1 - Math.pow(1 - k, 3)); tun.value = S.target; if (k >= 1) S.auto = false; }
+  S.v = RM ? S.target : S.v + (S.target - S.v) * clamp(dt * 7);
+  const d = Math.abs(S.v - 12), q = sstep(7, 1.1, d); S.q = q;
+  const near = d < 9; const txt = near ? scr('Сайт', Math.min(1, q * 1.6)) : 'Шум'; if (w.textContent !== txt) w.textContent = txt;
+  $('#presets button').classList.toggle('on', q > .92);
+  $('#noise').style.opacity = (1 - q) * .95; $('#top').style.opacity = q > .5 ? 0 : 1;
+  const tun2 = sstep(.7, .95, q); $('#tuned').style.opacity = tun2; $('#tuned').style.visibility = tun2 > .01 ? 'visible' : 'hidden';
+  S.mx += (S.tx - S.mx) * clamp(dt * 3.5); S.my += (S.ty - S.my) * clamp(dt * 3.5);
+  w.style.transform = `translate(${-S.mx * 14}px,${-S.my * 8}px)`;
+  const foot = innerHeight - $('#foot').getBoundingClientRect().top;
+  ctx.forEach((x, i) => { if (!x) return; const g = x.gl, u = x.u, k = i ? 30 : 7; g.uniform2f(u.R, cvs[i].width, cvs[i].height); g.uniform1f(u.T, time); g.uniform1f(u.Q, q); g.uniform4f(u.BOX, box[0], box[1], box[2], box[3]); g.uniform2f(u.OFF, -S.mx * k * dpr, -S.my * k * .6 * dpr); g.uniform1f(u.LY, innerWidth > 760 ? (innerHeight - foot - 14) * dpr : -999); if (i) g.clear(g.COLOR_BUFFER_BIT); g.drawArrays(g.TRIANGLES, 0, 3); });
+  requestAnimationFrame(frame);
+}
+Promise.all([load('{{PHOTO}}', 0), load('{{MASK}}', 1)]).then(() => requestAnimationFrame(frame));
+window.__m = S;
+})();
+</script>
+</body></html>

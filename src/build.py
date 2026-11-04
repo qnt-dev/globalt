@@ -7,8 +7,9 @@ small = os.path.join(AS, 'science-gothic-2axis.woff2')
 if not os.path.exists(small):
     f = TTFont(os.path.join(AS, 'science-gothic.woff2')); f = instancer.instantiateVariableFont(f, {'CTRS': 0, 'slnt': 0}); f.flavor = 'woff2'; f.save(small)
     print('font', os.path.getsize(small) // 1024, 'KB')
-css = open(os.path.join(HERE, 'style.css'), encoding='utf8').read()
-js = open(os.path.join(HERE, 'app.js'), encoding='utf8').read()
+# sayt.*: пример на станции «Сайт», идёт перед app.js, потому что app.js его вызывает
+css = open(os.path.join(HERE, 'style.css'), encoding='utf8').read() + open(os.path.join(HERE, 'sayt.css'), encoding='utf8').read()
+js = open(os.path.join(HERE, 'sayt.js'), encoding='utf8').read() + '\n' + open(os.path.join(HERE, 'app.js'), encoding='utf8').read()
 body = open(os.path.join(HERE, 'body.html'), encoding='utf8').read()
 face = '@font-face{font-family:"Science Gothic";font-weight:100 900;font-stretch:50%% 200%%;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}\n' % b64(small)
 logo = 'data:image/svg+xml;base64,' + b64(os.path.join(AS, 'logo-white.svg'))
@@ -19,7 +20,7 @@ body = body.replace('{{LOGO}}', logo).replace('{{MARK}}', mark)
 html = f'''<title>GLOBAL TRIUMPH</title>
 <meta name="description" content="Вакансии, подбор персонала и маркетинг. GLOBAL TRIUMPH сводит тех, кто ищет друг друга.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 {face}{css}</style>
 {body}

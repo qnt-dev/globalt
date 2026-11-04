@@ -27,6 +27,7 @@ python src/test.py
 ## Что где лежит
 
 - `src/app.js`, `src/style.css`, `src/body.html`: код страницы. Вакансии и объекты записаны в начале раздела «МИР 1» в `app.js`.
+- `src/sayt.js`, `src/sayt.css`: пример сайта на станции «Сайт» мира «Клиенты». Сборка ставит их перед `app.js` и `style.css`.
 - `src/build.py`: сборка в `index.html`.
 - `src/test.py`, `src/look.py`, `src/motion.py`: проверки и снимки в Chrome.
 - `assets/`: логотип, знак, шрифт, фото.

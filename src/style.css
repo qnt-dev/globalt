@@ -313,6 +313,72 @@ body[data-w=klienty]:not(.ink) #bar{text-shadow:0 0 5px #000,0 0 14px #000}
 #sound{background:none;border:0;padding:0;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:4px;color:inherit;align-self:flex-start}
 #air-foot{display:flex;flex-wrap:wrap;gap:0 22px;align-items:center;font-size:13px;font-weight:600}
 #air-foot button{color:inherit;background:none;border:0;padding:0;min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;font-weight:600;font-size:13px}
+#klienty[data-st="0"]{background:#000}
+/* «Сайт»: вместо кнопок вопрос заказчику и лёгкая подсказка, что дальше крутить колесо или щёлкнуть */
+#klienty[data-st="0"] #st-more{display:none}
+#st-ask,#st-hint{display:none}
+#klienty[data-st="0"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
+#klienty[data-st="0"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
+#klienty.exd #st-hint{display:none}
+@media (min-width:761px) and (max-height:780px){#klienty[data-st="0"] #st-name{font-size:min(18vh,14.4vw)}#klienty[data-st="0"] #st-hint{margin-top:6px}}
+#st-hint i{position:relative;flex:none;width:1px;height:30px;background:#ffffff38;overflow:hidden}
+#st-hint i::after{content:'';position:absolute;left:0;top:-40%;width:1px;height:40%;background:#fff;animation:sthint 1.8s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes sthint{to{top:100%}}
+#st-hint .ht{display:none}
+@media (hover:none){#st-hint .hm{display:none}#st-hint .ht{display:inline}}
+@media (prefers-reduced-motion:reduce){#st-hint i::after{animation:none;top:30%}}
+/* пока на экране плохой сайт, логотипа GT нет: шаблон не должен связываться с компанией */
+body.jk #logo{visibility:hidden}
+#air{pointer-events:none}
+#air button,#air input{pointer-events:auto}
+#klienty.junk #air-top,#klienty.junk #air-main{opacity:0;visibility:hidden}
+#klienty.junk #air-foot,#klienty.junk #presets{text-shadow:none}
+
+/* Плохой сайт: нарочно шаблонный, нарочно узнаваемый. Падает и становится обломками */
+#junk{position:absolute;inset:0;z-index:0;display:none;overflow:hidden;font-family:Tahoma,Arial,sans-serif;color:#223;--u:1px}
+#klienty[data-st="0"] #air{z-index:1}
+#klienty.clean #air-main{justify-content:flex-start}
+#klienty.clean #air-top{display:none}
+#klienty.clean #air-main{padding-top:4vh}
+#j-sheet{position:absolute;left:0;right:0;top:0;background:#f3f5f9;transition:transform .85s cubic-bezier(.55,0,.9,.45)}
+#j-sheet.drop{transform:translateY(230%) rotate(2.5deg);visibility:hidden;transition:transform .85s cubic-bezier(.55,0,.9,.45),visibility 0s .85s}
+.jp{position:absolute;left:0;top:0;transform-origin:50% 50%;overflow:hidden;user-select:none;-webkit-user-select:none;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;font-size:calc(var(--u)*15)}
+.jp.back{transition:transform .35s cubic-bezier(.2,.9,.2,1)}
+.jp.fell{filter:grayscale(1) brightness(.5);transition:filter .8s .1s;cursor:grab;touch-action:none}
+@media (hover:hover){.jp.fell:hover{filter:none;transition:filter .15s}}
+.jp.held{filter:none;cursor:grabbing;transition:filter .15s}
+.jp b{font-weight:700}
+.fade{background:rgba(10,20,50,.55);transition:opacity .3s;pointer-events:none}
+.j-bar{background:linear-gradient(#2b7fd6,#0f4f9e)}
+.j-nav{color:#fff;font-weight:700;background:linear-gradient(#2b7fd6,#0f4f9e);border-right:1px solid rgba(255,255,255,.35)}
+.j-hero{background:linear-gradient(115deg,#0d3f86,#2e8fe0 60%,#9fd2f5)}
+.j-head{color:#fff;font:700 calc(var(--u)*50)/1.08 Tahoma,Arial,sans-serif;text-align:left;justify-content:flex-start;text-shadow:calc(var(--u)*2) calc(var(--u)*2) calc(var(--u)*4) rgba(0,0,0,.6);overflow:visible}
+#junk .j-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:calc(var(--u)*6);font-weight:700;color:#fff;background:linear-gradient(#ffa42b,#ee6a00);box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(0,0,0,.35)}
+.j-big{font-size:calc(var(--u)*18)}
+#junk .j-green{background:linear-gradient(#3fce5a,#14912d)}
+#junk .j-red{background:linear-gradient(#ee3b34,#b90f0f);padding:calc(var(--u)*9) calc(var(--u)*14);width:100%}
+#junk .j-mini{padding:calc(var(--u)*6) calc(var(--u)*14);margin-left:calc(var(--u)*12);flex:none}
+.j-modal{flex-direction:column;gap:calc(var(--u)*8);padding:calc(var(--u)*16) calc(var(--u)*22);background:#fff;border:calc(var(--u)*4) solid #ee3b34;border-radius:calc(var(--u)*8);box-shadow:0 calc(var(--u)*8) calc(var(--u)*40) rgba(0,0,0,.5)}
+.j-modal b{font-size:calc(var(--u)*23);color:#c81616}
+.j-x{position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*2);font:400 calc(var(--u)*26) Arial;color:#888}
+.j-in{display:block;width:100%;padding:calc(var(--u)*8);border:1px solid #aab;background:#fff;color:#889;text-align:left;font-size:calc(var(--u)*14)}
+.j-cookie{background:#2a2f3a;color:#fff;padding:0 calc(var(--u)*14);border-radius:calc(var(--u)*5)}
+.j-chat{flex-direction:column;align-items:stretch;gap:calc(var(--u)*7);padding:calc(var(--u)*10);background:#fff;border:1px solid #9ab;border-top:calc(var(--u)*30) solid #14912d;border-radius:calc(var(--u)*8) calc(var(--u)*8) 0 0}
+.j-call{border-radius:50%;background:#14c13a;color:#fff;font-size:calc(var(--u)*38);box-shadow:0 0 0 calc(var(--u)*8) rgba(20,193,58,.3)}
+.j-rib{background:#ee3b34;color:#fff;font-weight:700;writing-mode:vertical-rl;letter-spacing:.1em;font-size:calc(var(--u)*18)}
+.j-star{flex-direction:column;background:#ffd400;color:#c81616;clip-path:polygon(50% 0,61% 13%,79% 7%,82% 25%,100% 30%,90% 50%,100% 70%,82% 75%,79% 93%,61% 87%,50% 100%,39% 87%,21% 93%,18% 75%,0 70%,10% 50%,0 30%,18% 25%,21% 7%,39% 13%);font-size:calc(var(--u)*14);font-weight:700}
+.j-star b{font-size:calc(var(--u)*38);line-height:1}
+.j-count{background:#c81616;color:#fff;font-weight:700;font-size:calc(var(--u)*18)}
+.j-count b{color:#ffe13a;margin-left:.4em}
+.j-card{flex-direction:column;gap:calc(var(--u)*4);padding:calc(var(--u)*8);background:#fff;border:1px solid #cdd5e4;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(0,0,50,.2);color:#223}
+.j-card i{font-style:normal;font-size:calc(var(--u)*34);color:#2b7fd6;line-height:1}
+.j-card b{font-size:calc(var(--u)*17);color:#0f4f9e}
+.j-card span{font-size:calc(var(--u)*13);color:#667}
+.j-tel{font-weight:700;font-size:calc(var(--u)*22);color:#0f4f9e}
+.j-logo{flex-direction:column;align-items:flex-start;text-align:left;color:#0f4f9e}
+.j-logo b{font-size:calc(var(--u)*26)}
+.j-logo span{font-size:calc(var(--u)*13);color:#667}
+@media (max-width:760px){.j-head{font-size:calc(var(--u)*27)}.j-logo b{font-size:calc(var(--u)*20)}.j-logo{white-space:nowrap}}
 
 /* Разговор */
 #talk{border:0;padding:0;background:#000;color:#fff;width:min(560px,100vw);max-width:100vw;max-height:100%;height:100%;margin:0 0 0 auto;overflow:auto}

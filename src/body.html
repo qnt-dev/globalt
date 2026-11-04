@@ -110,11 +110,32 @@
 
 <section id="klienty" class="world" hidden aria-labelledby="st-name">
   <div id="air-noise" aria-hidden="true"></div>
+  <div id="junk" aria-hidden="true"><div id="j-sheet"></div></div>
+  <!-- «Сайт»: пример поднимается из воды после развала плохого сайта, код в sayt.js -->
+  <div id="x1" role="region" aria-label="Пример сайта. Такой компании нет">
+    <canvas id="x1-gl" aria-hidden="true"></canvas>
+    <div id="x1-fake" aria-hidden="true"></div>
+    <div id="x1-site">
+      <header id="x1-hd">
+        <span class="mk" aria-hidden="true"></span><b class="wm">Студия</b>
+        <div class="h3i" role="group" aria-label="Формы воды"><div class="ix"></div><div class="sc"><i class="pt"></i></div></div>
+        <button class="h3c" type="button">Контакт</button>
+      </header>
+      <div id="x1-cap"><h2>Каждой идее&nbsp;—<br>своя форма.</h2><p>Мир говорит больше, чем мы успеваем услышать. Мы превращаем это в&nbsp;форму, от&nbsp;которой трудно отвести взгляд.</p></div>
+      <div id="x1-forms" role="group" aria-label="Форма воды под отрасль"></div>
+      <div id="x1-skin" role="radiogroup" aria-label="Вид кнопок"><div class="sl"><span>Вид кнопок</span><b id="x1-skn">Знаки</b></div><div class="sk"><i class="lt"></i></div></div>
+      <p id="x1-tag">Пример. Такой компании нет.</p>
+    </div>
+    <div id="x1-call" aria-hidden="true"><span>☎</span></div>
+    <div id="x1-needle" aria-hidden="true"></div>
+  </div>
   <div id="air">
     <p id="air-top" class="voice"><span>Покупатель слышит всех сразу. Значит, никого. Поверните ручку и найдите частоту, на которой слышно вас.</span></p>
     <div id="air-main">
       <h1 id="st-name" class="dsp" aria-live="polite">Шум</h1>
       <p id="st-line" class="voice"></p>
+      <p id="st-ask">Что вы хотите, чтобы человек видел, когда открывает ваш сайт?</p>
+      <p id="st-hint" aria-hidden="true"><i></i><span class="hm">Крутите колесо или щёлкните</span><span class="ht">Проведите вверх или коснитесь</span></p>
       <div id="st-more">
         <p id="st-get"></p>
         <p id="st-need"></p>
@@ -135,6 +156,7 @@
 </section>
 
 <svg id="wipe" viewBox="-1 -1 2 2" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path id="wipe-p" d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>
+
 
 <dialog id="talk" aria-labelledby="talk-t">
   <div id="talk-in">

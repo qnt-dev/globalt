@@ -1,0 +1,123 @@
+/* «Сайт»: пример сайта-абстракции, который поднимается из воды после развала плохого сайта. Перенесён из maket/vitrina.html.
+   Всё лежит внутри #x1, чтобы стили примера и сайта не мешали друг другу. */
+#x1{position:absolute;left:0;right:0;top:0;height:var(--f,100%);z-index:0;pointer-events:none;visibility:hidden;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:#fff;font-weight:300;line-height:normal}
+#x1.on{visibility:visible}
+#x1 a,#x1 button{pointer-events:auto;color:inherit;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font:inherit}
+#x1-gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#x1-fake{display:none;position:absolute;border:2px solid #a9c6ff;border-radius:50%;box-shadow:0 0 44px #2e6bff66,inset 0 0 44px #2e6bff44}
+#x1.nogl #x1-gl{display:none}
+#x1.nogl #x1-fake{display:block}
+/* Телефон из обломков падает в воду, как камень */
+#x1-call{position:absolute;left:0;top:0;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;background:#28b34b;display:grid;place-items:center;color:#fff;font:34px/1 Arial,sans-serif;visibility:hidden;will-change:transform}
+#x1-call span{display:block}
+/* Вода стягивается в стрелку настоящей шкалы */
+#x1-needle{position:absolute;left:0;top:0;width:10px;height:10px;background:#fff;visibility:hidden;transform-origin:0 0;will-change:transform}
+#x1-site{position:absolute;inset:0;opacity:0;visibility:hidden;pointer-events:auto;touch-action:none}
+
+/* Шапка примера: знак из той же воды слева, номера форм над шкалой */
+#x1-hd{position:absolute;left:0;right:0;top:var(--top,64px);display:flex;align-items:center;gap:12px;padding:6px var(--gutr,40px) 6px var(--gut,40px);font-size:14px}
+#x1-hd .mk{display:block;width:30px;height:30px;margin:-8px 0}
+#x1-hd .wm{font-weight:400;font-size:15px;letter-spacing:.02em}
+#x1-hd .h3i{position:absolute;left:50%;top:50%;width:min(600px,46vw);transform:translate(-50%,-38%)}
+#x1-hd .h3c{margin-left:auto;opacity:.62;transition:opacity .3s}
+#x1-hd .h3c:hover,#x1-hd .h3c:focus-visible{opacity:1}
+#x1-hd .ix{display:grid;grid-template-columns:repeat(4,1fr)}
+#x1-hd .ix button{display:flex;justify-content:center;align-items:baseline;gap:8px;padding:0 0 9px;font:400 10px "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#5f6780;white-space:nowrap;transition:color .3s}
+#x1-hd .ix em{font-style:normal;color:#3f4766;transition:color .3s}
+#x1-hd .ix button:hover{color:#c9d3ef}
+#x1-hd .ix button.on{color:#fff}
+#x1-hd .ix button.on em{color:#86a8ff}
+#x1-hd .sc{position:relative;height:9px;border-right:1px solid #ffffff66;background:repeating-linear-gradient(90deg,#ffffff66 0 1px,#0000 1px 25%) 0 100%/100% 9px no-repeat,repeating-linear-gradient(90deg,#ffffff2e 0 1px,#0000 1px 2.5%) 0 100%/100% 4px no-repeat}
+#x1-hd .sc::after{content:'';position:absolute;left:calc(var(--s,0)*25%);bottom:-1px;width:25%;height:1px;background:linear-gradient(90deg,#bcd3ff00,#bcd3ff,#bcd3ff00);transition:left .6s cubic-bezier(.6,.05,.25,1)}
+#x1-hd .pt{position:absolute;left:calc(var(--p,0)*100%);bottom:0;width:1px;height:15px;background:#fff;box-shadow:0 0 6px #6ea3ff,0 0 14px #3f7bff}
+
+/* Заголовок и подпись */
+#x1-cap{position:absolute;left:clamp(16px,7.85vw,113px);top:0;width:min(46vw,672px)}
+#x1-cap h2{margin:0;font-weight:300;font-size:clamp(30px,4.17vw,60px);line-height:1.25;letter-spacing:-.025em;color:#fff;background:linear-gradient(90deg,#fff 0%,#a0a0a0 25%,#fff 50%,#a0a0a0 75%,#fff 100%) 0 50%/200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:x1shimmer 8s linear infinite}
+@keyframes x1shimmer{to{background-position:200% 50%}}
+#x1-cap p{margin:24px 0 0;max-width:min(36vw,560px);font-weight:300;font-size:16px;line-height:1.625;letter-spacing:.025em;color:#ffffff99}
+
+/* Кнопки форм в трёх видах */
+#x1-forms{position:absolute;left:clamp(16px,7.85vw,113px);top:0;transition:opacity .35s,transform .35s}
+#x1-forms.sw{opacity:0;transform:translateY(6px)}
+#x1-forms .fl{display:block;font:400 10px "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#ffffff59;margin-bottom:12px}
+#x1-forms svg.ic{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}
+/* Терминал */
+#x1-forms .gb{display:grid;gap:2px;width:min(340px,100%);font:400 14px "JetBrains Mono",monospace}
+#x1-forms .gb button{display:flex;gap:14px;align-items:center;padding:9px 12px;text-align:left;color:#7d859f;letter-spacing:.04em;font:inherit}
+#x1-forms .gb .k{color:#3f4766}
+#x1-forms .gb .t::after{content:'';display:inline-block;width:.55em;height:1em;vertical-align:-.15em;margin-left:.2em;background:currentColor;opacity:0}
+#x1-forms .gb button:hover{color:#dfe6ff}
+#x1-forms .gb button:hover .t::after{opacity:1;animation:x1blink .9s steps(1) infinite}
+#x1-forms .gb button.on{background:#dfe6ff;color:#05060c}
+#x1-forms .gb button.on .k{color:#4a5374}
+@keyframes x1blink{50%{opacity:0}}
+/* Панель */
+#x1-forms .gc{position:relative;display:inline-grid;grid-template-columns:repeat(3,124px);background:linear-gradient(#17181c,#0d0d10);border:1px solid #ffffff1f;box-shadow:inset 0 1px 0 #ffffff14,0 14px 30px #0008;padding:5px}
+#x1-forms .gc::after{content:'';position:absolute;left:5px;top:5px;width:124px;height:calc(100% - 10px);background:linear-gradient(#26314f,#141a2d);box-shadow:inset 0 1px 0 #9fbaff55,0 0 24px #2e5bff33;transform:translateX(calc(var(--i,0)*124px));transition:transform .45s cubic-bezier(.6,.05,.25,1),opacity .3s;opacity:var(--o,0)}
+#x1-forms .gc button{position:relative;z-index:1;height:70px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;color:#8c92a4;text-align:left;transition:color .3s}
+#x1-forms .gc .led{width:6px;height:6px;border-radius:50%;background:#2a2d36;box-shadow:inset 0 0 0 1px #0006;transition:background .3s,box-shadow .3s}
+#x1-forms .gc .row{display:flex;justify-content:space-between;align-items:center;width:100%}
+#x1-forms .gc .ix{font:400 10px "JetBrains Mono",monospace;color:#5b6070}
+#x1-forms .gc .lb{font-size:13px;letter-spacing:.02em;white-space:nowrap}
+#x1-forms .gc button:hover{color:#e6e9f2}
+#x1-forms .gc button.on{color:#fff}
+#x1-forms .gc button.on .led{background:#7fb0ff;box-shadow:0 0 8px #6ea3ff,0 0 2px #fff}
+#x1-forms .gc .tk{position:absolute;left:5px;right:5px;bottom:-13px;height:7px;background:repeating-linear-gradient(90deg,#ffffff30 0 1px,transparent 1px 8px)}
+/* Знаки со светом по контуру */
+#x1-forms .ge{display:flex;gap:10px}
+#x1-forms .ge button{width:120px;display:grid;justify-items:center;gap:9px;color:#7f879e;padding:12px 6px 11px;border:1px solid transparent;transition:color .3s,border-color .3s,background .3s}
+#x1-forms .ge svg{width:50px;height:50px;overflow:visible}
+#x1-forms .ge .base{stroke:#ffffff2e;stroke-width:1.3}
+#x1-forms .ge .run{stroke:#bcd3ff;stroke-width:1.7;stroke-dasharray:22 400;opacity:0;filter:drop-shadow(0 0 3px #4f86ff)}
+#x1-forms .ge button:hover .run{opacity:1;animation:x1run 1.8s linear infinite}
+#x1-forms .ge button.on .base{stroke:#bcd3ff;filter:drop-shadow(0 0 6px #3f7bff)}
+#x1-forms .ge button.on .run{opacity:1;stroke:#fff;animation:x1run 2.4s linear infinite}
+@keyframes x1run{to{stroke-dashoffset:-422}}
+#x1-forms .ge .lb{font:400 10px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+#x1-forms .ge button:hover,#x1-forms .ge button.on{color:#fff}
+#x1-forms .ge button.on{border-color:#ffffff14;background:radial-gradient(60% 50% at 50% 40%,#2b52ff1c,transparent)}
+
+/* Переключатель вида кнопок */
+#x1-skin{position:absolute;right:var(--gutr,40px);bottom:clamp(20px,4vh,40px);user-select:none}
+#x1-skin .sl{display:flex;justify-content:space-between;gap:18px;font:400 10px "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#ffffff5c;margin-bottom:9px}
+#x1-skin .sl b{font-weight:400;color:#bcd3ff;letter-spacing:.1em}
+#x1-skin .sk{position:relative;display:grid;grid-template-columns:repeat(3,58px);background:linear-gradient(#0d0e12,#07070a);border:1px solid #ffffff17;box-shadow:inset 0 1px 0 #ffffff0d}
+#x1-skin .sk::before,#x1-skin .sk::after{content:'';position:absolute;width:7px;height:7px;border:0 solid #9fbaffaa}
+#x1-skin .sk::before{left:-4px;top:-4px;border-left-width:1px;border-top-width:1px}
+#x1-skin .sk::after{right:-4px;bottom:-4px;border-right-width:1px;border-bottom-width:1px}
+#x1-skin button{position:relative;z-index:1;height:48px;display:grid;place-items:center;color:#5d6479;transition:color .3s}
+#x1-skin button+button{border-left:1px solid #ffffff0d}
+#x1-skin button svg{width:26px;height:22px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+#x1-skin button .mono{font:500 13px "JetBrains Mono",monospace;letter-spacing:-.04em}
+#x1-skin button:hover{color:#c9d3ef}
+#x1-skin button[aria-checked=true]{color:#fff}
+#x1-skin button[aria-checked=true] svg{filter:drop-shadow(0 0 4px #5d92ff)}
+#x1-skin .lt{position:absolute;left:0;top:0;width:58px;height:100%;pointer-events:none;transform:translateX(calc(var(--i,0)*58px));transition:transform .5s cubic-bezier(.6,.05,.25,1);background:radial-gradient(70% 60% at 50% 100%,#3466ff33,transparent);border-bottom:1px solid #bcd3ff}
+#x1-skin .lt::after{content:'';position:absolute;left:50%;bottom:-3px;width:16px;height:5px;margin-left:-8px;background:#bcd3ff;filter:blur(4px)}
+#x1-skin .run2{stroke-dasharray:8 120;animation:x1run2 1.6s linear infinite}
+@keyframes x1run2{to{stroke-dashoffset:-128}}
+#x1-tag{position:absolute;left:var(--gut,40px);bottom:clamp(12px,2.4vh,24px);font-size:12px;letter-spacing:.02em;opacity:.55}
+
+/* Пока идёт пример, надпись станции и кнопки сайта спрятаны. После примера они встают по центру. */
+#klienty.ex #air-top,#klienty.ex #air-main{opacity:0;visibility:hidden}
+#klienty.exd #air-main{justify-content:center;padding-top:0}
+
+@media (max-width:760px){
+  #x1-hd .h3c{display:none}
+  #x1-hd .h3i{position:static;transform:none;width:58vw;margin-left:auto}
+  #x1-hd .ix span{display:none}#x1-hd .ix button.on span{display:inline}#x1-hd .ix button{gap:5px;letter-spacing:.1em}
+  #x1-cap{left:var(--gut,16px);width:auto;right:var(--gutr,16px)}
+  #x1-cap h2{font-size:clamp(28px,8.4vw,36px)}
+  #x1-cap p{margin-top:14px;font-size:14px;max-width:none}
+  #x1-forms{left:var(--gut,16px);right:var(--gutr,16px)}
+  #x1-forms .fl{margin-bottom:8px}
+  #x1-forms .ge{gap:4px}#x1-forms .ge button{width:auto;flex:1;padding:8px 2px}#x1-forms .ge svg{width:40px;height:40px}
+  #x1-forms .gc{display:grid;width:100%;grid-template-columns:repeat(3,1fr)}#x1-forms .gc::after{width:calc((100% - 10px)/3);transform:translateX(calc(var(--i,0)*100%))}#x1-forms .gc button{height:60px;padding:8px}
+  #x1-forms .gb{font-size:13px}#x1-forms .gb button{padding:7px 10px}
+  /* на телефоне переключатель стоит в строке «Форма под отрасль» */
+  #x1-skin{bottom:auto}#x1-skin .sl{display:none}#x1-skin .sk{grid-template-columns:repeat(3,40px)}#x1-skin button{height:30px}#x1-skin .lt{width:40px;transform:translateX(calc(var(--i,0)*40px))}#x1-skin button svg{width:20px;height:16px}
+  #x1-tag{bottom:8px}
+  #x1.short #x1-cap p{display:none}
+}
+@media (prefers-reduced-motion:reduce){#x1 *{transition:none!important;animation:none!important}}

@@ -1,6 +1,6 @@
 /* «Сайт»: пример сайта-абстракции на станции «Сайт» мира «Клиенты». Перенесён из maket/vitrina.html.
    Порядок: плохой сайт разваливается, телефон из обломков падает в воду, из воды встаёт пример.
-   Колесо ведёт пример по формам: круг, бык, магнит, ключ. В конце вода стягивается в стрелку шкалы, дальше колесо крутит ручку.
+   Колесо ведёт пример по формам: круг, магнит, ключ, зерно кофейни ZERNO. Зерном пример кончается, следующая станция «Бренд» начинается с того же зерна. В конце вода стягивается в стрелку шкалы, от стрелки идёт волна сетки-сонара, дальше колесо крутит ручку.
    Связь с app.js: step() каждый кадр из updateAir, wheel() из колеса мира, onTalk открывает разговор. */
 window.GTSAYT = (() => {
 const R = document.getElementById('x1');
@@ -19,7 +19,7 @@ if (!gl) R.classList.add('nogl');
 const VS_FULL = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
 const FS_RING = `precision highp float;
 /* Свет и шум круга взяты один в один из C:\\MIDGAME\\qtcapital (код QT Capital). Перед запуском сайта нужен свой код или согласие правообладателя. */
-uniform vec2 uC,uP;uniform float uR,uT,uA,uCalm,uHov,uSplash,uTint,uShA,uShB,uMx,uRot;uniform vec4 uRip[4];uniform sampler2D uSdf;uniform vec3 uAv[3];
+uniform vec2 uC,uP;uniform float uR,uT,uA,uCalm,uHov,uSplash,uTint,uShA,uShB,uMx,uRot,uSplit;uniform vec4 uRip[4];uniform sampler2D uSdf;uniform vec3 uAv[3];
 const float hue=0.;const vec3 backgroundColor=vec3(0.);
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
   vec3 rgb2yiq(vec3 c) {
@@ -170,8 +170,8 @@ float tri(vec2 p,vec2 a,vec2 b,vec2 c){
   vec2 d=min(min(vec2(dot(q0,q0),sg*(v0.x*e0.y-v0.y*e0.x)),vec2(dot(q1,q1),sg*(v1.x*e1.y-v1.y*e1.x))),vec2(dot(q2,q2),sg*(v2.x*e2.y-v2.y*e2.x)));
   return -sqrt(d.x)*sign(d.y);}
 float quad(vec2 p,vec2 a,vec2 b,vec2 c,vec2 d){return min(tri(p,a,b,c),tri(p,a,c,d));}
-/* Формы: 0 круг, 1 трейдинг (бык), 2 маркетинг (магнит), 3 недвижимость (ключ) */
-/* Формы берутся из поля расстояний готовых значков: R бык, G магнит, B ключ */
+/* Формы: 0 круг, 1 маркетинг (магнит), 2 недвижимость (ключ), 3 кофейня (зерно ZERNO) */
+/* Формы берутся из поля расстояний готовых значков: R магнит, G ключ, B зерно */
 /* Люди у магнита: круг с вырезанным человечком */
 float people(vec2 p){
   float d=9.;
@@ -183,12 +183,26 @@ float people(vec2 p){
   }
   return d;
 }
+/* Зерно: в квадрате знака 100 × 100 рамка значка 84 по высоте занимает 1,9 */
+const float ZK=1.9/84.;
+float bean(vec2 p){return max((texture2D(uSdf,p/2.3+.5).b-.5)*1.2,max(abs(p.x),abs(p.y))-1.1);}
+/* Расстояние до средней линии Z со знаком: плюс у верхней половины зерна, минус у нижней.
+   Точка переводится в оси знака: y вниз, поворот на −24°. Концы Z уходят за край зерна, поэтому половины разделены целиком. */
+float zside(vec2 p){
+  vec2 b=vec2(p.x,-p.y)/ZK;
+  b=vec2(.9135*b.x+.4067*b.y,-.4067*b.x+.9135*b.y);
+  float d=min(min(seg(b,vec2(-42.,-16.),vec2(11.,-16.)),seg(b,vec2(11.,-16.),vec2(-11.,16.))),seg(b,vec2(-11.,16.),vec2(42.,16.)));
+  float sg=b.y<-16.?1.:(b.y>16.?-1.:sign(dot(b-vec2(11.,-16.),vec2(.824,.567))));
+  return sg*d*ZK;
+}
 float shape(float k,vec2 p){
   if(k<.5) return length(p)-1.;
+  /* Пока над водой мышь, зерно раскалывается по Z: верхняя половина уходит вправо, нижняя влево.
+     Направление выбрано так, что разрез раскрывается одинаково на всех трёх отрезках буквы. */
+  if(k>2.5){vec2 o=vec2(.9976,.0648)*uSplit*.26;float w=4.*ZK;return min(max(bean(p-o),w-zside(p-o)),max(bean(p+o),w+zside(p+o)));}
   vec4 t=texture2D(uSdf,p/2.3+.5);
-  float v=k<1.5?t.r:(k<2.5?t.g:t.b);
-  float s=max((v-.5)*1.2,max(abs(p.x),abs(p.y))-1.1);
-  return k>1.5&&k<2.5?smin(s,people(p),.12):s;
+  float s=max(((k<1.5?t.r:t.g)-.5)*1.2,max(abs(p.x),abs(p.y))-1.1);
+  return k<1.5?smin(s,people(p),.12):s;
 }
 void main(){
   vec2 q=(gl_FragCoord.xy-uC)/uR;
@@ -202,7 +216,7 @@ void main(){
   sh=mix(sh,length(q)-1.,uCalm)-wob;
   vec4 col=draw(qr*.8,(sh+1.)*.8,uCalm);
   vec3 c=col.rgb*col.a;
-  /* Бык, магнит и ключ раздуваются, только пока над водой мышь. Круг всегда как был. */
+  /* Магнит, ключ и зерно раздуваются, только пока над водой мышь. Круг всегда как был. */
   float rest=mix(step(.5,uShA),step(.5,uShB),uMx)*(1.-uHov)*(1.-uCalm);
   if(rest>.001){
     vec2 qn=q+vec2(snoise3(vec3(q*1.2,uT*.3)),snoise3(vec3(q*1.2+100.,uT*.3)))*.025;
@@ -229,18 +243,21 @@ function prog(vs, fs) {
 const uni = (p, ...n) => Object.fromEntries(n.map(k => [k, gl.getUniformLocation(p, k)]));
 let pR, uR, full;
 if (gl) {
-  pR = prog(VS_FULL, FS_RING); uR = uni(pR, 'uC', 'uP', 'uR', 'uT', 'uA', 'uCalm', 'uHov', 'uRip', 'uSplash', 'uTint', 'uShA', 'uShB', 'uMx', 'uRot', 'uSdf', 'uAv');
+  pR = prog(VS_FULL, FS_RING); uR = uni(pR, 'uC', 'uP', 'uR', 'uT', 'uA', 'uCalm', 'uHov', 'uRip', 'uSplash', 'uTint', 'uShA', 'uShB', 'uMx', 'uRot', 'uSdf', 'uAv', 'uSplit');
   full = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, full); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   gl.enable(gl.BLEND); gl.clearColor(0, 0, 0, 0);
 }
 
-/* Значки форм. Бык: контур обведён по превью модели «Bull [Commissioned Sample]» (toscraft, Sketchfab), только для прототипа. Ключ-дом и люди у магнита обведены по картинкам, которые прислал заказчик, тоже только для прототипа.
+/* Значки форм: 1 магнит, 2 ключ, 3 зерно. Ключ-дом и люди у магнита обведены по картинкам, которые прислал заказчик, только для прототипа.
    Магнит: ровная подкова с пропорциями магнита с той же картинки, полюсами вверх.
-   У магнита: [0] рамка, [1] силуэт для воды, [2] значок для кнопки, [3] узкая рамка для значка в переключателе, [4] границы полюсов. */
-const ICONS = { 1: ['4 4 738 907', 'M736 41L667 110L635 118L624 118L610 110L592 105L573 113L547 118L506 96L482 98L474 102L459 104L432 86L454 10L451 8L426 26L413 53L402 68L399 79L398 119L402 137L421 149L426 156L422 160L386 160L371 184L374 191L396 211L399 211L409 222L399 231L370 245L353 258L330 317L320 328L278 357L226 380L166 378L113 397L94 394L67 366L73 351L78 346L89 346L146 357L177 341L180 316L189 304L165 253L162 255L152 305L163 316L164 328L160 332L144 339L136 339L76 322L66 321L63 324L46 357L46 368L68 398L89 421L71 445L65 459L51 469L26 533L31 577L36 596L36 614L23 687L22 738L8 767L8 774L21 790L59 791L85 777L85 769L80 762L67 728L67 713L64 705L60 668L122 606L154 592L169 598L177 607L184 640L214 708L197 746L203 750L268 751L286 748L281 735L260 702L238 650L238 639L243 633L244 620L249 615L296 624L303 631L321 663L365 752L366 826L358 851L354 877L358 881L372 885L385 893L395 895L417 906L476 902L479 899L478 879L439 829L434 811L439 806L471 806L484 804L487 801L487 791L456 749L458 698L487 658L498 647L425 573L425 569L433 555L432 553L443 528L449 522L521 560L527 568L506 634L506 639L509 640L577 563L602 347L610 340L648 327L656 322L661 256L641 235L641 232L682 205L677 180L651 178L646 171L650 167L674 158L698 138L732 77Z'], 2: ['0 0 496 1000', 'M0 467.6V770.8A229.2 229.2 0 0 0 458.3 770.8V467.6H296.3V770.8A67.2 67.2 0 0 1 162 770.8V467.6Z', 'M0 467.6V770.8A229.2 229.2 0 0 0 458.3 770.8V467.6H296.3V770.8A67.2 67.2 0 0 1 162 770.8V467.6ZM0 597.2H162M296.3 597.2H458.3M69.8 102.5a102.5 102.5 0 1 0 205 0a102.5 102.5 0 1 0 -205 0ZM119.0 128.9L125.3 119.5L131.5 113.9L138.6 109.3L154.1 104.8L167.7 104.2L179.6 105.4L194.3 109.9L204.5 116.7L208.7 120.9L214.4 130.0L216.9 136.2L217.8 154.6L216.6 158.0L213.5 159.1L198.0 157.7L149.6 157.7L120.5 159.1L116.8 157.7L115.1 154.0L114.5 145.8L115.9 136.8ZM184.7 42.6L192.9 50.2L198.3 63.5L198.3 74.8L195.4 81.3L190.1 87.0L189.8 89.0L190.9 90.1L184.4 95.8L172.2 98.6L155.2 99.7L145.1 92.9L138.8 85.3L136.6 80.2L134.9 72.5L134.9 66.3L136.6 57.9L141.9 47.9L152.4 39.7L159.8 36.9L173.6 37.2ZM131.8 288.5a78.9 78.9 0 1 0 157.8 0a78.9 78.9 0 1 0 -157.8 0ZM169.7 308.8L174.5 301.6L179.3 297.2L184.7 293.8L196.7 290.3L207.1 289.8L216.3 290.7L227.6 294.2L235.5 299.4L238.7 302.7L243.1 309.7L245.1 314.5L245.7 328.6L244.8 331.2L242.4 332.1L230.5 331.0L193.2 331.0L170.8 332.1L168.0 331.0L166.6 328.2L166.2 321.9L167.3 314.9ZM220.2 242.4L226.5 248.2L230.7 258.5L230.7 267.2L228.5 272.2L224.4 276.6L224.1 278.1L225.0 279.0L220.0 283.3L210.6 285.5L197.6 286.4L189.7 281.1L184.9 275.2L183.2 271.3L181.9 265.4L181.9 260.7L183.2 254.1L187.3 246.5L195.4 240.2L201.1 238.0L211.7 238.2ZM286.9 234.8a104.6 104.6 0 1 0 209.2 0a104.6 104.6 0 1 0 -209.2 0ZM337.1 261.7L343.5 252.2L349.8 246.4L357.1 241.8L372.9 237.2L386.8 236.6L398.9 237.7L413.9 242.4L424.3 249.3L428.7 253.6L434.4 262.9L437.0 269.2L437.9 288.0L436.7 291.5L433.6 292.6L417.7 291.2L368.3 291.2L338.6 292.6L334.8 291.2L333.1 287.4L332.5 279.0L334.0 269.8ZM404.1 173.6L412.5 181.4L418.0 195.0L418.0 206.6L415.1 213.2L409.6 219.0L409.3 221.0L410.5 222.1L403.8 227.9L391.4 230.8L374.1 232.0L363.7 225.0L357.4 217.2L355.0 212.0L353.3 204.2L353.3 197.9L355.0 189.2L360.5 179.1L371.2 170.7L378.7 167.9L392.9 168.1Z', '-8 460 474 548', 'M0 597.2H162M296.3 597.2H458.3'], 3: ['0 0 459 1000', 'M456 197L459 202L442 204L399 204L396 206L395 397L392 402L314 459L312 504L309 506L297 506L293 511L293 658L287 665L256 685L253 688L253 693L256 709L258 713L291 727L294 732L293 761L262 777L259 779L258 786L262 816L289 823L293 827L293 849L265 875L264 878L293 896L294 918L290 925L220 1000L213 993L213 510L208 506L195 506L190 510L190 963L188 965L165 938L165 510L160 506L148 506L146 503L145 459L67 402L63 396L62 206L59 204L3 204L0 203L0 201L94 117L96 114L96 37L98 33L146 33L148 36L148 63L152 66L225 2L231 0ZM156 310L157 369L160 372L220 371L222 367L221 308L219 305L159 306ZM236 311L237 369L240 372L300 371L303 366L302 308L299 305L243 305L238 306ZM236 228L237 287L240 289L301 288L303 284L302 225L299 222L241 222L238 224ZM156 227L157 287L159 289L220 288L222 283L221 225L218 222L158 223Z'] };
+   Зерно — знак кофейни ZERNO из примеров «Бренд», «Реклама» и SMM: зерно 31 × 44 под углом 24°, разрезанное буквой Z толщиной 8.
+   [0] рамка, [1] силуэт для воды, [2] значок для кнопки, [3] узкая рамка для значка в переключателе, [4] разрез: у магнита границы полюсов, у зерна буква Z. */
+const ICONS = { 1: ['0 0 496 1000', 'M0 467.6V770.8A229.2 229.2 0 0 0 458.3 770.8V467.6H296.3V770.8A67.2 67.2 0 0 1 162 770.8V467.6Z', 'M0 467.6V770.8A229.2 229.2 0 0 0 458.3 770.8V467.6H296.3V770.8A67.2 67.2 0 0 1 162 770.8V467.6ZM0 597.2H162M296.3 597.2H458.3M69.8 102.5a102.5 102.5 0 1 0 205 0a102.5 102.5 0 1 0 -205 0ZM119.0 128.9L125.3 119.5L131.5 113.9L138.6 109.3L154.1 104.8L167.7 104.2L179.6 105.4L194.3 109.9L204.5 116.7L208.7 120.9L214.4 130.0L216.9 136.2L217.8 154.6L216.6 158.0L213.5 159.1L198.0 157.7L149.6 157.7L120.5 159.1L116.8 157.7L115.1 154.0L114.5 145.8L115.9 136.8ZM184.7 42.6L192.9 50.2L198.3 63.5L198.3 74.8L195.4 81.3L190.1 87.0L189.8 89.0L190.9 90.1L184.4 95.8L172.2 98.6L155.2 99.7L145.1 92.9L138.8 85.3L136.6 80.2L134.9 72.5L134.9 66.3L136.6 57.9L141.9 47.9L152.4 39.7L159.8 36.9L173.6 37.2ZM131.8 288.5a78.9 78.9 0 1 0 157.8 0a78.9 78.9 0 1 0 -157.8 0ZM169.7 308.8L174.5 301.6L179.3 297.2L184.7 293.8L196.7 290.3L207.1 289.8L216.3 290.7L227.6 294.2L235.5 299.4L238.7 302.7L243.1 309.7L245.1 314.5L245.7 328.6L244.8 331.2L242.4 332.1L230.5 331.0L193.2 331.0L170.8 332.1L168.0 331.0L166.6 328.2L166.2 321.9L167.3 314.9ZM220.2 242.4L226.5 248.2L230.7 258.5L230.7 267.2L228.5 272.2L224.4 276.6L224.1 278.1L225.0 279.0L220.0 283.3L210.6 285.5L197.6 286.4L189.7 281.1L184.9 275.2L183.2 271.3L181.9 265.4L181.9 260.7L183.2 254.1L187.3 246.5L195.4 240.2L201.1 238.0L211.7 238.2ZM286.9 234.8a104.6 104.6 0 1 0 209.2 0a104.6 104.6 0 1 0 -209.2 0ZM337.1 261.7L343.5 252.2L349.8 246.4L357.1 241.8L372.9 237.2L386.8 236.6L398.9 237.7L413.9 242.4L424.3 249.3L428.7 253.6L434.4 262.9L437.0 269.2L437.9 288.0L436.7 291.5L433.6 292.6L417.7 291.2L368.3 291.2L338.6 292.6L334.8 291.2L333.1 287.4L332.5 279.0L334.0 269.8ZM404.1 173.6L412.5 181.4L418.0 195.0L418.0 206.6L415.1 213.2L409.6 219.0L409.3 221.0L410.5 222.1L403.8 227.9L391.4 230.8L374.1 232.0L363.7 225.0L357.4 217.2L355.0 212.0L353.3 204.2L353.3 197.9L355.0 189.2L360.5 179.1L371.2 170.7L378.7 167.9L392.9 168.1Z', '-8 460 474 548', 'M0 597.2H162M296.3 597.2H458.3'], 2: ['0 0 459 1000', 'M456 197L459 202L442 204L399 204L396 206L395 397L392 402L314 459L312 504L309 506L297 506L293 511L293 658L287 665L256 685L253 688L253 693L256 709L258 713L291 727L294 732L293 761L262 777L259 779L258 786L262 816L289 823L293 827L293 849L265 875L264 878L293 896L294 918L290 925L220 1000L213 993L213 510L208 506L195 506L190 510L190 963L188 965L165 938L165 510L160 506L148 506L146 503L145 459L67 402L63 396L62 206L59 204L3 204L0 203L0 201L94 117L96 114L96 37L98 33L146 33L148 36L148 63L152 66L225 2L231 0ZM156 310L157 369L160 372L220 371L222 367L221 308L219 305L159 306ZM236 311L237 369L240 372L300 371L303 366L302 308L299 305L243 305L238 306ZM236 228L237 287L240 289L301 288L303 284L302 225L299 222L241 222L238 224ZM156 227L157 287L159 289L220 288L222 283L221 225L218 222L158 223Z'], 3: ['16.5 8 67 84', 'M78.32 62.61A31 44 24 1 1 21.68 37.39A31 44 24 1 1 78.32 62.61Z', 'M78.32 62.61A31 44 24 1 1 21.68 37.39A31 44 24 1 1 78.32 62.61ZM30.13 23.64L66.56 39.86L33.44 60.14L69.87 76.36', '', 'M18.14 18.30L66.56 39.86L33.44 60.14L81.86 81.70'] };
 /* Магнит притягивает людей: кружки с человечком летят к устью магнита и вливаются в воду.
-   Координаты в рамке значка магнита, slit: ширина щели у полюсов. Человечек лежит в канале A поля расстояний. */
-const MAGNET = { av: [[172.3, 102.5, 102.5], [210.7, 288.5, 78.9], [391.5, 234.8, 104.6]], mouth: [229.2, 575.1], slit: 26, per: 'M240.2 628.6L270.5 583L300.9 555.4L335.4 533.4L411.3 511.3L477.5 508.5L535.5 514L607.3 536.1L657 569.2L677.7 589.9L705.3 634.1L717.7 664.5L721.8 754.2L716.3 770.8L701.1 776.3L625.2 769.4L389.2 769.4L247.1 776.3L229.1 769.4L220.8 751.4L218.1 711.4L225 667.2ZM560.4 207.6L600.4 244.9L626.6 309.8L626.6 365L612.8 396.7L586.6 424.3L585.2 434L590.7 439.5L559 467.1L499.6 480.9L416.8 486.4L367.1 453.3L336.8 416L325.7 391.2L317.4 353.9L317.4 323.6L325.7 282.2L351.9 233.9L403 193.8L438.9 180L506.5 181.4Z' };
+   Координаты в рамке значка магнита. Человечек лежит в канале A поля расстояний. */
+/* разрезы силуэтов: путь и толщина. Щель отделяет полюса магнита от ножек, буква Z разрезает зерно. */
+const CUT = { 1: [26, 'square', 'miter'], 3: [8, 'butt', 'miter'] };
+const MAGNET = { av: [[172.3, 102.5, 102.5], [210.7, 288.5, 78.9], [391.5, 234.8, 104.6]], mouth: [229.2, 575.1], per: 'M240.2 628.6L270.5 583L300.9 555.4L335.4 533.4L411.3 511.3L477.5 508.5L535.5 514L607.3 536.1L657 569.2L677.7 589.9L705.3 634.1L717.7 664.5L721.8 754.2L716.3 770.8L701.1 776.3L625.2 769.4L389.2 769.4L247.1 776.3L229.1 769.4L220.8 751.4L218.1 711.4L225 667.2ZM560.4 207.6L600.4 244.9L626.6 309.8L626.6 365L612.8 396.7L586.6 424.3L585.2 434L590.7 439.5L559 467.1L499.6 480.9L416.8 486.4L367.1 453.3L336.8 416L325.7 391.2L317.4 353.9L317.4 323.6L325.7 282.2L351.9 233.9L403 193.8L438.9 180L506.5 181.4Z' };
 /* Поле расстояний: значок рисуется на холсте, затем считается точное расстояние до края (алгоритм Фельценшвальба) */
 const SDF = { tex: null };
 function edt(f, w, h) {
@@ -269,8 +286,7 @@ function buildSdf() {
     const [vb, d] = k < 4 ? ICONS[k] : ['0 0 1000 1000', MAGNET.per], [mx, my, vw, vh] = vb.split(' ').map(Number), sc = 1.9 / 2.3 * S / Math.max(vw, vh);
     x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, S, S);
     x.setTransform(sc, 0, 0, sc, (S - vw * sc) / 2 - mx * sc, (S - vh * sc) / 2 - my * sc); x.fillStyle = '#fff'; x.fill(new Path2D(d));
-    /* Щель отделяет полюса магнита от ножек */
-    if (k === 2) { x.globalCompositeOperation = 'destination-out'; x.lineWidth = MAGNET.slit; x.lineCap = 'square'; x.stroke(new Path2D(ICONS[2][4])); x.globalCompositeOperation = 'source-over'; }
+    if (CUT[k]) { const [lw, cap, join] = CUT[k]; x.globalCompositeOperation = 'destination-out'; x.lineWidth = lw; x.lineCap = cap; x.lineJoin = join; x.miterLimit = 10; x.stroke(new Path2D(ICONS[k][4])); x.globalCompositeOperation = 'source-over'; }
     const a = x.getImageData(0, 0, S, S).data, inn = new Float64Array(S * S), out = new Float64Array(S * S);
     for (let i = 0; i < S * S; i++) { const on = a[i * 4 + 3] > 127; out[i] = on ? 0 : BIG; inn[i] = on ? BIG : 0; }
     edt(out, S, S); edt(inn, S, S);
@@ -337,9 +353,9 @@ document.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') P.t
 
 /* Формы воды и кнопки к ним. Вид кнопок выбирает посетитель, по умолчанию «Знаки». */
 const SH = { a: 0, b: 0, m: 1, rot: 0 };
-const FORMS = [[1, 'Трейдинг'], [2, 'Маркетинг'], [3, 'Недвижимость']];
+const FORMS = [[1, 'Маркетинг'], [2, 'Недвижимость'], [3, 'Кофейня']];
 const SKINS = [
-  ['e', 'Знаки', `<svg viewBox="${ICONS[2][3]}"><path d="${ICONS[2][1] + ICONS[2][4]}" vector-effect="non-scaling-stroke" opacity=".45"/><path class="run2" d="${ICONS[2][1] + ICONS[2][4]}" vector-effect="non-scaling-stroke" pathLength="128"/></svg>`],
+  ['e', 'Знаки', `<svg viewBox="${ICONS[1][3]}"><path d="${ICONS[1][1] + ICONS[1][4]}" vector-effect="non-scaling-stroke" opacity=".45"/><path class="run2" d="${ICONS[1][1] + ICONS[1][4]}" vector-effect="non-scaling-stroke" pathLength="128"/></svg>`],
   ['b', 'Терминал', '<span class="mono">&gt;_</span>'],
   ['c', 'Панель', '<svg viewBox="0 0 26 22"><rect x="2" y="5" width="22" height="12" rx="1"/><path d="M9.3 5v12M16.6 5v12"/><circle cx="20.3" cy="8.5" r="1.1" fill="currentColor"/></svg>']
 ];
@@ -412,7 +428,8 @@ function setSkin(id) {
 
 /* Шапка примера: знак из воды слева, номера форм над шкалой. Отметка идёт по шкале вместе с колесом. */
 const MK = { cx: 0, cyGl: 0, r: 13 };
-[[0, 'Круг'], ...FORMS].forEach(([k, t], i) => {
+/* круг — абстракция цельности, поэтому подпись «Цельность» */
+[[0, 'Цельность'], ...FORMS].forEach(([k, t], i) => {
   const b = document.createElement('button'); b.type = 'button'; b.dataset.k = k; b.innerHTML = `<em>0${i + 1}</em><span>${t}</span>`;
   b.addEventListener('click', () => setShape(k)); $('#x1-hd .ix').append(b);
 });
@@ -430,7 +447,7 @@ markSkin(); paintForms();
 
 /* Каждый человек появляется вдали, медленно тянется к магниту, у полюсов разгоняется, тает и вливается в воду */
 function people(T) {
-  const [, , vw, vh] = ICONS[2][0].split(' ').map(Number), k = 1.9 / Math.max(vw, vh);
+  const [, , vw, vh] = ICONS[1][0].split(' ').map(Number), k = 1.9 / Math.max(vw, vh);
   const mx = (MAGNET.mouth[0] - vw / 2) * k, my = -(MAGNET.mouth[1] - vh / 2) * k;
   return MAGNET.av.flatMap(([x, y, r], i) => {
     const ux = (x - vw / 2) * k - mx, uy = -(y - vh / 2) * k - my, rq = r * k;
@@ -451,6 +468,8 @@ function drawRing(A, calm, splash, tint, T, o = S) {
   gl.uniform1f(uR.uR, o.r * d); gl.uniform1f(uR.uT, T); gl.uniform1f(uR.uA, A); gl.uniform1f(uR.uCalm, calm); gl.uniform1f(uR.uHov, mark ? 1 : P.hov);
   gl.uniform1f(uR.uSplash, splash); gl.uniform1f(uR.uTint, tint);
   const m = SH.m < 1 ? ss(0, 1, SH.m) : 1; gl.uniform1f(uR.uShA, SH.a); gl.uniform1f(uR.uShB, SH.b); gl.uniform1f(uR.uMx, m); gl.uniform1f(uR.uRot, SH.rot);
+  /* знак в шапке всегда раздут, но зерно в нём целое: раскалывается только большая вода под мышью */
+  gl.uniform1f(uR.uSplit, mark ? 0 : P.hov);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, SDF.tex); gl.uniform1i(uR.uSdf, 1); gl.activeTexture(gl.TEXTURE0);
   gl.uniform4fv(uR.uRip, mark ? NO_RIP : P.rip.flatMap(r => [r.x, r.y, r.t, r.a]));
   gl.uniform3fv(uR.uAv, people(T));
@@ -461,11 +480,14 @@ function drawRing(A, calm, splash, tint, T, o = S) {
 
 /* Ход примера. Всё идёт по одной шкале u, её двигают колесо, палец и щелчок, поэтому назад рассказ идёт теми же шагами.
    u от U0 до 0: вступление. Куча уходит вниз, телефон падает в воду, вода рождается. Обратно телефон вылетает из воды в кучу.
-   u от 0 до 1: пример. Шкала z та же, что в прототипе: 1,53 круг, 2,4 бык, 3,4 магнит, 4,4 ключ, 5,4 круг, 6,55 стрелка на шкале.
+   u от 0 до 1: пример. Шкала z та же, что в прототипе: 1,53 круг, 2,4 магнит, 3,4 ключ, 4,4 зерно, 5,4 круг, 6,55 стрелка на шкале,
+   дальше до 6,95 от стрелки идёт волна сонара, и за ней встаёт сетка.
+   Сетка-сонар (sonar.js) в начале слетается на край серого круга с телефоном, прорастает в нём линией, и эта линия становится кольцом воды.
    Пока плохой сайт разваливается, u стоит в U0. Если после развала 6 секунд ничего не трогать, вступление проигрывается само один раз. */
-/* остановки щелчка стоят чуть внутри каждой формы: бык, магнит, ключ, снова круг, конец */
-const U0 = -.18, STOPS = [0, .19, .39, .59, .79, 1];
-const X = { on: false, u: U0, uc: U0, boost: 0, zone: -1, call: null, edge: 0, clean: false, run: false, tw: 0, auto: false, ph: 0 };
+/* остановки щелчка стоят чуть внутри каждой формы: магнит, ключ, зерно, снова круг, конец */
+const U0 = -.18, ZS = 5.42, STOPS = [0, .175, .362, .546, .732, 1];
+/* ring: серый круг сейчас (центр и радиус), td: ход вступления, pin: верх стрелки на шкале, z: шкала примера */
+const X = { on: false, u: U0, uc: U0, boost: 0, zone: -1, call: null, edge: 0, clean: false, run: false, tw: 0, auto: false, ph: 0, ring: null, td: 0, pin: null, z: 0 };
 /* Телефон забирается из кучи вместе с его вращением и возвращается туда с тем же углом */
 function grabCall(p) {
   if (p && p.body) { X.call = { x: p.body.x, y: p.body.y, s: p.pw * p.s, e: p.e, p, a: p.spin ? p.spin.a : 0, v: p.spin ? p.spin.v : 2.2 }; p.e.style.visibility = 'hidden'; }
@@ -474,7 +496,7 @@ function grabCall(p) {
 function dropCall() { if (X.call && X.call.e) { X.call.e.style.visibility = ''; if (X.call.p && X.call.p.spin) X.call.p.spin.a = X.call.a; } X.call = null; }
 function reset() {
   dropCall();
-  Object.assign(X, { on: false, u: U0, uc: U0, boost: 0, zone: -1, edge: 0, clean: false, run: false, tw: 0, auto: false, ph: 0 });
+  Object.assign(X, { on: false, u: U0, uc: U0, boost: 0, zone: -1, edge: 0, clean: false, run: false, tw: 0, auto: false, ph: 0, ring: null, td: 0, pin: null, z: 0 });
   R.classList.remove('on'); vis($('#x1-site'), 0); $('#x1-call').style.visibility = 'hidden'; $('#x1-needle').style.visibility = 'hidden';
   if (gl) gl.clear(gl.COLOR_BUFFER_BIT);
   const junk = document.getElementById('junk'); if (junk) { junk.style.transform = ''; junk.style.clipPath = ''; }
@@ -491,21 +513,22 @@ function step(dt, c) {
   if (!c.clean) { X.u = X.uc = U0; X.run = false; }
   else if (!X.auto && X.u <= U0) { X.tw += dt; if (X.tw > 6) { X.auto = X.run = true; } }
   if (X.run) { X.u = Math.min(0, X.u - U0 * dt / 1.8); if (X.u >= 0) X.run = false; }
-  X.uc = RM || X.run || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * 9));
+  /* в конце, где стрелка и волна, колесо сглаживается мягче */
+  X.uc = RM || X.run || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * (X.uc > .82 ? 3.5 : 9)));
   const ip = clamp((X.uc - U0) / -U0), ph = X.uc <= U0 + .0015 ? 0 : X.uc < 0 ? 1 : 2;
   if (ph >= 1 && X.ph === 0) grabCall(c.call);
   if (ph === 0 && X.ph >= 1) dropCall();
   X.ph = ph;
-  const z = 1.53 + Math.max(0, X.uc) * 5.02, td = ip * 1.8;
+  const z = 1.53 + Math.max(0, X.uc) * ZS, td = ip * 1.8; X.td = td; X.z = z;
 
   /* Куча уходит под пол кадра и не заезжает на шкалу. Крутящийся серый круг с телефоном поднимается из кучи на место воды и растёт.
-     Круг тает, его край становится кольцом воды. */
-  const lift = ss(0, 1.15, td), grow = ss(.15, 1.3, td), birth = clamp((td - .7) / 1.1), sink = ss(0, .6, td), junk = document.getElementById('junk');
+     На его край слетается сетка (td 0–0,7), точки прорастают в линию (0,7–0,95). Круг тает, линия становится кольцом воды (с 0,95). */
+  const lift = ss(0, 1.15, td), grow = ss(.15, 1.3, td), birth = clamp((td - .95) / .85), sink = ss(0, .6, td), junk = document.getElementById('junk');
   if (ph >= 1) { junk.style.opacity = c.alpha * (1 - sink); junk.style.transform = `translateY(${sink * G.H * .3}px)`; junk.style.clipPath = `inset(0 0 ${Math.max(0, innerHeight - G.H + sink * G.H * .3)}px 0)`; }
   else { junk.style.transform = ''; junk.style.clipPath = ''; }
   const call = $('#x1-call'), ex = ss(5.8, 6.2, z);
   const k0 = (X.call ? X.call.s : 84) / 84, cx = X.call ? lerp(X.call.x, G.cx, lift) : G.cx, cy = X.call ? lerp(X.call.y, G.cy, lift) - Math.sin(Math.PI * lift) * G.R * .25 : G.cy;
-  const cR = lerp(k0 * 42, G.R, grow), fade = 1 - ss(.75, 1.35, td);
+  const cR = lerp(k0 * 42, G.R, grow), fade = 1 - ss(.75, 1.35, td); X.ring = [cx, cy, cR];
   if (ph >= 1 && fade > 0 && X.call) {
     if (!RM) X.call.a += X.call.v * dt;
     /* круг остаётся серым, как обломки в куче: зелёного на этом шаге нет */
@@ -529,7 +552,8 @@ function step(dt, c) {
   if (SH.m < 1) SH.m = Math.min(1, SH.m + dt / .9);
   if (!RM) SH.rot += Math.min(.05, dt) * .08;
   P.rip.forEach(r => { r.t += dt; });
-  const calm = ss(5.4, 5.8, z), ringA = (birth > 0 ? 1 : 0) * (1 - ex) * c.alpha; S.ringA = ringA;
+  /* кольцо воды проявляется на линии сетки, пока линия тает */
+  const calm = ss(5.4, 5.8, z), ringA = ss(0, .3, birth) * (1 - ex) * c.alpha; S.ringA = ringA;
   if (gl) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     if (ringA > .001) drawRing(ringA, calm, splash, tint, T);
@@ -544,11 +568,15 @@ function step(dt, c) {
 
   /* Выход: вода стягивается в стрелку и ложится на стрелку настоящей шкалы. Дальше колесо крутит ручку. */
   const nt = ss(6.2, 6.55, z), needle = $('#x1-needle');
-  if (ex > 0 && nt < 1) {
+  if (ex > 0) {
     const sc = document.getElementById('scale').getBoundingClientRect(), tx = sc.left + 15 + (sc.width - 30) * c.v / 100;
-    const h0 = 2 * G.R * ex, nh = lerp(h0, sc.height, nt);
-    needle.style.visibility = 'visible'; needle.style.opacity = c.alpha;
-    needle.style.transform = `translate(${lerp(G.cx, tx, nt) - 1.5}px,${lerp(G.cy - h0 / 2, sc.top, nt)}px) scale(.3,${nh / 10})`;
+    /* pin: верх стрелки шкалы в координатах #klienty. Когда стрелка легла на шкалу, оттуда идёт волна, и за ней встаёт сетка-сонар. */
+    const k0 = document.getElementById('klienty').getBoundingClientRect(); X.pin = [tx - k0.left, sc.top - k0.top];
+    if (nt < 1) {
+      const h0 = 2 * G.R * ex, nh = lerp(h0, sc.height, nt);
+      needle.style.visibility = 'visible'; needle.style.opacity = c.alpha;
+      needle.style.transform = `translate(${lerp(G.cx, tx, nt) - 1.5}px,${lerp(G.cy - h0 / 2, sc.top, nt)}px) scale(.3,${nh / 10})`;
+    } else needle.style.visibility = 'hidden';
   } else needle.style.visibility = 'hidden';
 
   /* Пока идёт пример, надпись станции спрятана. После примера она возвращается. */
@@ -562,7 +590,7 @@ function wheel(dy) {
   const now = performance.now();
   X.run = false;
   if ((dy > 0 && X.u >= 1) || (dy < 0 && X.u <= U0)) return now - X.edge < 450;
-  X.u = clamp(X.u + dy / 2600, U0, 1);
+  X.u = clamp(X.u + dy / (2600 * ZS / 5.02), U0, 1);
   if (X.u >= 1 || X.u <= U0) X.edge = now;
   return true;
 }
@@ -580,8 +608,22 @@ addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) layout(); });
 
-Object.assign(api, { step, wheel, reset, next });
+/* Сетка-сонар (sonar.js). Точки на краю серого круга: в них слетается сетка, вдоль края они прорастают чёрточками в линию.
+   Круг крутится, и точки крутятся с ним. */
+function dots() {
+  if (!X.on || X.ph !== 1 || !X.ring) return null;
+  const [cx, cy, r] = X.ring, n = Math.max(24, Math.round(2 * Math.PI * G.R / 26)), a0 = X.call ? X.call.a : 0, h = Math.PI * r / n;
+  return Array.from({ length: n }, (_, k) => { const a = a0 + 2 * Math.PI * k / n, s = Math.sin(a), c = Math.cos(a); return [cx + r * c, cy + r * s, -s, c, h]; });
+}
+Object.assign(api, { step, wheel, reset, next, dots });
 /* fast и state читаются каждый раз заново, поэтому это свойства с геттером, а не копия */
-Object.defineProperties(api, { fast: { get: () => X.boost > 0 }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), shape: SH.b, on: X.on, c: [Math.round(G.cx), Math.round(G.cy)] }) } });
+/* grid: 0 сетка на надписи, 1 сетки нет. Во вступлении сетка слетается на край круга, в конце встаёт за волной от стрелки шкалы.
+   trace: линия из точек на краю круга, она тает, когда рождается кольцо воды. ping: верх стрелки шкалы, оттуда идёт волна.
+   Волна выходит сразу, как стрелка легла на шкалу, и идёт ровно, как кольцо сонара. */
+Object.defineProperties(api, {
+  grid: { get: () => !X.on || X.ph === 0 ? 0 : X.ph === 1 ? clamp(X.td / .7) : 1 - clamp((X.z - 6.55) / .37) },
+  trace: { get: () => X.ph === 1 ? { g: ss(.7, .95, X.td), th: ss(.9, 1.2, X.td), w: 1.5, a: .55, out: ss(1, 1.35, X.td) } : null },
+  ping: { get: () => X.ph === 2 && X.z > 6.5 ? X.pin : null },
+  fast: { get: () => X.boost > 0 }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), shape: SH.b, on: X.on, c: [Math.round(G.cx), Math.round(G.cy)] }) } });
 return api;
 })();

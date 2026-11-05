@@ -32,7 +32,7 @@ button,input,textarea{font:inherit;color:inherit}
 body.barhide #bar{transform:translateY(-110%)}
 #bar{position:fixed;inset:0 0 auto 0;z-index:40;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:max(10px,env(safe-area-inset-top,0px)) var(--gutr) 0 var(--gut);pointer-events:none;color:#fff;transition:color .3s,transform .25s}
 #bar a,#bar button{pointer-events:auto}
-#logo{grid-column:2;grid-row:1;display:block;width:clamp(92px,8vw,118px);transition:filter .3s}
+#logo{grid-column:2;grid-row:1;display:block;width:clamp(92px,8vw,118px);transition:filter .3s,opacity .3s}
 #logo img{display:block;width:100%;height:auto}
 .lg-m{display:none!important}
 body.ink #bar{color:#000}
@@ -318,11 +318,20 @@ body[data-w=klienty]:not(.ink) #bar{text-shadow:0 0 5px #000,0 0 14px #000}
 #klienty[data-st="0"] #st-more{display:none}
 #st-ask,#st-hint{display:none}
 /* сетка-сонар под чёрными надписями станций, её рисует src/sonar.js */
-#sonar{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity .6s}
+#sonar{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0}
 #sonar.on{opacity:1}
+/* пока точки слетаются в пример, холст над примером и без плавного появления */
+#sonar.mv{z-index:3;transition:none}
 #klienty[data-st="0"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
 #klienty[data-st="0"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
 #klienty.exd #st-hint{display:none}
+/* После примера вместо подсказки одна кнопка: разговор про эту услугу. До конца примера кнопок нет. */
+#st-go{display:none;align-self:flex-start;margin-top:clamp(8px,2vh,22px)}
+#klienty.exd[data-st] #st-go{display:inline-flex;animation:stgo .5s cubic-bezier(.2,.9,.2,1) both}
+#st-go:hover{background:#fff}
+@keyframes stgo{from{opacity:0;transform:translateY(12px)}}
+@media (prefers-reduced-motion:reduce){#klienty.exd[data-st] #st-go{animation:none}}
+@media (min-width:761px) and (max-height:780px){#st-go{min-height:50px;margin-top:4px}}
 @media (min-width:761px) and (max-height:780px){#klienty[data-st="0"] #st-name{font-size:min(18vh,14.4vw)}#klienty[data-st="0"] #st-hint{margin-top:6px}}
 #st-hint i{position:relative;flex:none;width:1px;height:30px;background:#ffffff38;overflow:hidden}
 #st-hint i::after{content:'';position:absolute;left:0;top:-40%;width:1px;height:40%;background:#fff;animation:sthint 1.8s cubic-bezier(.6,0,.4,1) infinite}
@@ -331,10 +340,12 @@ body[data-w=klienty]:not(.ink) #bar{text-shadow:0 0 5px #000,0 0 14px #000}
 @media (hover:none){#st-hint .hm{display:none}#st-hint .ht{display:inline}}
 @media (prefers-reduced-motion:reduce){#st-hint i::after{animation:none;top:30%}}
 /* пока на экране плохой сайт, логотипа GT нет: шаблон не должен связываться с компанией */
-body.jk #logo{visibility:hidden}
+body.jk #logo{opacity:0;visibility:hidden;transition:filter .3s,opacity .3s,visibility 0s .3s}
 #air{pointer-events:none}
 #air button,#air input{pointer-events:auto}
-#klienty.junk #air-top,#klienty.junk #air-main{opacity:0;visibility:hidden}
+/* пока плохой сайт пробивается сквозь шум, надпись станции гаснет вместе с шумом (--jt из app.js) */
+#klienty.junk #air-top,#klienty.junk #air-main{opacity:var(--jt,0)}
+#klienty.junk2 #air-top,#klienty.junk2 #air-main{visibility:hidden}
 #klienty.junk #air-foot,#klienty.junk #presets{text-shadow:none}
 
 /* Плохой сайт: нарочно шаблонный, нарочно узнаваемый. Падает и становится обломками */
@@ -356,7 +367,9 @@ body.jk #logo{visibility:hidden}
 .fade{background:rgba(10,20,50,.55);transition:opacity .3s;pointer-events:none}
 .j-bar{background:linear-gradient(#2b7fd6,#0f4f9e)}
 .j-nav{color:#fff;font-weight:700;background:linear-gradient(#2b7fd6,#0f4f9e);border-right:1px solid rgba(255,255,255,.35)}
-.j-hero{background:linear-gradient(115deg,#0d3f86,#2e8fe0 60%,#9fd2f5)}
+.j-hero{background:linear-gradient(115deg,#3a1d0e,#8a5330 60%,#e3bd8f)}
+.j-pic{background:#2a1a10;border:calc(var(--u)*5) solid #fff;box-shadow:0 calc(var(--u)*4) calc(var(--u)*12) rgba(0,0,0,.45)}
+.j-pic img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
 .j-head{color:#fff;font:700 calc(var(--u)*50)/1.08 Tahoma,Arial,sans-serif;text-align:left;justify-content:flex-start;text-shadow:calc(var(--u)*2) calc(var(--u)*2) calc(var(--u)*4) rgba(0,0,0,.6);overflow:visible}
 #junk .j-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:calc(var(--u)*6);font-weight:700;color:#fff;background:linear-gradient(#ffa42b,#ee6a00);box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(0,0,0,.35)}
 .j-big{font-size:calc(var(--u)*18)}
@@ -376,12 +389,12 @@ body.jk #logo{visibility:hidden}
 .j-star b{font-size:calc(var(--u)*38);line-height:1}
 .j-count{background:#c81616;color:#fff;font-weight:700;font-size:calc(var(--u)*18)}
 .j-count b{color:#ffe13a;margin-left:.4em}
-.j-card{flex-direction:column;gap:calc(var(--u)*4);padding:calc(var(--u)*8);background:#fff;border:1px solid #cdd5e4;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(0,0,50,.2);color:#223}
-.j-card i{font-style:normal;font-size:calc(var(--u)*34);color:#2b7fd6;line-height:1}
-.j-card b{font-size:calc(var(--u)*17);color:#0f4f9e}
+.j-card{flex-direction:column;gap:calc(var(--u)*4);padding:calc(var(--u)*8);background:#fff8ef;border:1px solid #e2d3bf;box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(50,20,0,.22);color:#322}
+.j-card i{font-style:normal;font-size:calc(var(--u)*34);color:#b8742f;line-height:1}
+.j-card b{font-size:calc(var(--u)*17);color:#6b3a1a}
 .j-card span{font-size:calc(var(--u)*13);color:#667}
 .j-tel{font-weight:700;font-size:calc(var(--u)*22);color:#0f4f9e}
-.j-logo{flex-direction:column;align-items:flex-start;text-align:left;color:#0f4f9e}
+.j-logo{flex-direction:column;align-items:flex-start;text-align:left;color:#6b3a1a}
 .j-logo b{font-size:calc(var(--u)*26)}
 .j-logo span{font-size:calc(var(--u)*13);color:#667}
 @media (max-width:760px){.j-head{font-size:calc(var(--u)*27)}.j-logo b{font-size:calc(var(--u)*20)}.j-logo{white-space:nowrap}}

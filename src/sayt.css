@@ -100,8 +100,12 @@
 #x1-tag{position:absolute;left:var(--gut,40px);bottom:clamp(12px,2.4vh,24px);font-size:12px;letter-spacing:.02em;opacity:.55}
 
 /* Пока идёт пример, надпись станции и кнопки сайта спрятаны. После примера они встают по центру. */
-#klienty.ex #air-top,#klienty.ex #air-main{opacity:0;visibility:hidden}
+#klienty.ex #air-top,#klienty.ex #air-main{opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}
 #klienty.exd #air-main{justify-content:center;padding-top:0}
+/* надпись не выскакивает: после примера она проявляется и чуть поднимается, когда сетка уже встала */
+#klienty.exd #air-main{animation:stback 1.1s cubic-bezier(.35,.1,.25,1) both}
+@keyframes stback{from{opacity:0;transform:translateY(14px)}}
+@media (prefers-reduced-motion:reduce){#klienty.exd #air-main{animation:none}#klienty.ex #air-top,#klienty.ex #air-main{transition:none}}
 
 @media (max-width:760px){
   #x1-hd .h3c{display:none}

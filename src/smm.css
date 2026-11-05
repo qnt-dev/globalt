@@ -53,7 +53,8 @@
 #x3-ct dt{font-size:12px;color:var(--ink2)}
 #x3-gw{position:relative}
 #x3-grid{position:absolute;left:0;top:0;width:var(--pw);height:calc(3*var(--ts) + 2*var(--g))}
-.x3-c{position:absolute;left:0;top:0;width:var(--ts);height:var(--ts);border:1px dashed var(--line)}
+/* пунктир пустой клетки: чёрточка 4 пикселя, промежуток 4, от начала каждой стороны. В начале его собирает сетка-сонар (smm.js dots), поэтому он нарисован сам, а не рамкой */
+.x3-c{position:absolute;left:0;top:0;width:var(--ts);height:var(--ts);--dh:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 8px);--dv:repeating-linear-gradient(180deg,var(--line) 0 4px,transparent 4px 8px);background:var(--dh) left top/100% 1px no-repeat,var(--dh) left bottom/100% 1px no-repeat,var(--dv) left top/1px 100% no-repeat,var(--dv) right top/1px 100% no-repeat}
 
 /* Плитки постов. Размеры текста считаются от ширины плитки. */
 .x3-t{position:absolute;left:0;top:0;width:var(--ts);height:var(--ts);overflow:hidden;background:#1b1a20;transform-origin:0 0;container-type:inline-size;visibility:hidden;will-change:transform}
@@ -104,7 +105,7 @@
 .bb.vip .vip{display:inline-block}
 
 #x3-scene .tag{position:absolute;right:var(--gutr);bottom:10px;font:500 11px var(--text);opacity:0;margin:0}
-#x3-px{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+
 #x3-sd{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:#000a;pointer-events:auto}
 #x3-sd[hidden]{display:none}
 #x3-sd .bx{width:min(440px,calc(100vw - 32px));padding:26px 26px 22px;border:1px solid #ffffff26;background:#0b0b10;color:#e8e8ee;font-family:var(--text)}

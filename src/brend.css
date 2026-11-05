@@ -41,7 +41,6 @@
 #x4-pal b{font:500 13px/1.2 var(--text);color:#fff;margin-top:6px}
 
 #x4-scene .tag{position:absolute;right:var(--gutr);bottom:10px;font:500 11px var(--text);opacity:0;margin:0}
-#x4-px{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 #x4-sd{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:#000a;pointer-events:auto}
 #x4-sd[hidden]{display:none}
 #x4-sd .bx{width:min(440px,calc(100vw - 32px));padding:26px 26px 22px;border:1px solid #ffffff26;background:#0b0b10;color:#e8e8ee;font-family:var(--text)}

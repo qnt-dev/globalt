@@ -1,7 +1,8 @@
 /* «Реклама»: пример на станции «Реклама» мира «Клиенты». Контекст и таргет показаны одним рассказом про кофейню ZERNO, такой кофейни нет.
    Порядок: человек ищет «кофе с доставкой бишкек», первой отвечает реклама ZERNO. Это контекст.
    Потом человек листает ленту, и среди постов встаёт пост ZERNO. Это таргет. Пост раскрывается в сайт кофейни.
-   Сайт кофейни сделан в стиле красного сайта из maket/kontekst.html. В конце он рассыпается квадратами, возвращается надпись станции, дальше колесо крутит ручку.
+   Сайт кофейни сделан в стиле красного сайта из maket/kontekst.html. В конце он распадается растром в сетку-сонар, возвращается надпись станции, дальше колесо крутит ручку.
+   В начале сетка-сонар (sonar.js) слетается в линию поля поиска, прорастает в ней чёрточками, и линия становится линией поля.
    Связь с app.js: step() каждый кадр из updateAir, wheel() из колеса мира, onTalk открывает разговор. Разметку модуль строит сам. */
 window.GTREK = (() => {
 const kl = document.getElementById('klienty');
@@ -16,6 +17,8 @@ const api = { onTalk: null };
 
 /* Разметка */
 /* знак ZERNO: зерно разрезано буквой Z. Разрез — цвет фона под знаком (--zbg), знак стоит на красном. */
+/* тот же знак для шапки: разрез вырезан маской, потому что под шапкой стекло, а не один цвет. Рамка обрезана по зерну. */
+const HMARK = '<svg viewBox="16.5 8 67 84" aria-hidden="true"><mask id="x2-zcut"><rect x="-20" y="-20" width="140" height="140" fill="#fff"/><path d="M8 34H61L39 66H92" fill="none" stroke="#000" stroke-width="8" stroke-miterlimit="10"/></mask><g transform="rotate(24 50 50)"><ellipse cx="50" cy="50" rx="31" ry="44" fill="currentColor" mask="url(#x2-zcut)"/></g></svg>';
 const MARK = '<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(24 50 50)"><ellipse cx="50" cy="50" rx="31" ry="44" fill="currentColor"/><path d="M8 34H61L39 66H92" fill="none" style="stroke:var(--zbg,#df1f12)" stroke-width="8" stroke-miterlimit="10"/></g></svg>';
 const NZROW = '<li class="nz"><div class="u"></div><div class="t"></div><div class="d"></div></li>';
 const NZPOST = '<div class="po nz"><div class="ph"><i></i><span class="nm"></span></div><div class="md"></div><div class="ac"><i></i><i></i><i></i></div><p class="tx"></p></div>';
@@ -61,10 +64,9 @@ R.innerHTML = `
     <div><h2>Выберите напиток</h2><div id="x2-wall" role="group" aria-label="Меню"></div></div>
     <div id="x2-pick"><small>Кофейня · Бишкек</small><div class="word" id="x2-w3" aria-hidden="true"><canvas></canvas></div><div id="x2-pic" aria-hidden="true"><canvas></canvas></div><div class="x2-order"><div id="x2-price"></div><button class="cta" type="button" id="x2-take"><span>Заказать</span><i>›</i></button></div></div>
   </div>
-  <header id="x2-hd"><div><b>ZERNO</b><small>Кофе с доставкой</small></div><nav><span class="t"><button type="button">Войти</button><button type="button">Регистрация</button></span><span class="m"><button type="button" class="on" data-k="lots">Меню</button><button type="button" data-k="lots">Доставка</button><span class="bx"><button type="button" class="k" data-k="lots">Отзывы</button><button type="button" class="in" id="x2-buy">Заказать</button></span></span></nav></header>
+  <header id="x2-hd"><div class="lg">${HMARK}<div><b>ZERNO</b><small>Кофе с доставкой</small></div></div><nav><span class="t"><button type="button">Войти</button><button type="button">Регистрация</button></span><span class="m"><button type="button" class="on" data-k="lots">Меню</button><button type="button" data-k="lots">Доставка</button><span class="bx"><button type="button" class="k" data-k="lots">Отзывы</button><button type="button" class="in" id="x2-buy">Заказать</button></span></span></nav></header>
   <p class="tag">Пример. Такой кофейни нет.</p>
 </div>
-<canvas id="x2-px" aria-hidden="true"></canvas>
 <div id="x2-sd" role="dialog" aria-modal="true" aria-labelledby="x2-sd-t" hidden><div class="bx"><small>Пример</small><h3 id="x2-sd-t">Здесь человек оформит заказ</h3><p>Реклама привела его на&nbsp;сайт, сайт довёл до&nbsp;покупки.</p><div class="bt"><button type="button" id="x2-sd-x">Понятно</button><button type="button" id="x2-sd-go">Обсудить рекламу</button></div></div></div>`;
 kl.insertBefore(R, document.getElementById('air'));
 const $ = s => R.querySelector(s), $$ = s => [...R.querySelectorAll(s)];
@@ -378,19 +380,6 @@ const WORDS = [W1, W2, W3, P1, P2];
   $('#x2-price').innerHTML = `Капучино, 190 с<em>Привезём за 20 минут. Пример, такой кофейни нет.</em>`;
 })();
 
-/* Квадраты: красный сайт уходит в цвет станции */
-const px = $('#x2-px'), pxc = px.getContext('2d');
-function wipe(amount, color, seed, cell) {
-  if (amount <= 0) return;
-  const { W, H } = G; pxc.fillStyle = color;
-  if (amount >= 1) { pxc.fillRect(0, 0, W, H); return; }
-  const nx = Math.ceil(W / cell), ny = Math.ceil(H / cell);
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    const thr = hash(i + j * 137, seed) * .55 + (j / ny) * .45;
-    if (amount > thr) pxc.fillRect(i * cell, j * cell, cell + .5, cell + .5);
-  }
-}
-
 /* Геометрия: сцены стоят между шапкой сайта и строкой над шкалой */
 const G = { W: 0, H: 0, wide: true, top: 0, bot: 0 };
 function layout() {
@@ -400,7 +389,6 @@ function layout() {
   R.style.setProperty('--top', G.top + 'px'); R.style.setProperty('--bot', Math.max(0, G.H - G.bot) + 'px');
   const d = dpr();
   canvas.width = Math.round(G.W * d); canvas.height = Math.round(G.H * d);
-  px.width = G.W; px.height = G.H;
   R.style.setProperty('--hh', $('#x2-hd').offsetHeight + 'px');
   hero(); WORDS.forEach(w => w.fit()); PIC.fit();
 }
@@ -457,16 +445,17 @@ function tags(a) {
 
 /* Шкала примера в щелчках колеса: один щелчок (100 пикселей колеса) — одно деление.
    Поиск 0–10, лента 9–17, из поста выходят линии 17,4–18,8, набирают толщину 18,6–20,2, сайт обрастает частями до 22,4 и стоит три щелчка,
-   меню выезжает 25,2–26,8 и стоит три щелчка, перед уходом пауза, уход квадратами 29,8–31,8. */
+   меню выезжает 25,2–26,8 и стоит три щелчка, перед уходом пауза, уход растром в сетку 29,8–31,5.
+   Первые два щелчка — сетка-сонар слетается в линию поля поиска — и уход идут медленнее, колесо в них мягче. */
 const TOTAL = 32.4, EXIT = 29.8;
 const STOPS = [0, 7.8, 16.4, 22.6, 27.2, TOTAL].map(n => n / TOTAL);
-const X = { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, landA: 0, dark: false, ring: null };
+const X = { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, landA: 0, dark: false, ring: null, tr: trace(0) };
 function reset() {
   Object.assign(X, { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, landA: 0, dark: false, ring: null });
   R.classList.remove('on'); $('#x2-sd').hidden = true;
   ['#x2-bg', '#x2-find', '#x2-feed', '#x2-open', '#x2-land', '#x2-th'].forEach(s => vis($(s), 0));
   if (gl) { RB.clear(); RP?.clear(); }
-  pxc.clearRect(0, 0, px.width, px.height);
+  R.style.opacity = ''; window.GTSONAR?.halftone(R, 0);
   kl.classList.remove('ex', 'exd');
 }
 /* c: near — ручка у станции «Реклама», tuned — станция настроена, alpha — насколько станция слышна */
@@ -477,22 +466,26 @@ function step(dt, c) {
   if (!c.tuned) { X.tw = 0; if (X.u <= 0) X.goal = null; }
   else if (!X.auto && X.u <= 0 && X.goal == null) { X.tw += dt; if (X.tw > 6) { X.auto = true; X.goal = STOPS[1]; } }
   /* Щелчок и сам запуск проигрывают отрезок со скоростью четыре щелчка в секунду, колесо ведёт пример само */
-  if (X.goal != null) { const sp = RM ? 9 : 4 / TOTAL * dt, d = X.goal - X.u; X.u = Math.abs(d) <= sp ? X.goal : X.u + Math.sign(d) * sp; if (X.u === X.goal) X.goal = null; }
-  X.uc = RM || X.goal != null || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * 9));
+  const slow = v => v * TOTAL < 2.3 || v * TOTAL > EXIT;
+  if (X.goal != null) { const sp = RM ? 9 : (slow(X.u) ? 1.3 : 4) / TOTAL * dt, d = X.goal - X.u; X.u = Math.abs(d) <= sp ? X.goal : X.u + Math.sign(d) * sp; if (X.u === X.goal) X.goal = null; }
+  X.uc = RM || X.goal != null || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * (slow(X.uc) ? 3.5 : 9)));
   const n = X.uc * TOTAL, A = c.alpha;
-  X.ph = n <= .1 ? 0 : 1;
+  X.ph = n <= .1 ? 0 : 1; X.tr = trace(n);
   const tick = flicker(dt);
 
-  /* Свой фон примера: тёмный или светлый. Под ним чёрная станция, она возвращается в конце. */
-  const bgA = ss(.1, 1, n) * (n > 31.8 ? 0 : 1) * A, light = R.classList.contains('lt');
+  /* Свой фон примера: тёмный или светлый. Под ним чёрная станция, она возвращается в конце.
+     Светлый фон светлеет, когда линия поля уже собралась: белые точки сетки на светлом не видны. */
+  const light = R.classList.contains('lt'), bgA = (light ? ss(1.5, 2.1, n) : ss(.1, 1, n)) * A;
   vis($('#x2-bg'), bgA);
 
   /* 1. Поиск: запрос печатается сам, выдача шумит, первой настраивается реклама */
-  const out1 = ss(8.6, 10.4, n), findA = ss(.1, 1.3, n) * (1 - out1) * A;
+  /* поиск проявляется вокруг линии поля, которую собрала сетка; сама линия поля (--fb) видна, когда сетка её отдала */
+  const out1 = ss(8.6, 10.4, n), findA = ss(.8, 1.6, n) * (1 - out1) * A;
+  $('#x2-fld').style.setProperty('--fb', X.tr.out);
   vis($('#x2-find'), findA);
   if (findA > .004) {
     $('#x2-find').style.transform = `translateY(${-out1 * 40}px)`;
-    const k = Math.round(Q.length * clamp((n - 1.56) / 2.6)), qe = $('#x2-q');
+    const k = Math.round(Q.length * clamp((n - 2) / 2.2)), qe = $('#x2-q');
     if (qe.textContent.length !== k) qe.textContent = Q.slice(0, k);
     R.classList.toggle('typed', k >= Q.length);
     $$('#x2-res li').forEach((li, i) => { const k = ss(3.9 + i * .31, 5.2 + i * .31, n); li.style.opacity = k; li.style.transform = `translateY(${(1 - k) * 12}px)`; });
@@ -520,7 +513,7 @@ function step(dt, c) {
 
   /* 3. Линии выходят из картинки поста влево и вправо до краёв экрана (e1), потом набирают толщину лент сайта (e2),
      и от поста растекается тёмный фон сайта */
-  const e1 = ss(17.4, 18.8, n), e2 = ss(18.6, 20.2, n), wk = ss(EXIT, 31.8, n), gone = wk >= 1, mr = md.getBoundingClientRect();
+  const e1 = ss(17.4, 18.8, n), e2 = ss(18.6, 20.2, n), hz = ss(EXIT, EXIT + .8, n), wt = ss(EXIT + .8, EXIT + 1.6, n), gone = wt >= 1, mr = md.getBoundingClientRect();
   if (n < 17.4 || !X.ring) X.ring = [mr.left, mr.top, mr.width, mr.height];
   const r = X.ring, open = $('#x2-open');
   /* тёмный фон растекается вместе с линиями: на светлом фоне ленты видны только на тёмном */
@@ -569,9 +562,10 @@ function step(dt, c) {
     }
   }
 
-  /* 5. Выход: сайт рассыпается чёрными квадратами, потом квадраты тают в чёрную станцию */
-  pxc.clearRect(0, 0, G.W, G.H);
-  if (wk > 0) { wipe(wk, '#000', 5, G.wide ? 18 : 14); px.style.opacity = (1 - ss(31.8, 32.3, n)) * A; }
+  /* 5. Выход: сайт распадается растром на кружки на местах точек сетки-сонара (hz), кружки мельчают до точек,
+     на них проявляются белые точки сетки (grid), потом пример гаснет (wt): картинка белеет в сетку. */
+  if (window.GTSONAR) GTSONAR.halftone(R, hz);
+  R.style.opacity = 1 - (window.GTSONAR ? wt : ss(EXIT, EXIT + 1.6, n));
   vis($('#x2-th'), Math.max(findA, feedA * rest));
   /* Станция чёрная, как «Сайт», поэтому буквы сайта белые. Тёмные они только на светлом фоне поиска и ленты. */
   X.dark = !(light && bgA > .5 && spread < .6);
@@ -581,7 +575,7 @@ function step(dt, c) {
   kl.classList.toggle('ex', X.ph === 1 && !done); kl.classList.toggle('exd', done);
 }
 /* Колесо: сначала пример, потом ручка. У края пример держит колесо ещё 0,45 секунды, чтобы ручка не уехала по инерции.
-   Так же колесо держится перед уходом квадратами, чтобы меню не пролетело. */
+   Так же колесо держится перед уходом в сетку, чтобы меню не пролетело. */
 function wheel(dy) {
   if (!X.on || !dy) return false;
   const now = performance.now(), ex = EXIT / TOTAL, du = dy / (100 * TOTAL);
@@ -628,8 +622,24 @@ sd.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagatio
 $$('#x2-hd [data-k],#x2-see').forEach(b => b.addEventListener('click', () => { X.goal = STOPS[4]; }));
 
 /* цвет станции для эфира: чёрный, как у «Сайта» */
-Object.assign(api, { step, wheel, reset, next, col: [0, 0, 0] });
-/* dark и state читаются каждый раз заново, поэтому это свойства с геттером, а не копия */
-Object.defineProperties(api, { dark: { get: () => X.dark }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), on: X.on, land: +X.landA.toFixed(2) }) } });
+/* Сетка-сонар (sonar.js): точки на линии поля поиска, по одной на отрезок длиной около шага сетки. Чёрточки дорастают до краёв отрезков, и линия сплошная. */
+function dots() {
+  /* только в начале: в уходе сетка встаёт из растра на своих местах */
+  if (!X.on || X.uc * TOTAL > 3) return null;
+  const f = $('#x2-fld').getBoundingClientRect(), k = kl.getBoundingClientRect(), n = Math.max(4, Math.round(f.width / 26)), sp = f.width / n, y = f.bottom - 1 - k.top;
+  return Array.from({ length: n }, (_, i) => [f.left - k.left + sp * (i + .5), y, 1, 0, sp / 2]);
+}
+/* Чёрточки растут (g), линия становится линией поля: 2 пикселя цвета --rule (th), потом отдаётся полю (out). На светлом фоне линия чернеет вместе с фоном. */
+function trace(n) {
+  const lt = R.classList.contains('lt');
+  return { g: ss(1, 1.5, n), th: lt ? ss(1.6, 2.1, n) : ss(1.4, 1.9, n), w: 2, a: lt ? 1 : .349, rgb: lt ? [0, 0, 0] : null, out: lt ? ss(2, 2.3, n) : ss(1.8, 2.1, n) };
+}
+Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0] });
+/* dark и state читаются каждый раз заново, поэтому это свойства с геттером, а не копия.
+   grid: 0 сетка на надписи, 1 сетки нет. В начале сетка слетается в линию поля, в уходе встаёт из растра. */
+Object.defineProperties(api, {
+  grid: { get: () => { if (!X.on) return 1; const n = X.uc * TOTAL; return n < EXIT ? clamp((n - .1) / .9) : 1 - ss(EXIT + .6, EXIT + 1.2, n); } },
+  trace: { get: () => X.on && X.uc * TOTAL < 3 ? X.tr : null },
+  dark: { get: () => X.dark }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), on: X.on, land: +X.landA.toFixed(2) }) } });
 return api;
 })();

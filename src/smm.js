@@ -3,7 +3,8 @@
    как в профиле соцсети. Пост сначала появляется кругом сторис у аватара, потом становится квадратом.
    Через месяц под постами идёт разговор: гостья спрашивает, кофейня отвечает, гостья возвращается.
    Последние девять постов — серия: вместе они складываются в одну картину, чашку эспрессо ZERNO.
-   В конце картина рассыпается квадратами, возвращается надпись станции.
+   В конце картина распадается растром в сетку-сонар, возвращается надпись станции.
+   В начале сетка-сонар (sonar.js) слетается в пунктир пустых клеток профиля: точки вытягиваются в чёрточки, и это клетки.
    Образцы в review/obraztsy-smm.jpg: сетка-пазл в Instagram, Mario Mosaic 2.0, Codrops Grid Scroll Animations, If the Moon Were Only 1 Pixel.
    Связь с app.js: step() каждый кадр из updateAir, wheel() из колеса мира, onTalk открывает разговор. Разметку модуль строит сам. */
 window.GTSMM = (() => {
@@ -85,26 +86,12 @@ R.innerHTML = `
   </div>
   <p class="tag">Пример. Такой кофейни нет.</p>
 </div>
-<canvas id="x3-px" aria-hidden="true"></canvas>
 <div id="x3-sd" role="dialog" aria-modal="true" aria-labelledby="x3-sd-t" hidden><div class="bx"><small>Пример</small><h3 id="x3-sd-t">Здесь человек подпишется</h3><p>Реклама привела его один раз. Соцсети напоминают о&nbsp;вас, и&nbsp;он возвращается.</p><div class="bt"><button type="button" id="x3-sd-x">Понятно</button><button type="button" id="x3-sd-go">Обсудить SMM</button></div></div></div>`;
 kl.insertBefore(R, document.getElementById('air'));
 const $ = s => R.querySelector(s), $$ = s => [...R.querySelectorAll(s)];
 const TILES = $$('.x3-t'), CELLS = $$('.x3-c');
 /* картина серии */
 R.style.setProperty('--grid', `url("${GRID}")`);
-
-/* Квадраты: картина уходит в чёрную станцию */
-const px = $('#x3-px'), pxc = px.getContext('2d');
-function wipe(amount, color, seed, cell) {
-  if (amount <= 0) return;
-  const { W, H } = G; pxc.fillStyle = color;
-  if (amount >= 1) { pxc.fillRect(0, 0, W, H); return; }
-  const nx = Math.ceil(W / cell), ny = Math.ceil(H / cell);
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    const thr = hash(i + j * 137, seed) * .55 + (j / ny) * .45;
-    if (amount > thr) pxc.fillRect(i * cell, j * cell, cell + .5, cell + .5);
-  }
-}
 
 /* Геометрия: сцена стоит между шапкой сайта и строкой над шкалой. Размер плитки зависит от высоты: видно три ряда и край четвёртого. */
 const G = { W: 0, H: 0, wide: true, top: 0, bot: 0, ts: 100, g: 4, av: [0, 0, 56] };
@@ -113,7 +100,6 @@ function layout() {
   G.W = innerWidth; G.H = Math.max(240, kr.height || innerHeight); G.wide = G.W > 760;
   G.top = Math.max(44, bar ? bar.getBoundingClientRect().bottom : 56); G.bot = foot.getBoundingClientRect().top - kr.top;
   R.style.setProperty('--top', G.top + 'px'); R.style.setProperty('--bot', Math.max(0, G.H - G.bot) + 'px');
-  px.width = G.W; px.height = G.H;
   const st = $('#x3-stage'), hd = $('#x3-hd'), sw = st.clientWidth, sh = st.clientHeight;
   /* сначала ширина под шапку, потом плитка по оставшейся высоте */
   const cmW = G.wide ? Math.min(270, Math.max(200, sw * .32)) : 0, g = G.wide ? 5 : 3;
@@ -146,12 +132,12 @@ function at(c, g) {
   return k < .5 ? [a[0] + st * k, a[1], 1 - 2 * k] : [b[0] - st * (1 - k), b[1], 2 * k - 1];
 }
 
-const X = { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, cap: -1, key: '' };
+const X = { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, cap: -1, key: '', tr: trace(0) };
 function reset() {
   Object.assign(X, { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, cap: -1, key: '' });
   R.classList.remove('on'); $('#x3-sd').hidden = true;
   ['#x3-bg', '#x3-scene'].forEach(s => vis($(s), 0));
-  pxc.clearRect(0, 0, px.width, px.height);
+  R.style.opacity = ''; window.GTSONAR?.halftone(R, 0);
   kl.classList.remove('ex', 'exd');
 }
 /* c: near — ручка у станции SMM, tuned — станция настроена, alpha — насколько станция слышна */
@@ -161,20 +147,23 @@ function step(dt, c) {
   if (!c.tuned) { X.tw = 0; if (X.u <= 0) X.goal = null; }
   else if (!X.auto && X.u <= 0 && X.goal == null) { X.tw += dt; if (X.tw > 6) { X.auto = true; X.goal = STOPS[1]; } }
   /* Щелчок и сам запуск проигрывают отрезок со скоростью четыре щелчка в секунду */
-  if (X.goal != null) { const sp = RM ? 9 : 4 / TOTAL * dt, d = X.goal - X.u; X.u = Math.abs(d) <= sp ? X.goal : X.u + Math.sign(d) * sp; if (X.u === X.goal) X.goal = null; }
-  X.uc = RM || X.goal != null || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * 9));
+  /* переходы с сеткой-сонаром идут медленнее, колесо в них мягче */
+  const slow = v => v * TOTAL < 1.9 || v * TOTAL > EXIT;
+  if (X.goal != null) { const sp = RM ? 9 : (slow(X.u) ? 1.3 : 4) / TOTAL * dt, d = X.goal - X.u; X.u = Math.abs(d) <= sp ? X.goal : X.u + Math.sign(d) * sp; if (X.u === X.goal) X.goal = null; }
+  X.uc = RM || X.goal != null || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * (slow(X.uc) ? 3.5 : 9)));
   const n = X.uc * TOTAL, A = c.alpha;
-  X.ph = n <= .1 ? 0 : 1;
-  const wk = ss(EXIT, EXIT + 2, n), gone = wk >= 1;
+  X.ph = n <= .1 ? 0 : 1; X.tr = trace(n);
+  const hz = ss(EXIT, EXIT + .8, n), wt = ss(EXIT + .8, EXIT + 1.6, n), gone = wt >= 1;
   vis($('#x3-bg'), ss(.1, 1, n) * (gone ? 0 : 1) * A);
   const sceneA = ss(.2, 1.4, n) * (gone ? 0 : 1) * A;
   vis($('#x3-scene'), sceneA);
   const key = n.toFixed(4) + '|' + A.toFixed(3);
   if (sceneA > .004 && key !== X.key) { X.key = key; scene(n); }
 
-  /* Уход: картина рассыпается чёрными квадратами, потом квадраты тают в чёрную станцию */
-  pxc.clearRect(0, 0, G.W, G.H);
-  if (wk > 0) { wipe(wk, '#000', 7, G.wide ? 18 : 14); px.style.opacity = (1 - ss(EXIT + 2, EXIT + 2.5, n)) * A; }
+  /* Уход: картина распадается растром на кружки на местах точек сетки-сонара (hz), кружки мельчают до точек,
+     на них проявляются белые точки сетки (grid), потом пример гаснет (wt): картина белеет в сетку. */
+  if (window.GTSONAR) GTSONAR.halftone(R, hz);
+  R.style.opacity = 1 - (window.GTSONAR ? wt : ss(EXIT, EXIT + 1.6, n));
   /* Пока идёт пример, надпись станции спрятана. После примера она возвращается. */
   const done = n > TOTAL - .15;
   kl.classList.toggle('ex', X.ph === 1 && !done); kl.classList.toggle('exd', done);
@@ -212,9 +201,9 @@ function scene(n) {
     el.style.opacity = ss(0, .2, p) * o * (c > 8.5 ? 1 - rv : 1);
   }
   $('#x3-av').style.setProperty('--ring', ring);
-  /* клетки пустого профиля видны, пока их не заняли */
+  /* клетки пустого профиля видны, пока их не заняли. В начале их пунктир собирает сетка-сонар и отдаёт им (X.tr.out). */
   const filled = tail;
-  CELLS.forEach((cl, i) => { cl.style.opacity = (i < filled - .5 ? 0 : 1) * (1 - rv); });
+  CELLS.forEach((cl, i) => { cl.style.opacity = (i < filled - .5 ? 0 : 1) * (1 - rv) * X.tr.out; });
 
   /* счётчики */
   const early = E.slice(0, EARLY.length).filter(v => v >= .5).length, ser = clamp((n - 14.4) / (TIMES[TIMES.length - 1] + LAND - 14.4));
@@ -241,7 +230,7 @@ function scene(n) {
   $('#x3-stage').style.transform = `translateY(${(1 - ss(.2, 1.4, n)) * 30}px)`;
   $('#x3-scene .tag').style.opacity = .5 * ss(1, 2, n);
 }
-/* Колесо: сначала пример, потом ручка. У края пример держит колесо ещё 0,45 секунды. Так же колесо держится перед уходом квадратами. */
+/* Колесо: сначала пример, потом ручка. У края пример держит колесо ещё 0,45 секунды. Так же колесо держится перед уходом в сетку. */
 function wheel(dy) {
   if (!X.on || !dy) return false;
   const now = performance.now(), ex = EXIT / TOTAL, du = dy / (100 * TOTAL);
@@ -276,8 +265,27 @@ $('#x3-sd-go').addEventListener('click', () => { sd.hidden = true; api.onTalk?.(
 sd.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); sd.hidden = true; sdBack?.focus(); } });
 
 /* цвет станции для эфира: чёрный, как у «Сайта» и «Рекламы» */
-Object.assign(api, { step, wheel, reset, next, col: [0, 0, 0] });
-/* пример всегда на тёмном фоне, поэтому буквы сайта белые, пока пример включён */
-Object.defineProperties(api, { dark: { get: () => X.on }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), on: X.on }) } });
+/* Сетка-сонар (sonar.js): точки в серединах чёрточек пунктира у первых трёх рядов клеток. Четвёртый ряд уходит в тень, его клетки проявляются сами.
+   Пунктир клетки: чёрточка 4 пикселя, промежуток 4, от начала каждой стороны (smm.css .x3-c). */
+function dots() {
+  /* только в начале: в уходе сетка встаёт из растра на своих местах */
+  if (!X.on || X.uc * TOTAL > 3) return null;
+  const k = kl.getBoundingClientRect(), T = [];
+  CELLS.slice(0, 9).forEach(cl => {
+    const r = cl.getBoundingClientRect(), x0 = r.left - k.left, y0 = r.top - k.top;
+    for (let d = 2; d + 2 <= r.width; d += 8) T.push([x0 + d, y0 + .5, 1, 0, 1.5], [x0 + d, y0 + r.height - .5, 1, 0, 1.5]);
+    for (let d = 2; d + 2 <= r.height; d += 8) T.push([x0 + .5, y0 + d, 0, 1, 1.5], [x0 + r.width - .5, y0 + d, 0, 1, 1.5]);
+  });
+  return T;
+}
+/* точки вытягиваются в чёрточки (g), чёрточки становятся пунктиром клеток: 1 пиксель цвета --line (th), потом отдаются клеткам (out) */
+function trace(n) { return { g: ss(1, 1.4, n), th: ss(1.2, 1.7, n), w: 1, a: .122, out: ss(1.6, 1.9, n) }; }
+Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0] });
+/* пример всегда на тёмном фоне, поэтому буквы сайта белые, пока пример включён.
+   grid: 0 сетка на надписи, 1 сетки нет. В начале сетка слетается в клетки профиля, в уходе встаёт из растра. */
+Object.defineProperties(api, {
+  grid: { get: () => { if (!X.on) return 1; const n = X.uc * TOTAL; return n < EXIT ? clamp((n - .1) / .9) : 1 - ss(EXIT + .6, EXIT + 1.2, n); } },
+  trace: { get: () => X.on && X.uc * TOTAL < 3 ? X.tr : null },
+  dark: { get: () => X.on }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), on: X.on }) } });
 return api;
 })();

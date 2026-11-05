@@ -41,7 +41,8 @@ const BW = 2 * Math.hypot(RX * Math.cos(AZ), RY * Math.sin(AZ)), BH = 2 * Math.h
 const PAL = [['Красный зерна', '#DF1F12', '223 · 31 · 18'], ['Тёмная обжарка', '#19181D', '25 · 24 · 29'], ['Оранжевый', '#FF5A1A', '255 · 90 · 26'], ['Крема', '#FFB03A', '255 · 176 · 58']];
 /* Шкала примера в щелчках колеса. Знак чертится 1–4,4 и стоит до 4,8, заливка и размеры 5–6,6, цвет 7,6–11,4, буквы 12,6–14,4,
    правила 15,4–18, носители 19–22,8, проверка 24,4–27,2 и стоит три щелчка, перед уходом пауза, уход квадратами 30,6–32,6. */
-const TOTAL = 33.2, EXIT = 30.6;
+/* Уход — зеркало начала: 30,6–31,5 знак распадается на точки в узлах листа, 31,5–33 точки разлетаются в сетку-сонар (GO — начало разлёта). */
+const TOTAL = 33.2, EXIT = 30.6, GO = 31.5;
 const STOPS = [0, 4.8, 7.2, 12, 15, 18.6, 23.4, 27.6, TOTAL].map(n => n / TOTAL);
 const CAPS = [
   [0, '01 · Знак', 'Знак', 'Зерно разрезано буквой Z. Каждая линия стоит на своём месте.'],
@@ -68,7 +69,6 @@ R.innerHTML = `
   </div></div>
   <p class="tag">Пример. Такой кофейни нет.</p>
 </div>
-<canvas id="x4-px" aria-hidden="true"></canvas>
 <div id="x4-sd" role="dialog" aria-modal="true" aria-labelledby="x4-sd-t" hidden><div class="bx"><small>Пример</small><h3 id="x4-sd-t">Здесь заказчик получит брендбук</h3><p>Знак, цвета, буквы, правила и&nbsp;носители в&nbsp;одном файле. По&nbsp;нему любой подрядчик сделает стакан или вывеску одинаково.</p><div class="bt"><button type="button" id="x4-sd-x">Понятно</button><button type="button" id="x4-sd-go">Обсудить бренд</button></div></div></div>`;
 kl.insertBefore(R, document.getElementById('air'));
 const $ = s => R.querySelector(s), $$ = s => [...R.querySelectorAll(s)];
@@ -119,7 +119,6 @@ function layout() {
   const S = Math.floor(Math.max(160, Math.min(st.clientWidth, sh0, 760)));
   G.S = S; R.style.setProperty('--s', S + 'px');
   const d = dpr(); cv.width = cv.height = Math.round(S * d); G.U = S * d / 1000;
-  px.width = G.W; px.height = G.H;
   /* середина знака на экране: оттуда красный заливает экран. Красная плашка палитры: туда красный сжимается. */
   const rr = R.getBoundingClientRect(), sh = $('#x4-sheet').getBoundingClientRect(), sw = CHIPS[0].querySelector('.sw').getBoundingClientRect();
   G.mx = sh.left - rr.left + S / 2; G.my = sh.top - rr.top + S / 2;
@@ -159,12 +158,32 @@ function line(c, x0, y0, x1, y1, k, a, col = INK, w = 2) {
   c.globalAlpha = a; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.moveTo(x0, y0); c.lineTo(lerp(x0, x1, k), lerp(y0, y1, k)); c.stroke(); c.globalAlpha = 1;
 }
 
+/* Точки в узлах листа 19 × 19 такого же размера и такой же яркости, как севшие точки сетки-сонара (sonar.js).
+   Лист в начале ещё проявляется, поэтому яркость делится на его прозрачность: на экране она равна яркости точек сонара. */
+const dotR = () => (window.GTSONAR ? 1.4 : 2) * 1000 / G.S;
+function nodes(c, r) { for (let i = 1; i < 20; i++) for (let j = 1; j < 20; j++) { c.moveTo(i * 50 + r, j * 50); c.arc(i * 50, j * 50, r, 0, Math.PI * 2); } }
+function matrix(c, n, a) {
+  if (a <= .004) return;
+  c.globalAlpha = Math.min(1, a * (window.GTSONAR ? GTSONAR.MV.land : .7) / Math.max(.2, ss(.2, 1.2, n))); c.fillStyle = '#fff';
+  c.beginPath(); nodes(c, dotR()); c.fill(); c.globalAlpha = 1;
+}
 /* 1–2. Знак на сетке: сетка, оси, окружности, контур зерна, средняя линия разреза Z с узлами, края разреза, потом заливка и размеры */
 function drawSign(c, n) {
   const fade = 1 - ss(7.6, 8.1, n), cons = ss(1, 1.6, n) * lerp(1, .25, ss(5, 6, n)) * fade;
+  /* Точки в узлах листа: в них села сетка-сонар. Они проявляются, пока точки сонара тают у цели. */
+  matrix(c, n, ss(.87, 1, n) * (1 - ss(1.7, 2.4, n)));
   if (cons > .004) {
+    /* Линии сетки растут из узлов: от каждого узла к соседям, встречаются посередине. У края листа линия идёт от узла до края. */
     const g = ss(1, 1.8, n);
-    for (let i = 1; i < 20; i++) { line(c, i * 50, 0, i * 50, 1000, g, cons * .9, FAINT, 1.5); line(c, 0, i * 50, 1000, i * 50, g, cons * .9, FAINT, 1.5); }
+    if (g > 0) {
+      c.globalAlpha = cons * .9; c.strokeStyle = FAINT; c.lineWidth = 1.5; c.beginPath();
+      for (let i = 1; i < 20; i++) for (let j = 0; j < 20; j++) {
+        const a = j * 50, b = a + 50, x = i * 50, fa = (j < 19 ? 25 : 50) * g, fb = (j > 0 ? 25 : 50) * g;
+        if (j > 0) { c.moveTo(x, a); c.lineTo(x, a + fa); c.moveTo(a, x); c.lineTo(a + fa, x); }
+        if (j < 19) { c.moveTo(x, b); c.lineTo(x, b - fb); c.moveTo(b, x); c.lineTo(b - fb, x); }
+      }
+      c.stroke(); c.globalAlpha = 1;
+    }
     const ax = ss(1.6, 2.4, n), ma = [-Math.sin(AZ), Math.cos(AZ)], mi = [Math.cos(AZ), Math.sin(AZ)];
     for (const [v, r] of [[ma, 420], [mi, 330]]) {
       line(c, 500, 500, 500 + v[0] * r, 500 + v[1] * r, ax, cons); line(c, 500, 500, 500 - v[0] * r, 500 - v[1] * r, ax, cons);
@@ -320,7 +339,12 @@ function drawCheck(c, n) {
     c.globalAlpha = k; c.fillStyle = `rgb(${r},${g},${b})`; c.fillRect(x0 + (i % N) * q + 4, y0 + Math.floor(i / N) * q + 4, q - 8, q - 8);
   });
   c.globalAlpha = 1;
-  icon(c, x0, y0, S, sharp);
+  /* Уход: знак распадается на точки в узлах листа, как растр. Кружки в узлах сжимаются от сплошного знака до точек сетки, точки белеют,
+     потом белые точки отдаются сетке-сонару, и она разлетается из листа на весь экран. */
+  const hz = ss(EXIT, EXIT + .7, n), wt = ss(EXIT + .4, GO, n);
+  if (hz <= 0) { icon(c, x0, y0, S, sharp); return; }
+  if (wt < 1) { c.save(); c.beginPath(); nodes(c, lerp(36, dotR(), hz)); c.clip(); icon(c, x0, y0, S, sharp * (1 - wt)); c.restore(); }
+  matrix(c, n, ss(EXIT + .3, GO, n) * (1 - ss(GO, GO + .21, n)));
 }
 function paint(n) {
   const c = ctx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.setTransform(G.U, 0, 0, G.U, 0, 0);
@@ -331,25 +355,12 @@ function paint(n) {
   if (n > 24.3) drawCheck(c, n);
 }
 
-/* Квадраты: лист уходит в чёрную станцию */
-const px = $('#x4-px'), pxc = px.getContext('2d');
-function wipe(amount, color, seed, cell) {
-  if (amount <= 0) return;
-  const { W, H } = G; pxc.fillStyle = color;
-  if (amount >= 1) { pxc.fillRect(0, 0, W, H); return; }
-  const nx = Math.ceil(W / cell), ny = Math.ceil(H / cell);
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    const thr = hash(i + j * 137, seed) * .55 + (j / ny) * .45;
-    if (amount > thr) pxc.fillRect(i * cell, j * cell, cell + .5, cell + .5);
-  }
-}
 
 const X = { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, cap: -1, key: '' };
 function reset() {
   Object.assign(X, { on: false, u: 0, uc: 0, goal: null, edge: 0, hold: 0, tw: 0, auto: false, ph: 0, cap: -1, key: '' });
   R.classList.remove('on'); $('#x4-sd').hidden = true;
   ['#x4-bg', '#x4-scene', '#x4-flood'].forEach(s => vis($(s), 0));
-  pxc.clearRect(0, 0, px.width, px.height);
   kl.classList.remove('ex', 'exd');
 }
 /* c: near — ручка у станции «Бренд», tuned — станция настроена, alpha — насколько станция слышна */
@@ -358,21 +369,21 @@ function step(dt, c) {
   if (!X.on) { X.on = true; R.classList.add('on'); layout(); }
   if (!c.tuned) { X.tw = 0; if (X.u <= 0) X.goal = null; }
   else if (!X.auto && X.u <= 0 && X.goal == null) { X.tw += dt; if (X.tw > 6) { X.auto = true; X.goal = STOPS[1]; } }
-  /* Щелчок и сам запуск проигрывают отрезок со скоростью четыре щелчка в секунду */
-  if (X.goal != null) { const sp = RM ? 9 : 4 / TOTAL * dt, d = X.goal - X.u; X.u = Math.abs(d) <= sp ? X.goal : X.u + Math.sign(d) * sp; if (X.u === X.goal) X.goal = null; }
-  X.uc = RM || X.goal != null || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * 9));
+  /* Щелчок и сам запуск проигрывают отрезок со скоростью четыре щелчка в секунду.
+     Переходы с сеткой-сонаром идут медленнее: первый щелчок (сетка складывается в лист) за секунду, уход (лист раскладывается в сетку) за две. */
+  const slow = v => v * TOTAL < 1 || v * TOTAL > EXIT;
+  if (X.goal != null) { const sp = RM ? 9 : (X.u * TOTAL < 1 ? 1 : X.u * TOTAL > EXIT ? 1.2 : 4) / TOTAL * dt, d = X.goal - X.u; X.u = Math.abs(d) <= sp ? X.goal : X.u + Math.sign(d) * sp; if (X.u === X.goal) X.goal = null; }
+  /* колесо сглаживается, а в переходах с сеткой мягче */
+  X.uc = RM || X.goal != null || Math.abs(X.uc - X.u) < 2e-4 ? X.u : lerp(X.uc, X.u, clamp(dt * (slow(X.uc) || X.uc * TOTAL < 1.2 ? 3.5 : 9)));
   const n = X.uc * TOTAL, A = c.alpha;
   X.ph = n <= .1 ? 0 : 1;
-  const wk = ss(EXIT, EXIT + 2, n), gone = wk >= 1;
-  vis($('#x4-bg'), ss(.1, 1, n) * (gone ? 0 : 1) * A);
-  const sceneA = ss(.2, 1.2, n) * (gone ? 0 : 1) * A;
+  /* фон листа гаснет до чёрного фона станции, лист держится, пока его точки не отдались сетке-сонару */
+  vis($('#x4-bg'), ss(.1, 1, n) * (1 - ss(EXIT + .3, EXIT + .9, n)) * A);
+  const sceneA = ss(.2, 1.2, n) * (1 - ss(GO + .22, GO + .3, n)) * A;
   vis($('#x4-scene'), sceneA);
   const key = n.toFixed(4) + '|' + A.toFixed(3);
   if (sceneA > .004 && key !== X.key) { X.key = key; scene(n, A); }
 
-  /* Уход: лист рассыпается чёрными квадратами, потом квадраты тают в чёрную станцию */
-  pxc.clearRect(0, 0, G.W, G.H);
-  if (wk > 0) { wipe(wk, '#000', 11, G.wide ? 18 : 14); px.style.opacity = (1 - ss(EXIT + 2, EXIT + 2.5, n)) * A; }
   const done = n > TOTAL - .15;
   kl.classList.toggle('ex', X.ph === 1 && !done); kl.classList.toggle('exd', done);
 }
@@ -382,7 +393,9 @@ function scene(n, A) {
   const nb = CAPS.reduce((m, cp, i) => i ? Math.min(m, Math.abs(n - cp[0])) : m, 9);
   if (ci !== X.cap) { X.cap = ci; $('#x4-n').textContent = CAPS[ci][1]; $('#x4-h').textContent = CAPS[ci][2]; $('#x4-p').textContent = CAPS[ci][3]; $('#x4-pg').textContent = 'ZERNO · брендбук · ' + CAPS[ci][1].slice(0, 2); }
   const cap = $('#x4-cap'), ci0 = ss(.5, 1.4, n);
-  cap.style.opacity = ci0 * clamp(nb / .22); cap.style.transform = `translateY(${(1 - ci0) * 16}px)`;
+  const gone = 1 - ss(EXIT, EXIT + .6, n);
+  cap.style.opacity = ci0 * clamp(nb / .22) * gone; cap.style.transform = `translateY(${(1 - ci0) * 16}px)`;
+  $('#x4-pg').style.opacity = gone; R.style.setProperty('--line', `rgba(255,255,255,${(.12 * gone).toFixed(3)})`);
   $('#x4-stage').style.transform = `translateY(${(1 - ss(.2, 1.2, n)) * 24}px)`;
   paint(n);
 
@@ -399,10 +412,10 @@ function scene(n, A) {
     vis(ch, k * palOut); ch.style.transform = i ? `translateY(${(1 - k) * 30}px)` : '';
   });
   R.classList.toggle('red', grow > .5 && shrink < .5);
-  $('#x4-scene .tag').style.opacity = .5 * ss(1, 2, n);
+  $('#x4-scene .tag').style.opacity = .5 * ss(1, 2, n) * gone;
   $('#x4-get').style.opacity = ss(1.2, 2, n) * (1 - ss(23.8, 24.3, n));
 }
-/* Колесо: сначала пример, потом ручка. У края пример держит колесо ещё 0,45 секунды. Так же колесо держится перед уходом квадратами. */
+/* Колесо: сначала пример, потом ручка. У края пример держит колесо ещё 0,45 секунды. Так же колесо держится перед уходом в сетку. */
 function wheel(dy) {
   if (!X.on || !dy) return false;
   const now = performance.now(), ex = EXIT / TOTAL, du = dy / (100 * TOTAL);
@@ -439,7 +452,16 @@ $('#x4-sd-go').addEventListener('click', () => { sd.hidden = true; api.onTalk?.(
 sd.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); sd.hidden = true; sdBack?.focus(); } });
 
 /* цвет станции для эфира: чёрный, как у остальных станций с примером */
-Object.assign(api, { step, wheel, reset, next, col: [0, 0, 0] });
+/* Узлы сетки листа: в них складывается сетка-сонар, когда начинается пример. Столбцами, как точки сонара. */
+function dots() {
+  if (!X.on) return null;
+  const kr = kl.getBoundingClientRect(), r = cv.getBoundingClientRect(), out = [];
+  for (let i = 1; i < 20; i++) for (let j = 1; j < 20; j++) out.push([r.left - kr.left + r.width * i / 20, r.top - kr.top + r.height * j / 20]);
+  return out;
+}
+Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0] });
+/* grid: ход перехода сетки-сонара, 0 сетка на надписи, 1 точки в узлах листа. В начале идёт по первому щелчку, в уходе обратно с GO до конца. */
+Object.defineProperty(api, 'grid', { get: () => { if (!X.on) return 1; const n = X.uc * TOTAL; return n < EXIT ? clamp((n - .1) / .9) : 1 - clamp((n - GO) / 1.5); } });
 /* пример всегда на тёмном или красном фоне, поэтому буквы сайта белые, пока пример включён */
 Object.defineProperties(api, { dark: { get: () => X.on }, state: { get: () => ({ ph: X.ph, u: +X.u.toFixed(3), on: X.on }) } });
 return api;

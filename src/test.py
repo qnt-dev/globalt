@@ -162,15 +162,27 @@ with sync_playwright() as pw:
         g=ImageStat.Stat(Image.open(io.BytesIO(p.screenshot())).convert('L')); check(f'noise stays after {hours} h',g.mean[0]>80 and g.stddev[0]>30,(g.mean[0],g.stddev[0])); c.close()
     # «Сайт»: плохой сайт разваливается, куча лежит, колесо роняет телефон в воду, из воды встаёт пример
     ST="window.GTSAYT.state"
+    # после примера на надписи одна кнопка: разговор про эту услугу. До конца примера кнопок нет.
+    GO="(()=>{const g=document.querySelector('#st-go'),r=g.getBoundingClientRect(),f=document.querySelector('#air-foot').getBoundingClientRect().top;return {on:getComputedStyle(g).display!='none'&&r.height>0,t:g.textContent,b:Math.round(r.bottom),foot:Math.round(f),r:Math.round(r.right),W:innerWidth}})()"
+    # надпись после примера проявляется и поднимается (stback, stgo): мерить её, когда она встала
+    def until(p,js,ms=9000):
+        try: p.wait_for_function(js,timeout=ms); return True
+        except Exception: return False
+    def go_check(p,name,word,topic):
+        until(p,"document.querySelector('#klienty').classList.contains('exd')&&document.getAnimations().filter(a=>['stback','stgo'].includes(a.animationName)).every(a=>a.playState=='finished')"); r=p.evaluate(GO); check(f'{name}: one button after the example',r['on'] and word in r['t'] and r['b']<=r['foot'] and r['r']<=r['W'],r)
+        p.click('#st-go'); check(f'{name}: button opens talk',p.is_visible('#talk') and topic in p.input_value('#t-what').lower()); p.click('#talk-x')
     for w,h in SIZES:
+        # плохой сайт ловится, как станция: сначала полосы сквозь шум (junk), потом он закрывает экран (junk2), буквы встают на место
         c,p=page(w,h,'#klienty'); p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.junk',state='attached',timeout=20000)
-        check(f'junk page first {w}',p.is_visible('.j-modal') and not p.is_visible('#st-ask'))
+        p.wait_for_function("document.querySelector('#klienty').classList.contains('junk2')&&document.querySelector('#junk').textContent.includes('Заезженный дизайн')&&getComputedStyle(document.querySelector('#logo')).visibility=='hidden'",timeout=20000)
+        check(f'junk page first {w}',p.is_visible('.j-modal') and not p.is_visible('#st-ask') and not p.evaluate("document.querySelector('#klienty').classList.contains('clean')"))
         check(f'no GT logo over junk {w}',p.evaluate("getComputedStyle(document.querySelector('#logo')).visibility")=='hidden')
         check(f'junk says worn design {w}','Заезженный дизайн' in p.text_content('#junk'))
         p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(2500)
-        r=p.evaluate("(()=>{const P=[...document.querySelectorAll('#junk .jp.fell')].map(e=>e.getBoundingClientRect()),f=document.querySelector('#air-foot').getBoundingClientRect(),a=document.querySelector('#st-hint').getBoundingClientRect();return {n:P.length,out:P.filter(q=>q.left<-3||q.right>innerWidth+3||q.bottom>f.top+8).length,top:Math.round(Math.min(...P.map(q=>q.top))),hint:Math.round(a.bottom),sheet:getComputedStyle(document.querySelector('#j-sheet')).visibility}})()")
-        check(f'junk pile on floor {w}x{h}',r['n']>=10 and r['out']==0,r); check(f'junk sheet gone {w}',r['sheet']=='hidden',r); check(f'junk leaves text {w}x{h}',r['top']>=r['hint']-30,r)
-        check(f'site station: face and question, no buttons {w}',p.is_visible('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-cta') and p.locator('#st-x').count()==0 and 'лицо компании' in p.text_content('#st-line'))
+        # куча не закрывает текст: под вопросом и подсказкой обломки ниже подсказки, сбоку от них не выше нижнего края вопроса
+        r=p.evaluate("(()=>{const P=[...document.querySelectorAll('#junk .jp.fell')].map(e=>e.getBoundingClientRect()),f=document.querySelector('#air-foot').getBoundingClientRect(),a=document.querySelector('#st-hint').getBoundingClientRect(),R=s=>{const g=document.createRange();g.selectNodeContents(document.querySelector(s));return g.getBoundingClientRect()},ht=R('#st-hint'),ak=R('#st-ask'),L=Math.min(ht.left,ak.left),Rt=Math.max(ht.right,ak.right),u=P.filter(q=>q.right>L&&q.left<Rt),sd=P.filter(q=>!(q.right>L&&q.left<Rt)),mn=A=>A.length?Math.round(Math.min(...A.map(q=>q.top))):9999;return {n:P.length,out:P.filter(q=>q.left<-3||q.right>innerWidth+3||q.bottom>f.top+8).length,top:mn(u),side:mn(sd),hint:Math.round(a.bottom),ask:Math.round(ak.bottom),sheet:getComputedStyle(document.querySelector('#j-sheet')).visibility}})()")
+        check(f'junk pile on floor {w}x{h}',r['n']>=10 and r['out']==0,r); check(f'junk sheet gone {w}',r['sheet']=='hidden',r); check(f'junk leaves text {w}x{h}',r['top']>=r['hint']-30 and r['side']>=r['ask'],r)
+        check(f'site station: face and question, no buttons {w}',p.is_visible('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta') and p.locator('#st-x').count()==0 and 'лицо компании' in p.text_content('#st-line'))
         check(f'logo back after junk {w}',p.evaluate("getComputedStyle(document.querySelector('#logo')).visibility")=='visible')
         r=p.evaluate("(()=>{const q=document.querySelector('#junk .jp.j-modal').getBoundingClientRect();return [q.left+q.width/2,q.top+q.height/2]})()"); y0=r[1]; p.mouse.move(r[0],r[1]); p.mouse.down(); p.mouse.move(r[0],max(90,r[1]-160),steps=5); p.wait_for_timeout(500)
         y1=p.evaluate("(()=>{const q=document.querySelector('#junk .jp.j-modal').getBoundingClientRect();return q.top+q.height/2})()"); p.mouse.up(); check(f'junk can be grabbed {w}',y1<y0-40,(y0,y1)); p.wait_for_timeout(300)
@@ -191,6 +203,7 @@ with sync_playwright() as pw:
         p.wait_for_timeout(1200); s=p.evaluate(ST)
         check(f'wheel walks all forms {w}',seen>={1,2,3} and s['u']==1,(seen,s))
         check(f'station text after example {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#st-hint'))
+        go_check(p,f'site {w}','сайт','сайт'); p.mouse.move(w/2,h/2)
         back=set()
         for _ in range(40):
             if p.evaluate(ST)['u']<=-.18: break
@@ -199,8 +212,9 @@ with sync_playwright() as pw:
         check(f'wheel goes back the same steps {w}',back>={1,2,3} and s['ph']==0 and abs(float(p.evaluate('__gt.air.v'))-12)<1.5,(back,s))
         check(f'phone back in the pile {w}',p.evaluate("getComputedStyle(document.querySelector('#junk .j-call')).visibility")=='visible' and not p.is_visible('#x1-call'))
         # щелчок по пустому месту: вступление, затем следующая форма
-        p.mouse.click(w*.5,h*.45); p.wait_for_timeout(2600); s=p.evaluate(ST); check(f'click starts example {w}',s['ph']==2,s)
-        p.mouse.click(*s['c']); p.wait_for_timeout(1200); s=p.evaluate(ST); check(f'click shows next form {w}',s['shape']==1,s)
+        # первый щелчок проигрывает вступление до первой остановки, второй ведёт к следующей форме
+        p.mouse.click(w*.5,h*.45); until(p,ST+".ph==2&&"+ST+".u>=0"); p.wait_for_timeout(300); s=p.evaluate(ST); check(f'click starts example {w}',s['ph']==2,s)
+        p.mouse.click(*s['c']); until(p,ST+".shape==1",6000); s=p.evaluate(ST); check(f'click shows next form {w}',s['shape']==1,s)
         if w>760: p.click('#x1-hd .h3c'); check(f'example contact opens talk {w}',p.is_visible('#talk') and 'сайт' in p.input_value('#t-what').lower()); p.click('#talk-x')
         check(f'site no err {w}',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty'); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1300); check('other stations keep their text',p.is_visible('#st-get') and p.is_visible('#st-cta') and not p.is_visible('#st-ask')); check('junk hidden on other stations',not p.is_visible('#junk'))
@@ -212,6 +226,13 @@ with sync_playwright() as pw:
     p.click('#presets button[data-i="0"]'); p.wait_for_timeout(1800); check('junk stays fallen on return from the right',p.evaluate(KJ) and p.evaluate('window.__jk')==0)
     p.evaluate("(()=>{const t=document.querySelector('#tun');t.value=6;t.dispatchEvent(new Event('input'))})()"); p.wait_for_timeout(1400); check('dial back restores junk',p.evaluate("document.querySelector('#klienty').classList.contains('junk')"))
     p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(7500); check('example starts by itself',p.evaluate(ST)['ph']==2); check('site no err idle',not p.E,p.E); c.close()
+    # на полпути к «Сайту» плохой сайт ещё ловится: полосы сквозь шум, помехи, буквы перебираются, и он не валится, пока сигнал не встал
+    c,p=page(1000,640,'#klienty'); p.evaluate("(()=>{const t=document.querySelector('#tun');t.value=5;t.dispatchEvent(new Event('input'))})()"); p.wait_for_timeout(2500)
+    r=p.evaluate("(()=>{const b=document.querySelector('#junk'),k=document.querySelector('#klienty');return {f:b.style.filter,m:!!(b.style.maskImage||b.style.webkitMaskImage),txt:b.textContent.includes('Заезженный дизайн'),junk:k.classList.contains('junk'),clean:k.classList.contains('clean')}})()")
+    check('junk tunes in through bands',r['junk'] and 'j-tv' in r['f'] and r['m'] and not r['txt'] and not r['clean'],r)
+    p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000)
+    r=p.evaluate("(()=>{const b=document.querySelector('#junk');return {f:b.style.filter,m:!!(b.style.maskImage||b.style.webkitMaskImage),txt:b.textContent.includes('Заезженный дизайн')}})()")
+    check('junk whole before it falls',not r['f'] and not r['m'] and r['txt'],r); check('no err junk tune',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',rm='reduce'); p.click('#presets button[data-i="0"]'); p.wait_for_timeout(300); check('reduced: junk already fallen',p.evaluate("document.querySelector('#klienty').classList.contains('clean') && document.querySelectorAll('#junk .jp.fell').length>=10"))
     p.mouse.move(500,320); [p.mouse.wheel(0,100) for _ in range(8)]; p.wait_for_timeout(300); check('reduced: example by wheel',p.evaluate(ST)['ph']==2); check('no err rm site',not p.E,p.E); c.close()
     # «Реклама», прототип maket/reklama.html: поиск, лента, сайт кофейни, назад теми же шагами. В index.html станция пока прежняя.
@@ -219,6 +240,8 @@ with sync_playwright() as pw:
     # остановки шкалы в щелчках колеса из 32,4: выдача, лента, сайт, меню
     S1,S2,S3,S4=7.8/32.4,16.4/32.4,22.6/32.4,27.2/32.4
     FOOT="document.querySelector('#air-foot').getBoundingClientRect().top"
+    # конец примера: он виден только в кружках на местах точек сетки, а сетка-сонар уже встаёт из него (класс mv)
+    HT="(()=>{const x=document.querySelector(%s),s=document.querySelector('#sonar');return {m:(x.style.maskImage||x.style.webkitMaskImage||'').slice(0,16),on:s.classList.contains('on'),mv:s.classList.contains('mv')}})()"
     def to(p,t):
         for _ in range(90):
             u=p.evaluate(RS)['u']
@@ -227,7 +250,7 @@ with sync_playwright() as pw:
         p.wait_for_timeout(800)
     for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
         c,p=page(w,h,'#klienty',url=RK); p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1800)
-        check(f'ads card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'привести' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-cta'))
+        check(f'ads card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'привести' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta'))
         p.mouse.move(w/2,h*.45); to(p,S1)
         check(f'ads search {w}',p.is_visible('#x2-find') and p.text_content('#x2-q')=='кофе с доставкой бишкек' and p.text_content('#x2-ad .t')=='ZERNO — кофе за 20 минут' and not p.is_visible('#st-name'))
         r=p.evaluate(CLIP%"'#x2-find h3,#x2-find p,#x2-fld,#x2-ad .t,#x2-ad .d'"); check(f'ads search clip {w}x{h}',not r['out'],r)
@@ -248,17 +271,20 @@ with sync_playwright() as pw:
         to(p,S4); p.click('#x2-wall button:nth-child(4)'); check(f'ads menu pick {w}','Латте' in p.text_content('#x2-price'))
         p.click('#x2-take'); check(f'ads order note {w}',p.is_visible('#x2-sd')); p.click('#x2-sd-go'); check(f'ads talk {w}',p.is_visible('#talk') and 'реклам' in p.input_value('#t-what').lower()); p.click('#talk-x')
         # надпись станции чёрная, как у «Сайта»: буквы белые, поэтому класса ink нет
-        p.mouse.move(w/2,h*.45); to(p,1); check(f'ads end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x2-land') and not p.evaluate("document.body.classList.contains('ink')"))
+        p.mouse.move(w/2,h*.45); to(p,30.7/32.4); p.wait_for_timeout(700); r=p.evaluate(HT%"'#x2'"); check(f'ads ends as halftone into the grid {w}','radial' in r['m'] and r['on'] and r['mv'],r)
+        to(p,1); until(p,"document.querySelector('#klienty').classList.contains('exd')"); check(f'ads end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x2-land') and not p.evaluate("document.body.classList.contains('ink')"))
+        go_check(p,f'ads {w}','рекламу','реклам'); p.mouse.move(w/2,h*.45)
         # назад по щелчку колеса до края. Лишние щелчки после края по правилу крутят ручку, поэтому их нет.
         back=set(); SC="['#x2-land','#x2-feed','#x2-find'].filter(s=>getComputedStyle(document.querySelector(s)).visibility=='visible')"
         for _ in range(40):
             if p.evaluate(RS)['u']<=0: break
             p.mouse.wheel(0,-100); p.wait_for_timeout(40); back.update(p.evaluate(SC))
-        p.wait_for_timeout(1200); s=p.evaluate(RS); check(f'ads back the same steps {w}',back>={'#x2-land','#x2-feed','#x2-find'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-37)<1.5,s)
-        p.mouse.click(w*.5,h*.4); p.wait_for_timeout(2800); s=p.evaluate(RS); check(f'ads click plays search {w}',abs(s['u']-S1)<.002,s)
+        p.wait_for_timeout(1200); s=p.evaluate(RS); check(f'ads back the same steps {w}',back>={'#x2-land','#x2-feed','#x2-find'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-63)<1.5,s)
+        # начало и конец примера идут медленно, поэтому щелчок играет до выдачи около трёх секунд
+        p.mouse.click(w*.5,h*.4); until(p,f"Math.abs({RS}.u-{S1})<.002"); s=p.evaluate(RS); check(f'ads click plays search {w}',abs(s['u']-S1)<.002,s)
         check(f'ads no err {w}',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',url=RK); p.click('#presets button[data-i="1"]'); p.wait_for_timeout(10500); check('ads start by itself',abs(p.evaluate(RS)['u']-S1)<.002,p.evaluate(RS))
-    p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1500); check('ads off on other station',not p.evaluate(RS)['on'] and p.is_visible('#st-cta')); check('ads no err idle',not p.E,p.E); c.close()
+    p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1500); check('ads off on other station',not p.evaluate(RS)['on'] and p.evaluate("window.GTSMM.state")['on']); check('ads no err idle',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',rm='reduce',url=RK); p.click('#presets button[data-i="1"]'); p.wait_for_timeout(400); p.mouse.move(500,300)
     for _ in range(21): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: ads site by wheel',p.evaluate(RS)['land']==1); check('no err rm ads',not p.E,p.E); c.close()
@@ -275,7 +301,7 @@ with sync_playwright() as pw:
     VIS="(s=>getComputedStyle(document.querySelector(s)).visibility=='visible'&&+getComputedStyle(document.querySelector(s)).opacity>.9)"
     for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
         c,p=page(w,h,'#klienty',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1800)
-        check(f'smm card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'подписаться' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-cta'))
+        check(f'smm card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'подписаться' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta'))
         p.mouse.move(w/2,h*.45); to3(p,T1)
         check(f'smm day 1 {w}',p.is_visible('#x3-scene') and p.text_content('#x3-h')=='День 1' and p.text_content('#x3-np')=='0' and not p.is_visible('#st-name'))
         r=p.evaluate("(()=>{const q=s=>document.querySelector(s).getBoundingClientRect(),f=q('#air-foot').top,hd=q('#x3-hd'),b=q('#bar'),g=q('#x3-grid'),ts=parseFloat(getComputedStyle(document.querySelector('#x3')).getPropertyValue('--ts'));return {hd:Math.round(hd.top),bar:Math.round(b.bottom),rows:Math.round(g.top+3*ts),foot:Math.round(f),right:Math.round(g.right),W:innerWidth,ink:document.body.classList.contains('ink')}})()")
@@ -290,17 +316,19 @@ with sync_playwright() as pw:
         to3(p,T5)
         r=p.evaluate("(()=>{const q=document.querySelector('#x3-big').getBoundingClientRect(),f=document.querySelector('#air-foot').getBoundingClientRect().top;return {op:+getComputedStyle(document.querySelector('#x3-big')).opacity,hd:+getComputedStyle(document.querySelector('#x3-hd')).opacity,l:Math.round(q.left),r:Math.round(q.right),b:Math.round(q.bottom),t:Math.round(q.top),foot:Math.round(f),W:innerWidth}})()")
         check(f'smm image {w}x{h}',p.text_content('#x3-h')=='Образ' and r['op']>.99 and r['hd']<.01 and r['l']>=0 and r['r']<=r['W'] and r['b']<=r['foot']+2,r)
-        to3(p,1); check(f'smm end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x3-scene'))
+        to3(p,26.3/28); p.wait_for_timeout(700); r=p.evaluate(HT%"'#x3'"); check(f'smm ends as halftone into the grid {w}','radial' in r['m'] and r['on'] and r['mv'],r)
+        to3(p,1); until(p,"document.querySelector('#klienty').classList.contains('exd')"); check(f'smm end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x3-scene'))
+        go_check(p,f'smm {w}','SMM','соцсет'); p.mouse.move(w/2,h*.45)
         back=set(); SC="['#x3-big','#x3-q2','#x3-scene'].filter(s=>getComputedStyle(document.querySelector(s)).visibility=='visible'&&+getComputedStyle(document.querySelector(s)).opacity>.5)"
         for _ in range(60):
             if p.evaluate(SS)['u']<=0: break
             p.mouse.wheel(0,-100); p.wait_for_timeout(40); back.update(p.evaluate(SC))
-        p.wait_for_timeout(1200); s=p.evaluate(SS); check(f'smm back the same steps {w}',back>={'#x3-big','#x3-q2','#x3-scene'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-63)<1.5,s)
-        p.mouse.click(w*.5,h*.4); p.wait_for_timeout(1600); s=p.evaluate(SS); check(f'smm click plays day 1 {w}',abs(s['u']-T1)<.002,s)
+        p.wait_for_timeout(1200); s=p.evaluate(SS); check(f'smm back the same steps {w}',back>={'#x3-big','#x3-q2','#x3-scene'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-88)<1.5,s)
+        p.mouse.click(w*.5,h*.4); until(p,f"Math.abs({SS}.u-{T1})<.002"); s=p.evaluate(SS); check(f'smm click plays day 1 {w}',abs(s['u']-T1)<.002,s)
         check(f'smm no err {w}',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(10500); check('smm start by itself',abs(p.evaluate(SS)['u']-T1)<.002,p.evaluate(SS))
     p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1500); check('smm off on ads',not p.evaluate(SS)['on'] and p.evaluate(RS)['on'])
-    p.click('#presets button[data-i="3"]'); p.wait_for_timeout(1500); check('smm off on brand',not p.evaluate(SS)['on'] and p.is_visible('#st-cta')); check('smm no err idle',not p.E,p.E); c.close()
+    p.click('#presets button[data-i="3"]'); p.wait_for_timeout(1500); check('smm off on brand',not p.evaluate(SS)['on'] and p.evaluate("window.GTBRD.state")['on']); check('smm no err idle',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',rm='reduce',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(400); p.mouse.move(500,300)
     for _ in range(22): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: smm image by wheel',p.evaluate("+getComputedStyle(document.querySelector('#x3-big')).opacity")>.99); check('no err rm smm',not p.E,p.E); c.close()
@@ -319,7 +347,7 @@ with sync_playwright() as pw:
         p.wait_for_timeout(800)
     for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
         c,p=page(w,h,'#klienty',url=BD); p.click('#presets button[data-i="3"]'); p.wait_for_timeout(1800)
-        check(f'brand card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'взгляда' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-cta'))
+        check(f'brand card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'взгляда' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta'))
         check(f'brand card: sonar draws {w}',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX))
         p.mouse.move(w/2,h*.45); to4(p,B1)
         check(f'brand sign {w}',p.is_visible('#x4-scene') and p.text_content('#x4-h')=='Знак' and not p.is_visible('#st-name') and not p.evaluate(SON))
@@ -335,16 +363,18 @@ with sync_playwright() as pw:
         to4(p,B5); check(f'brand rules {w}',p.text_content('#x4-h')=='Правила')
         to4(p,B6); check(f'brand carriers {w}',p.text_content('#x4-h')=='Везде')
         to4(p,B7); check(f'brand check {w}',p.text_content('#x4-h')=='ZERNO' and p.evaluate("+getComputedStyle(document.querySelector('#x4-get')).opacity")<.01)
-        to4(p,1); check(f'brand end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x4-scene') and p.evaluate(SON))
+        to4(p,1); until(p,"document.querySelector('#klienty').classList.contains('exd')"); check(f'brand end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x4-scene') and p.evaluate(SON))
+        go_check(p,f'brand {w}','бренд','бренд'); p.mouse.move(w/2,h*.45)
         back=set()
         for _ in range(70):
             if p.evaluate(BS)['u']<=0: break
             p.mouse.wheel(0,-100); p.wait_for_timeout(40); back.add(p.text_content('#x4-h'))
-        p.wait_for_timeout(1200); s=p.evaluate(BS); check(f'brand back the same steps {w}',back>={'ZERNO','Узнали?','Везде','Правила','Буквы','Цвет','Знак'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-88)<1.5,(back,s))
+        p.wait_for_timeout(1200); s=p.evaluate(BS); check(f'brand back the same steps {w}',back>={'ZERNO','Узнали?','Везде','Правила','Буквы','Цвет','Знак'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-37)<1.5,(back,s))
         p.mouse.click(w*.5,h*.4); p.wait_for_timeout(2000); s=p.evaluate(BS); check(f'brand click plays the sign {w}',abs(s['u']-B1)<.002,s)
         check(f'brand no err {w}',not p.E,p.E); c.close()
     # сетка есть на всех четырёх надписях прототипа, пока пример идёт, её нет
-    c,p=page(1000,640,'#klienty',url=BD); p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(700); on=[p.evaluate(SON)]
+    c,p=page(1000,640,'#klienty',url=BD); DO="[...document.querySelectorAll('#presets button')].map(b=>b.textContent+b.style.left).join()"; check('dial order: site, brand, ads, smm',p.evaluate(DO)=='Сайт12%,Бренд37%,Реклама63%,SMM88%',p.evaluate(DO))
+    p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(700); on=[p.evaluate(SON)]
     for i in (1,2,3): p.click(f'#presets button[data-i="{i}"]'); p.wait_for_timeout(1800); on.append(p.evaluate(SON))
     check('sonar on all four cards',all(on),on)
     p.wait_for_timeout(9000); check('brand start by itself',abs(p.evaluate(BS)['u']-B1)<.002,p.evaluate(BS)); check('sonar off while the brand example runs',not p.evaluate(SON))

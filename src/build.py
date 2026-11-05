@@ -34,20 +34,13 @@ open(os.path.join(ROOT, 'artifact.html'), 'w', encoding='utf8').write(html)
 # готовая страница с тем же каркасом, который артефакт добавляет при публикации
 open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf8').write(full(html))
 print('index', os.path.getsize(os.path.join(ROOT, 'index.html')) // 1024, 'KB')
-# Прототип «Рекламы»: тот же сайт, на станции «Реклама» идёт пример reklama.*. В index.html он войдёт после одобрения.
-# Шрифт TT Mussels лежит только локально в maket/fonts, для запуска нужна лицензия или другой шрифт.
+# Прототип мира «Клиенты»: весь сайт и все четыре примера. В index.html примеры «Реклама», SMM и «Бренд» войдут после одобрения.
+# Шрифт TT Mussels лежит только локально в maket/fonts, для запуска нужна лицензия или другой шрифт. Фото кофейни берутся из maket/img.
+# Страница одна, она пишется под тремя адресами прошлых кругов, чтобы старые ссылки показывали всё.
 rk_face = face + '@font-face{font-family:Mussels;src:url(fonts/TTMussels_Medium.ttf);font-weight:500;font-display:swap}\n'
-rk_css = css + open(os.path.join(HERE, 'reklama.css'), encoding='utf8').read()
-rk_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'sonar.js', 'app.js'))
-open(os.path.join(ROOT, 'maket', 'reklama.html'), 'w', encoding='utf8').write(full(page(rk_face, rk_css, rk_js)))
-print('maket/reklama', os.path.getsize(os.path.join(ROOT, 'maket', 'reklama.html')) // 1024, 'KB')
-# Прототип «SMM»: весь сайт, примеры «Реклама» и «SMM». Фото напитков и картина серии берутся из maket/img.
-sm_css = rk_css + open(os.path.join(HERE, 'smm.css'), encoding='utf8').read()
-sm_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'sonar.js', 'app.js'))
-open(os.path.join(ROOT, 'maket', 'smm.html'), 'w', encoding='utf8').write(full(page(rk_face, sm_css, sm_js)))
-print('maket/smm', os.path.getsize(os.path.join(ROOT, 'maket', 'smm.html')) // 1024, 'KB')
-# Прототип «Бренда»: весь сайт и все четыре примера.
-bd_css = sm_css + open(os.path.join(HERE, 'brend.css'), encoding='utf8').read()
-bd_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'brend.js', 'sonar.js', 'app.js'))
-open(os.path.join(ROOT, 'maket', 'brend.html'), 'w', encoding='utf8').write(full(page(rk_face, bd_css, bd_js)))
-print('maket/brend', os.path.getsize(os.path.join(ROOT, 'maket', 'brend.html')) // 1024, 'KB')
+mk_css = css + ''.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('reklama.css', 'smm.css', 'brend.css'))
+mk_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'brend.js', 'sonar.js', 'app.js'))
+mk = full(page(rk_face, mk_css, mk_js))
+for n in ('reklama', 'smm', 'brend'):
+    open(os.path.join(ROOT, 'maket', n + '.html'), 'w', encoding='utf8').write(mk)
+print('maket/reklama, smm, brend', len(mk.encode('utf8')) // 1024, 'KB')

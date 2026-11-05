@@ -31,3 +31,4 @@
 Все напитки без фона (maket/img/zerno-cut) вырезаны нейросетью rembg, модель isnet-general-use. Латте и флэт уайт заменены: тёмная чашка на тёмном столе не вырезалась.
 Эспрессо, колд брю и какао заменены по просьбе заказчика: прежние выглядели некрасиво. Эспрессо заменён ещё раз: белая чашка с блюдцем сбоку.
 Пример SMM (maket/img/smm/espresso-grid.webp): квадрат 1080×1080 вырезан из того же фото эспрессо (https://unsplash.com/photos/white-ceramic-teacup-filled-with-brown-coffee-niAkR1H24tE, автор @gabimirandan). Посты первого месяца берут напитки без фона из maket/img/zerno-cut.
+Плохой сайт на станции «Сайт» (assets/photo/j_kofe.webp, стоковая чашка шаблона кофейни): эспрессо на блюдце, https://unsplash.com/photos/3v0vppDjvMI, автор @kattgalvan, бесплатная лицензия Unsplash. Кадр обрезан и уменьшен до 440×505.

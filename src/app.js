@@ -520,13 +520,16 @@ function enterPeople() {
 }
 
 /* ---------- МИР 3: эфир ---------- */
+/* Номер станции — её место в ST, по нему подключены примеры. Порядок на шкале задаёт v: Сайт, Бренд, Реклама, SMM. */
 const ST = [
-  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
-  { wd: 72, v: 37, name: 'Реклама', full: 'Контекстная и таргетированная реклама', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?', get: 'Подбор запросов и аудиторий, объявления, настройка кампаний и отчёт.', need: 'Адрес сайта, список услуг и доступ к рекламным кабинетам.' },
-  { wd: 120, v: 63, name: 'SMM', full: 'Ведение соцсетей', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
-  { wd: 100, v: 88, name: 'Бренд', full: 'Брендбук и логотип', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен узнать в вас с одного взгляда?', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
+  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
+  { wd: 72, v: 63, name: 'Реклама', full: 'Контекстная и таргетированная реклама', go: 'Обсудить рекламу', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?', get: 'Подбор запросов и аудиторий, объявления, настройка кампаний и отчёт.', need: 'Адрес сайта, список услуг и доступ к рекламным кабинетам.' },
+  { wd: 120, v: 88, name: 'SMM', full: 'Ведение соцсетей', go: 'Обсудить SMM', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
+  { wd: 100, v: 37, name: 'Бренд', full: 'Брендбук и логотип', go: 'Обсудить бренд', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен запомнить о вас с первого взгляда?', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
 ];
 const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
+/* станции слева направо по шкале */
+const ORD = ST.map((s, i) => i).sort((a, b) => ST[a].v - ST[b].v);
 const air = { v: 1, target: 1, q: 0, cur: -1, thr: [], snd: null, built: false };
 const GLY = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЫЭЮЯ#%/*+=';
 function buildAir() {
@@ -535,7 +538,7 @@ function buildAir() {
     const y = (i * 8.2 + 2) % 92, x = (i * 37) % 70 - 8, fs = 6 + (i * 5) % 9, wd = 50 + (i * 23) % 90;
     return `<span style="left:${x}vw;top:${y}vh;font-size:${fs}vw;--wd:${wd};animation-delay:-${i * .07}s">${t}</span>`;
   }).join('');
-  $('#presets').innerHTML = ST.map((s, i) => `<button type="button" style="left:${s.v}%" data-i="${i}" aria-pressed="false" aria-label="${s.full}">${s.name}</button>`).join('');
+  $('#presets').innerHTML = ORD.map(i => `<button type="button" style="left:${ST[i].v}%" data-i="${i}" aria-pressed="false" aria-label="${ST[i].full}">${ST[i].name}</button>`).join('');
   $$('#presets button').forEach(b => b.addEventListener('click', () => { const v = ST[+b.dataset.i].v; air.target = v; if (RM) air.v = v; $('#tun').value = v; dirty = true; }));
   const t = $('#tun'); t.addEventListener('input', () => { air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
   $('#klienty').addEventListener('wheel', e => {
@@ -545,6 +548,7 @@ function buildAir() {
     if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
     air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
   $('#st-cta').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
+  $('#st-go').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
   $('#sound').addEventListener('click', toggleSound);
 }
 function enterAir() { buildAir(); air.v = air.target = +$('#tun').value; J.done = false; }
@@ -588,14 +592,16 @@ function updateAir(dt) {
   if (near) { scramble($('#st-name'), s.name, Math.min(1, q * 1.6), best + 1); scramble($('#st-line'), s.line, q, best + 3); }
   else { if ($('#st-name').textContent !== 'Шум') $('#st-name').textContent = 'Шум'; if ($('#st-line').textContent) $('#st-line').textContent = ''; }
   if (q > .92 && air.cur !== best) {
-    air.cur = best; W.dataset.st = best; if (s.ask) $('#st-ask').textContent = s.ask; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`;
+    air.cur = best; W.dataset.st = best; if (s.ask) $('#st-ask').textContent = s.ask; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`; $('#st-go span').textContent = s.go + ' →';
     $('#st-name').setAttribute('aria-label', s.full);
-    $$('#presets button').forEach((b, i) => b.setAttribute('aria-pressed', i === best));
+    $$('#presets button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.i === best));
   }
   if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
-  /* сетка-сонар под чёрной надписью станции: у «Сайта» после развала, у остальных, когда подключён пример. Пока идёт пример, сетки нет. */
-  if (window.GTSONAR) GTSONAR.show(q > .92 && (best === 0 ? W.classList.contains('clean') : !![window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][best]) && !W.classList.contains('ex'));
-  if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + best * 55, c, .05); }
+  /* Сетка-сонар под чёрной надписью станции: у «Сайта» после развала, у остальных, когда подключён пример. Она идёт после шагов примеров:
+     по силе сигнала расходится в шум и собирается, в начале примера становится им, в конце встаёт из него. После развала «Сайта» встаёт за волной от телефона. */
+  if (window.GTSONAR) { const mod = near ? [window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][best] : null;
+    GTSONAR.frame({ q: near ? q : 0, ok: best === 0 ? W.classList.contains('clean') : !!mod, at: best === 0 ? junkCall : null, mod: mod && 'grid' in mod ? mod : null }); }
+  if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + ORD.indexOf(best) * 55, c, .05); }
   air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : best === 3 && window.GTBRD ? GTBRD.col : s.col;
 }
 function drawAir(time) {
@@ -665,34 +671,91 @@ function phStep(h) {
   }
 }
 /* Плохой сайт. Всё выдумано нарочно: это пародия на шаблон, компании нет. Порядок в списке это порядок падения */
+/* Плохой сайт — шаблон кофейни «как у всех»: та же кофейня, что дальше в примерах, только до ZERNO. Фото чашки стоковое. */
 const JUNK_W = () => [
   ['fade', 0, 58, 1440, 800, '', { ghost: 1 }],
-  ['j-modal', 470, 150, 500, 250, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите скидку 10% на первый заказ. Только для новых клиентов!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ СКИДКУ</span>'],
+  ['j-modal', 470, 150, 500, 250, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите второй капучино в подарок. Только для новых гостей!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ КОФЕ</span>'],
   ['j-cookie', 40, 700, 560, 56, 'Мы используем файлы cookie <span class="j-btn j-mini">Принять</span>'],
-  ['j-chat', 1120, 540, 280, 170, '<b>Онлайн-консультант</b><p>Здравствуйте! Чем могу помочь?</p><span class="j-in">Введите сообщение…</span>'],
+  ['j-chat', 1120, 540, 280, 170, '<b>Онлайн-бариста</b><p>Здравствуйте! Какой кофе вам посоветовать?</p><span class="j-in">Введите сообщение…</span>'],
   ['j-call', 1340, 440, 84, 84, '<i>☎</i>'],
   ['j-rib', 0, 270, 50, 190, 'ПОДАРОК'],
-  ['j-star', 1120, 180, 170, 170, '<b>−70%</b><span>только<br>сегодня</span>'],
+  ['j-star', 1120, 180, 170, 170, '<b>−50%</b><span>на второй<br>кофе</span>'],
+  ['j-pic', 950, 190, 220, 254, `<img src="${window.GT_IMG ? GT_IMG.j_kofe : ''}" alt="">`],
   ['j-count', 410, 462, 620, 40, 'Только сегодня! До конца акции <b>00:14:59</b>'],
-  ['j-btn j-big', 150, 392, 190, 46, 'Подробнее'],
-  ['j-card', 90, 520, 300, 150, '<i>★</i><b>Команда профессионалов</b><span>Индивидуальный подход</span>'], ['j-card', 400, 520, 300, 150, '<i>◆</i><b>Высокое качество</b><span>Гарантия результата</span>'],
-  ['j-card', 710, 520, 300, 150, '<i>✔</i><b>Лучшие цены</b><span>Лидер рынка</span>'],
-  ...['Главная', 'О компании', 'Услуги', 'Цены', 'Акции', 'Отзывы', 'Контакты'].map((t, i) => ['j-nav', 100 + i * 178, 130, 160, 36, t]),
-  ['j-tel', 880, 72, 240, 40, '8 (000) 000-00-00'], ['j-btn j-green', 1130, 72, 200, 42, 'Заказать звонок'], ['j-logo', 100, 66, 340, 54, '<b>ВАША КОМПАНИЯ</b><span>Динамично развиваемся</span>'],
+  ['j-btn j-big', 150, 392, 220, 46, 'Смотреть меню'],
+  ['j-card', 90, 520, 300, 150, '<i>★</i><b>Лучший кофе в городе</b><span>Свежая обжарка</span>'], ['j-card', 400, 520, 300, 150, '<i>◆</i><b>Уютная атмосфера</b><span>Бесплатный Wi-Fi</span>'],
+  ['j-card', 710, 520, 300, 150, '<i>✔</i><b>Лучшие цены</b><span>Кофе с собой</span>'],
+  ...['Главная', 'О нас', 'Меню', 'Акции', 'Доставка', 'Отзывы', 'Контакты'].map((t, i) => ['j-nav', 100 + i * 178, 130, 160, 36, t]),
+  ['j-tel', 880, 72, 240, 40, '8 (000) 000-00-00'], ['j-btn j-green', 1130, 72, 200, 42, 'Заказать звонок'], ['j-logo', 100, 66, 340, 54, '<b>ВАША КОФЕЙНЯ</b><span>Кофе с душой</span>'],
   ['j-head', 150, 210, 800, 170, 'Заезженный дизайн, как у всех!', { ghost: 1 }], ['j-hero', 90, 176, 1260, 276, '', { ghost: 1 }], ['j-bar', 0, 124, 1440, 48, '', { ghost: 1 }]
 ];
 const JUNK_N = () => [
   ['fade', 0, 54, 390, 900, '', { ghost: 1 }],
-  ['j-modal', 28, 130, 334, 232, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите скидку 10% на первый заказ!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ СКИДКУ</span>'],
+  ['j-modal', 28, 130, 334, 232, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите второй капучино в подарок!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ КОФЕ</span>'],
   ['j-cookie', 12, 590, 366, 50, 'Мы используем cookie <span class="j-btn j-mini">Принять</span>'],
-  ['j-call', 306, 500, 66, 66, '<i>☎</i>'], ['j-star', 262, 116, 112, 112, '<b>−70%</b><span>только<br>сегодня</span>'],
-  ['j-count', 12, 318, 366, 36, 'До конца акции <b>00:14:59</b>'], ['j-btn j-big', 24, 262, 156, 42, 'Подробнее'],
-  ['j-card', 12, 362, 178, 104, '<i>★</i><b>Команда профессионалов</b>'], ['j-card', 200, 362, 178, 104, '<i>◆</i><b>Высокое качество</b>'],
-  ['j-card', 12, 474, 178, 104, '<i>✔</i><b>Лучшие цены</b>'], ['j-card', 200, 474, 100, 104, '<i>♥</i><b>Лидер рынка</b>'],
-  ['j-logo', 12, 58, 240, 46, '<b>ВАША КОМПАНИЯ</b><span>Динамично развиваемся</span>'], ['j-btn j-green', 262, 62, 116, 36, 'Звонок'],
+  ['j-call', 306, 500, 66, 66, '<i>☎</i>'], ['j-star', 262, 116, 112, 112, '<b>−50%</b><span>на второй<br>кофе</span>'], ['j-pic', 206, 244, 168, 70, `<img src="${window.GT_IMG ? GT_IMG.j_kofe : ''}" alt="">`],
+  ['j-count', 12, 318, 366, 36, 'До конца акции <b>00:14:59</b>'], ['j-btn j-big', 24, 262, 170, 42, 'Смотреть меню'],
+  ['j-card', 12, 362, 178, 104, '<i>★</i><b>Лучший кофе в городе</b>'], ['j-card', 200, 362, 178, 104, '<i>◆</i><b>Уютная атмосфера</b>'],
+  ['j-card', 12, 474, 178, 104, '<i>✔</i><b>Лучшие цены</b>'], ['j-card', 200, 474, 100, 104, '<i>♥</i><b>Кофе с собой</b>'],
+  ['j-logo', 12, 58, 240, 46, '<b>ВАША КОФЕЙНЯ</b><span>Кофе с душой</span>'], ['j-btn j-green', 262, 62, 116, 36, 'Звонок'],
   ['j-head', 24, 126, 240, 130, 'Заезженный дизайн, как у всех!', { ghost: 1 }], ['j-hero', 0, 108, 390, 206, '', { ghost: 1 }]
 ];
-const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, drag: null, done: false };
+/* sig: как поймался плохой сайт (1 — стоит целым), cov: сколько его полос пробилось сквозь шум, pop: сколько секунд он стоит целым,
+   tx: его тексты, tvt: такт помех, roll: на сколько уползли полосы */
+const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, drag: null, done: false, sig: 0, cov: 0, pop: 0, tx: [], tvt: 0, roll: 0 };
+/* Полосы сигнала: картинка сайта пробивается сквозь шум полосами разной высоты. У каждой полосы свой порог r: она видна, когда сигнал выше порога.
+   Пока сигнал слабый, полосы мигают и ползут по экрану, как кадр у телевизора без синхронизации. */
+const BANDS = (() => { const b = [], f = v => v - Math.floor(v); let y = 0, i = 0; while (y < 2400) { const h = Math.round(6 + 58 * f(Math.sin(i * 12.9898) * 43758.5453) ** 2); b.push({ y, h, r: f(Math.sin(i * 78.233 + 4.1) * 12345.6789) }); y += h; i++; } return { b, H: y }; })();
+function junkBands(box, cv) {
+  const st = box.style;
+  if (cv >= .999) { if (st.maskImage || st.webkitMaskImage) st.maskImage = st.webkitMaskImage = ''; return; }
+  const g = BANDS.b.map(b => { const a = clamp((cv - b.r * .95) * 6 + (Math.random() - .5) * .8 * (1 - cv)).toFixed(2); return `rgba(0,0,0,${a}) ${b.y}px,rgba(0,0,0,${a}) ${b.y + b.h}px`; }).join(',');
+  st.maskImage = st.webkitMaskImage = `linear-gradient(${g})`; st.maskSize = st.webkitMaskSize = `100% ${BANDS.H}px`; st.maskRepeat = st.webkitMaskRepeat = 'repeat-y';
+}
+/* Помехи плохого сайта: полосы страницы сдвигаются вбок на разное расстояние, красный канал отстаёт.
+   Шум идёт только по высоте и ступенями, поэтому полосы горизонтальные и с ровными краями, как у телевизора при настройке. */
+const TV = (() => {
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('width', '0'); s.setAttribute('height', '0'); s.setAttribute('aria-hidden', 'true'); s.style.position = 'absolute';
+  s.innerHTML = '<filter id="j-tv" x="-10%" y="0" width="120%" height="100%" color-interpolation-filters="sRGB">'
+    + '<feTurbulence type="fractalNoise" baseFrequency="0 0.022" numOctaves="1" seed="1" result="n"/>'
+    + '<feComponentTransfer in="n" result="m"><feFuncR type="discrete" tableValues=".5 .5 .2 .5 .74 .5 .5 .9 .36 .5 .5 .12 .62 .5"/><feFuncG type="linear" slope="0" intercept=".5"/></feComponentTransfer>'
+    + '<feDisplacementMap in="SourceGraphic" in2="m" scale="0" xChannelSelector="R" yChannelSelector="G" result="d"/>'
+    + '<feColorMatrix in="d" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r0"/><feOffset in="r0" dx="0" result="r"/>'
+    + '<feColorMatrix in="d" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="gb"/>'
+    + '<feComposite in="r" in2="gb" operator="arithmetic" k2="1" k3="1"/></filter>';
+  document.body.appendChild(s);
+  return { t: s.querySelector('feTurbulence'), d: s.querySelector('feDisplacementMap'), o: s.querySelector('feOffset') };
+})();
+/* Буквы плохого сайта перебираются из шума, как название станции: чем лучше сигнал, тем больше букв встало на место. На sig = 1 тексты целые. */
+function junkText(sig) {
+  J.tx.forEach((o, k) => {
+    let s = o.t;
+    if (sig < 1) { s = ''; for (let i = 0; i < o.t.length; i++) { const c = o.t[i], th = ((i * 37 + k * 11) % 100) / 100; s += c === ' ' || sig > th * .9 + .05 ? c : GLY[Math.floor(Math.random() * GLY.length)]; } }
+    if (o.n.nodeValue !== s) o.n.nodeValue = s;
+  });
+}
+/* Плохой сайт ловится, как станция: сначала сквозь шум пробиваются редкие полосы картинки, их становится всё больше (cov).
+   Пока сигнал слабый, полосы рвутся вбок, страница мигает, буквы перебираются (sig). Помехи меняются 20 раз в секунду. */
+function junkTv(dt, box) {
+  const k = 1 - J.sig;
+  if (k < .002) { if (box.style.filter) { box.style.filter = ''; junkText(1); } junkBands(box, 1); box.style.opacity = J.alpha; return; }
+  J.tvt += dt; J.roll = (J.roll + dt * 240 * (1 - J.cov)) % BANDS.H;
+  if (J.tvt > .05 || !box.style.filter) { J.tvt = 0; TV.t.setAttribute('seed', 1 + Math.floor(Math.random() * 997)); junkText(J.sig); junkBands(box, J.cov); box.style.opacity = J.alpha * (1 - .3 * k * Math.random()); }
+  if (box.style.maskImage || box.style.webkitMaskImage) box.style.maskPosition = box.style.webkitMaskPosition = `0 ${(-J.roll).toFixed(1)}px`;
+  TV.d.setAttribute('scale', (260 * Math.pow(k, 1.3)).toFixed(1)); TV.o.setAttribute('dx', (10 * k).toFixed(1));
+  box.style.filter = 'url(#j-tv)';
+}
+/* Сайт встал целым — через четверть секунды выскакивает окно подписки с отскоком, подложка под ним темнеет.
+   Подложка не падает вместе с обломками, а гаснет на месте (junkFall, junkDraw). */
+function junkPop() {
+  const k = RM ? 1 : sstep(.25, .6, J.pop), o = k - 1, b = 1 + 2.7 * o * o * o + 1.7 * o * o;
+  for (const p of J.p) {
+    if (p.body) continue;
+    if (p.e.classList.contains('j-modal')) { p.e.style.opacity = k; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px) scale(${.7 + .3 * b})`; }
+    else if (p.still) p.e.style.opacity = RM ? 1 : sstep(.2, .55, J.pop);
+  }
+}
 function junkFloor() { return $('#air-foot').getBoundingClientRect().top - $('#klienty').getBoundingClientRect().top; }
 function junkBuild() {
   const box = $('#junk'), W = innerWidth, wide = W > 760, F = junkFloor(), list = wide ? JUNK_W() : JUNK_N(), u = wide ? Math.min(W / 1440, F / 770) : Math.min(W / 390, F / 650), ox = wide ? (W - 1440 * u) / 2 : (W - 390 * u) / 2;
@@ -703,10 +766,12 @@ function junkBuild() {
     const e = document.createElement('div'); e.className = 'jp ' + cls; e.innerHTML = html; e.style.zIndex = 100 - i;
     const full = cls === 'fade' || cls === 'j-bar', pw = full ? W : w * u, ph = cls === 'fade' ? F : h * u, hx = full ? W / 2 : ox + x * u + pw / 2, hy = cls === 'fade' ? F / 2 : y * u + ph / 2; e.style.width = pw + 'px'; e.style.height = ph + 'px';
     e.style.transform = `translate(${hx - pw / 2}px,${hy - ph / 2}px)`; box.appendChild(e);
-    return { e, hx, hy, pw, ph, ghost: !!o.ghost, thr: .03 + .78 * i / (list.length - 1), body: null, s: 1 };
+    return { e, hx, hy, pw, ph, ghost: !!o.ghost, still: cls === 'fade', thr: .03 + .78 * i / (list.length - 1), body: null, s: 1 };
   });
+  J.tx = []; const tw = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+  while (tw.nextNode()) if (tw.currentNode.nodeValue.trim()) J.tx.push({ n: tw.currentNode, t: tw.currentNode.nodeValue });
   PH.b = []; [[W / 2, F + 200, W + 800, 400], [-200, F / 2, 400, 2 * F + 800], [W + 200, F / 2, 400, 2 * F + 800], [W / 2, -200, W + 800, 400]].forEach(([x, y, w, h]) => PH.b.push(phBody(x, y, w, h, true)));
-  J.built = true; J.k = 0; J.hold = 0; J.clean = false; $('#klienty').classList.remove('clean', 'junk'); sheet.classList.remove('drop');
+  J.built = true; J.k = 0; J.hold = 0; J.pop = 0; J.clean = false; $('#klienty').classList.remove('clean', 'junk', 'junk2'); sheet.classList.remove('drop');
 }
 function junkFall(p, seed) {
   const s = p.ghost ? 1 : J.shrink, b = phBody(p.hx, p.hy, p.pw * s, p.ph * s); b.ghost = p.ghost; p.s = s; p.body = b;
@@ -717,21 +782,27 @@ function junkFall(p, seed) {
   if (p.e.classList.contains('j-call') && !p.spin) p.spin = { a: 0, v: 9 };
 }
 function junkBack(p) { if (p.spin) { p.spin = null; p.e.firstChild.style.transform = ''; } PH.b.splice(PH.b.indexOf(p.body), 1); p.body = null; p.s = 1; p.e.classList.remove('fell'); p.e.classList.add('back'); if (p.e.classList.contains('fade')) p.e.style.opacity = ''; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`; }
-function junkDraw() { for (const p of J.p) { const b = p.body; if (!b || b.asleep && b.drawn) continue; p.e.style.transform = `translate(${b.x - p.pw / 2}px,${b.y - p.ph / 2}px) rotate(${b.a}rad) scale(${p.s})`; b.drawn = b.asleep; } }
+function junkDraw() { for (const p of J.p) { const b = p.body; if (!b || b.asleep && b.drawn || p.still) continue; p.e.style.transform = `translate(${b.x - p.pw / 2}px,${b.y - p.ph / 2}px) rotate(${b.a}rad) scale(${p.s})`; b.drawn = b.asleep; } }
 function junkSim(dt) { PH.acc = Math.min(.05, PH.acc + dt); while (PH.acc >= PH.tick) { phStep(PH.tick); PH.acc -= PH.tick; } for (let i = PH.b.length - 1; i >= 4; i--) { const b = PH.b[i]; if (b.ghost && b.y - Math.hypot(b.hw, b.hh) > J.floor + 900) { b.asleep = true; } } }
 function junkNow() { J.p.forEach((p, i) => { if (!p.body) junkFall(p, ((i * 37) % 100) / 100); }); for (let i = 0; i < 420; i++) phStep(PH.tick); junkDraw(); J.k = 1; }
 /* side: ручка правее «Сайта» (больше нуля) или левее. Развалившийся сайт не собирается, когда ручка уходит вправо к следующим станциям,
    и при возвращении справа сразу лежит кучей. Собирается он только при повороте ручки назад, левее «Сайта». */
 function junkStep(dt, d, side = 0) {
   const box = $('#junk'), W = $('#klienty'), near = d < 9;
-  if (!near) { if (J.on) { J.on = false; box.style.display = 'none'; J.built = false; PH.b = []; W.classList.remove('clean', 'junk'); $('#j-sheet').classList.remove('drop'); } return false; }
+  if (!near) { if (J.on) { J.on = false; box.style.display = 'none'; box.style.filter = ''; junkBands(box, 1); J.built = false; J.sig = J.cov = J.pop = 0; W.style.removeProperty('--jt'); PH.b = []; W.classList.remove('clean', 'junk', 'junk2'); $('#j-sheet').classList.remove('drop'); } return false; }
   if (!J.on) {
     J.on = true; box.style.display = 'block'; if (!J.built) junkBuild();
     if (RM || (J.done && side > 0)) { junkNow(); J.clean = true; $('#j-sheet').classList.add('drop'); W.classList.add('clean'); }
   }
-  J.alpha = sstep(9, 7.8, d); box.style.opacity = J.alpha;
-  J.hold += dt;
-  let want = J.hold > 1 ? sstep(8.4, 1.6, d) : 0;
+  /* Сначала сайт ловится: ручка в 9–5 от станции, полосы картинки пробиваются сквозь шум к 5,8, буквы и полосы встают на место к 5.
+     Потом сайт стоит целым и выскакивает окно подписки, и только через секунду после этого ручка ближе 4,4 валит его.
+     Пока сайт валится, он пойман целиком. */
+  const got = RM || J.k > .02;
+  J.sig = got ? 1 : sstep(9, 5, d); J.cov = got ? 1 : sstep(9, 5.8, d); J.alpha = sstep(9, 7.2, d);
+  junkTv(dt, box);
+  J.pop = J.sig >= 1 ? J.pop + dt : Math.max(0, J.pop - 3 * dt);
+  junkPop();
+  let want = J.pop > 1.1 ? sstep(4.4, 1.6, d) : 0;
   if (side > 0) want = Math.max(want, J.k);
   if (!RM) J.k += clamp(want - J.k, -2 * dt, .56 * dt); else J.k = want > 0 || d < 8 ? 1 : J.k;
   J.p.forEach((p, i) => { if (!p.body && J.k > p.thr) junkFall(p, ((i * 37) % 100) / 100); else if (p.body && J.k < p.thr - .02 && !RM) junkBack(p); });
@@ -739,8 +810,17 @@ function junkStep(dt, d, side = 0) {
   for (const p of J.p) if (p.spin && !RM) { p.spin.v = lerp(p.spin.v, 2.2, clamp(dt * .6)); p.spin.a += p.spin.v * dt; p.e.firstChild.style.transform = `rotate(${p.spin.a}rad)`; }
   if (J.k > .84) J.done = true; else if (J.k < .02) J.done = false;
   const clean = J.k > .84; if (clean !== J.clean) { J.clean = clean; $('#j-sheet').classList.toggle('drop', clean); W.classList.toggle('clean', clean); }
-  W.classList.toggle('junk', J.alpha > .4 && !clean);
-  return J.alpha > .4 && !clean;
+  /* надпись станции гаснет, пока полосы сайта закрывают шум (--jt), шапка мира темнеет, когда сайт закрыл экран наполовину */
+  const seen = J.alpha * J.cov;
+  W.classList.toggle('junk', J.alpha > .02 && !clean); W.classList.toggle('junk2', seen > .75 && !clean);
+  W.style.setProperty('--jt', (1 - sstep(.2, .7, seen)).toFixed(3));
+  return seen > .55 && !clean;
+}
+/* где сейчас телефон в куче, в координатах #klienty: от него идёт волна сетки после развала */
+function junkCall() {
+  const p = J.p.find(q => q.e.classList.contains('j-call')); if (!p) return null;
+  const r = p.e.getBoundingClientRect(), k = $('#klienty').getBoundingClientRect();
+  return [r.left + r.width / 2 - k.left, r.top + r.height / 2 - k.top];
 }
 /* обломки можно хватать и бросать */
 function junkPointer() {

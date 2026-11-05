@@ -524,7 +524,7 @@ const ST = [
   { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
   { wd: 72, v: 37, name: 'Реклама', full: 'Контекстная и таргетированная реклама', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?', get: 'Подбор запросов и аудиторий, объявления, настройка кампаний и отчёт.', need: 'Адрес сайта, список услуг и доступ к рекламным кабинетам.' },
   { wd: 120, v: 63, name: 'SMM', full: 'Ведение соцсетей', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
-  { wd: 100, v: 88, name: 'Бренд', full: 'Брендбук и логотип', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
+  { wd: 100, v: 88, name: 'Бренд', full: 'Брендбук и логотип', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен узнать в вас с одного взгляда?', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
 ];
 const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
 const air = { v: 1, target: 1, q: 0, cur: -1, thr: [], snd: null, built: false };
@@ -541,7 +541,7 @@ function buildAir() {
   $('#klienty').addEventListener('wheel', e => {
     if (e.target.closest('#st-more')) return;
     /* На станциях с примером колесо сначала ведёт пример, потом ручку */
-    const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : null;
+    const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
     if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
     air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
   $('#st-cta').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
@@ -575,8 +575,9 @@ function updateAir(dt) {
   W.classList.toggle('tuned', q > .92);
   if (window.GTREK) GTREK.step(dt, { near: best === 1 && bd < 9, tuned: air.cur === 1, alpha: q });
   if (window.GTSMM) GTSMM.step(dt, { near: best === 2 && bd < 9, tuned: air.cur === 2, alpha: q });
+  if (window.GTBRD) GTBRD.step(dt, { near: best === 3 && bd < 9, tuned: air.cur === 3, alpha: q });
   /* На тёмном сайте из примера «Реклама» буквы сайта снова белые */
-  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99, air.v - ST[0].v), dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark);
+  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99, air.v - ST[0].v), dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark);
   if (window.GTSAYT) GTSAYT.step(dt, { near: best === 0 && bd < 9, alpha: J.alpha, clean: J.clean, call: J.p.find(p => p.e.classList.contains('j-call')), v: air.v });
   document.body.classList.toggle('ink', dark || js);
   document.body.classList.toggle('jk', js);
@@ -592,8 +593,10 @@ function updateAir(dt) {
     $$('#presets button').forEach((b, i) => b.setAttribute('aria-pressed', i === best));
   }
   if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
+  /* сетка-сонар под чёрной надписью станции: у «Сайта» после развала, у остальных, когда подключён пример. Пока идёт пример, сетки нет. */
+  if (window.GTSONAR) GTSONAR.show(q > .92 && (best === 0 ? W.classList.contains('clean') : !![window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][best]) && !W.classList.contains('ex'));
   if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + best * 55, c, .05); }
-  air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : s.col;
+  air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : best === 3 && window.GTBRD ? GTBRD.col : s.col;
 }
 function drawAir(time) {
   if (!gl) return;
@@ -765,6 +768,7 @@ $('#contact-open').addEventListener('click', () => openTalk(''));
 if (window.GTSAYT) GTSAYT.onTalk = () => openTalk(ST[0].full);
 if (window.GTREK) GTREK.onTalk = () => openTalk(ST[1].full);
 if (window.GTSMM) GTSMM.onTalk = () => openTalk(ST[2].full);
+if (window.GTBRD) GTBRD.onTalk = () => openTalk(ST[3].full);
 $('#talk-x').addEventListener('click', () => talk.close());
 $('#talk-f').addEventListener('submit', e => {
   e.preventDefault(); const c = !$('#t-contact').value.trim(); $('#t-contact-e').hidden = !c; if (c) { $('#t-contact').focus(); return; }

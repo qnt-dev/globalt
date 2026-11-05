@@ -183,14 +183,18 @@ with sync_playwright() as pw:
         r=p.evaluate(CLIP%"'#x1-cap h2,#x1-cap p,#x1-forms .lb,#x1-forms .t,#x1-hd .ix button,#x1-tag'"); check(f'example clip {w}x{h}',not r['out'] and r['sw']<=r['W'],r)
         r=p.evaluate("(()=>{const f=document.querySelector('#air-foot').getBoundingClientRect(),q=s=>document.querySelector(s).getBoundingClientRect(),c=q('#x1-cap'),m=q('#x1-forms'),hd=q('#x1-hd'),b=q('#bar');return {forms:Math.round(m.bottom),foot:Math.round(f.top),cap:Math.round(c.top),hd:Math.round(hd.top),bar:Math.round(b.bottom)}})()")
         check(f'example fits {w}x{h}',r['forms']<=r['foot'] and r['cap']>=r['hd'] and r['hd']>=r['bar']-1,r)
-        # колесо проводит по формам и обратно теми же шагами
+        # колесо проводит по формам и обратно теми же шагами. Лишние щелчки после края по правилу крутят ручку, поэтому их нет.
         seen=set()
-        for _ in range(30): p.mouse.wheel(0,100); p.wait_for_timeout(60); seen.add(p.evaluate(ST)['shape'])
+        for _ in range(40):
+            if p.evaluate(ST)['u']>=1: break
+            p.mouse.wheel(0,100); p.wait_for_timeout(60); seen.add(p.evaluate(ST)['shape'])
         p.wait_for_timeout(1200); s=p.evaluate(ST)
         check(f'wheel walks all forms {w}',seen>={1,2,3} and s['u']==1,(seen,s))
         check(f'station text after example {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#st-hint'))
         back=set()
-        for _ in range(32): p.mouse.wheel(0,-100); p.wait_for_timeout(60); back.add(p.evaluate(ST)['shape'])
+        for _ in range(40):
+            if p.evaluate(ST)['u']<=-.18: break
+            p.mouse.wheel(0,-100); p.wait_for_timeout(60); back.add(p.evaluate(ST)['shape'])
         p.wait_for_timeout(1200); s=p.evaluate(ST)
         check(f'wheel goes back the same steps {w}',back>={1,2,3} and s['ph']==0 and abs(float(p.evaluate('__gt.air.v'))-12)<1.5,(back,s))
         check(f'phone back in the pile {w}',p.evaluate("getComputedStyle(document.querySelector('#junk .j-call')).visibility")=='visible' and not p.is_visible('#x1-call'))
@@ -300,6 +304,59 @@ with sync_playwright() as pw:
     c,p=page(1000,640,'#klienty',rm='reduce',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(400); p.mouse.move(500,300)
     for _ in range(22): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: smm image by wheel',p.evaluate("+getComputedStyle(document.querySelector('#x3-big')).opacity")>.99); check('no err rm smm',not p.E,p.E); c.close()
+    # «Бренд», прототип maket/brend.html: брендбук кофейни по шагам, назад теми же шагами
+    BD='http://127.0.0.1:4391/maket/brend.html'; BS="window.GTBRD.state"
+    # сетка-сонар: под чёрной надписью станции, пока пример не идёт
+    SON="document.querySelector('#sonar').classList.contains('on')"
+    SONPX="(()=>{const c=document.querySelector('#sonar'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=16)if(d[i]>0)n++;return n})()"
+    # точки шкалы в щелчках колеса из 33,2: знак, красный на весь экран, палитра, буквы, правила, носители, проверка
+    B1,B2,B3,B4,B5,B6,B7=[n/33.2 for n in (4.8,9.4,12,15,18.6,23.4,27.6)]
+    def to4(p,t):
+        for _ in range(140):
+            u=p.evaluate(BS)['u']
+            if abs(u-t)<.002: break
+            p.mouse.wheel(0,max(-100,min(100,(t-u)*3320))); p.wait_for_timeout(25)
+        p.wait_for_timeout(800)
+    for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
+        c,p=page(w,h,'#klienty',url=BD); p.click('#presets button[data-i="3"]'); p.wait_for_timeout(1800)
+        check(f'brand card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'взгляда' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-cta'))
+        check(f'brand card: sonar draws {w}',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX))
+        p.mouse.move(w/2,h*.45); to4(p,B1)
+        check(f'brand sign {w}',p.is_visible('#x4-scene') and p.text_content('#x4-h')=='Знак' and not p.is_visible('#st-name') and not p.evaluate(SON))
+        r=p.evaluate("(()=>{const q=s=>document.querySelector(s).getBoundingClientRect(),f=q('#air-foot').top,b=q('#bar').bottom,sh=q('#x4-sheet'),cp=q('#x4-cap'),g=q('#x4-get'),pg=q('#x4-pg');return {top:Math.round(Math.min(sh.top,cp.top,g.top,pg.top)),bar:Math.round(b),bot:Math.round(Math.max(sh.bottom,cp.bottom)),foot:Math.round(f),l:Math.round(Math.min(sh.left,cp.left)),r:Math.round(Math.max(sh.right,cp.right,g.right)),W:innerWidth,hit:cp.right>sh.left&&cp.left<sh.right&&cp.bottom>pg.top&&cp.top<sh.bottom,ink:document.body.classList.contains('ink')}})()")
+        check(f'brand sheet fits {w}x{h}',r['top']>=r['bar']-1 and r['bot']<=r['foot']+1 and r['l']>=0 and r['r']<=r['W'] and not r['hit'] and not r['ink'],r)
+        r=p.evaluate(CLIP%"'#x4-cap small,#x4-cap h3,#x4-cap p,#x4-get,#x4-pg'"); check(f'brand clip {w}x{h}',not r['out'] and r['sw']<=r['W'],r)
+        to4(p,B2); check(f'brand red flood {w}',p.text_content('#x4-h')=='Цвет' and p.evaluate("document.querySelector('#x4').classList.contains('red')") and p.evaluate(VIS+"('#x4-flood')"))
+        to4(p,B3)
+        r=p.evaluate("(()=>{const f=document.querySelector('#air-foot').getBoundingClientRect().top,c=[...document.querySelectorAll('#x4-pal .ch')].map(e=>[e.getBoundingClientRect(),+getComputedStyle(e).opacity]);return {n:c.filter(x=>x[1]>.99).length,out:c.filter(([q])=>q.left<-1||q.right>innerWidth+1||q.bottom>f+2).length}})()")
+        check(f'brand palette {w}x{h}',r['n']==4 and r['out']==0,r)
+        p.click('#x4-get'); check(f'brand pdf note {w}',p.is_visible('#x4-sd')); p.click('#x4-sd-go'); check(f'brand talk opens {w}',p.is_visible('#talk') and 'бренд' in p.input_value('#t-what').lower()); p.click('#talk-x')
+        p.mouse.move(w/2,h*.45); to4(p,B4); check(f'brand letters {w}',p.text_content('#x4-h')=='Буквы')
+        to4(p,B5); check(f'brand rules {w}',p.text_content('#x4-h')=='Правила')
+        to4(p,B6); check(f'brand carriers {w}',p.text_content('#x4-h')=='Везде')
+        to4(p,B7); check(f'brand check {w}',p.text_content('#x4-h')=='ZERNO' and p.evaluate("+getComputedStyle(document.querySelector('#x4-get')).opacity")<.01)
+        to4(p,1); check(f'brand end card {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name') and not p.is_visible('#x4-scene') and p.evaluate(SON))
+        back=set()
+        for _ in range(70):
+            if p.evaluate(BS)['u']<=0: break
+            p.mouse.wheel(0,-100); p.wait_for_timeout(40); back.add(p.text_content('#x4-h'))
+        p.wait_for_timeout(1200); s=p.evaluate(BS); check(f'brand back the same steps {w}',back>={'ZERNO','Узнали?','Везде','Правила','Буквы','Цвет','Знак'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-88)<1.5,(back,s))
+        p.mouse.click(w*.5,h*.4); p.wait_for_timeout(2000); s=p.evaluate(BS); check(f'brand click plays the sign {w}',abs(s['u']-B1)<.002,s)
+        check(f'brand no err {w}',not p.E,p.E); c.close()
+    # сетка есть на всех четырёх надписях прототипа, пока пример идёт, её нет
+    c,p=page(1000,640,'#klienty',url=BD); p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(700); on=[p.evaluate(SON)]
+    for i in (1,2,3): p.click(f'#presets button[data-i="{i}"]'); p.wait_for_timeout(1800); on.append(p.evaluate(SON))
+    check('sonar on all four cards',all(on),on)
+    p.wait_for_timeout(9000); check('brand start by itself',abs(p.evaluate(BS)['u']-B1)<.002,p.evaluate(BS)); check('sonar off while the brand example runs',not p.evaluate(SON))
+    p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1500); check('brand off on smm',not p.evaluate(BS)['on'] and p.evaluate(SS)['on']); check('brand no err idle',not p.E,p.E); c.close()
+    c,p=page(1000,640,'#klienty',rm='reduce',url=BD); p.click('#presets button[data-i="3"]'); p.wait_for_timeout(400); check('reduced: sonar is a still grid',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX)); p.mouse.move(500,300)
+    for _ in range(27): p.mouse.wheel(0,100); p.wait_for_timeout(20)
+    p.wait_for_timeout(300); check('reduced: brand check by wheel',p.text_content('#x4-h')=='ZERNO',p.text_content('#x4-h')); check('no err rm brand',not p.E,p.E); c.close()
+    # в index.html пример есть только у «Сайта», поэтому сетка только там
+    c,p=page(1000,640,'#klienty'); p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(700)
+    check('sonar on the site card',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX))
+    p.wait_for_timeout(7500); check('sonar off while the site example runs',p.evaluate(ST)['ph']==2 and not p.evaluate(SON))
+    p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1500); check('sonar off on stations without example',not p.evaluate(SON)); check('sonar no err',not p.E,p.E); c.close()
     # без анимации
     c,p=page(1000,640,rm='reduce'); p.wait_for_timeout(300); check('reduced: choice at once',p.is_visible('.pick[data-t="0"]')); p.click('.pick[data-t="2"]'); p.wait_for_timeout(200); check('reduced: instant world',p.is_visible('#st-name')); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(300); check('reduced: tuned',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
     p.evaluate("window.__gt.show('rabota')"); p.wait_for_timeout(200); check('reduced: wall is still',p.evaluate("getComputedStyle(document.querySelector('.w-track')).animationName")=='none')

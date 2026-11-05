@@ -52,7 +52,8 @@ const CLOCK = [[3.6, 0], [6, .22], [9.2, .48], [14.2, .5], [19.6, 1]];
 const FANS = [[3.6, 14], [6, 61], [9.2, 540], [14.2, 810], [19.6, 4800]];
 
 /* Разметка */
-const MARK = '<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="10.5" ry="15" transform="rotate(32 20 20)" fill="currentColor"/><path d="M24 7c-8 7 0 17-8 26" stroke="#141317" stroke-width="2.4" fill="none"/></svg>';
+/* знак ZERNO: зерно разрезано буквой Z. Разрез — цвет фона под знаком (--zbg), знак стоит на красном. */
+const MARK = '<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(24 50 50)"><ellipse cx="50" cy="50" rx="31" ry="44" fill="currentColor"/><path d="M8 34H61L39 66H92" fill="none" style="stroke:var(--zbg,#df1f12)" stroke-width="8" stroke-miterlimit="10"/></g></svg>';
 const ZIMG = window.GT_ZERNO_CUT || 'img/zerno-cut/', GRID = window.GT_SMM_GRID || 'img/smm/espresso-grid.webp';
 const tile = (p, k) => p.f
   ? `<div class="x3-t ph${p.reel ? ' reel' : ''}" data-k="${k}"><img src="${ZIMG + p.f}.webp" alt="" decoding="async"><b>${p.h}</b><em>${p.s}</em></div>`

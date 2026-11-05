@@ -9,7 +9,7 @@ if not os.path.exists(small):
     print('font', os.path.getsize(small) // 1024, 'KB')
 # sayt.*: пример на станции «Сайт», идёт перед app.js, потому что app.js его вызывает
 css = open(os.path.join(HERE, 'style.css'), encoding='utf8').read() + open(os.path.join(HERE, 'sayt.css'), encoding='utf8').read()
-js = open(os.path.join(HERE, 'sayt.js'), encoding='utf8').read() + '\n' + open(os.path.join(HERE, 'app.js'), encoding='utf8').read()
+js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'sonar.js', 'app.js'))
 body = open(os.path.join(HERE, 'body.html'), encoding='utf8').read()
 face = '@font-face{font-family:"Science Gothic";font-weight:100 900;font-stretch:50%% 200%%;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}\n' % b64(small)
 logo = 'data:image/svg+xml;base64,' + b64(os.path.join(AS, 'logo-white.svg'))
@@ -38,11 +38,16 @@ print('index', os.path.getsize(os.path.join(ROOT, 'index.html')) // 1024, 'KB')
 # Шрифт TT Mussels лежит только локально в maket/fonts, для запуска нужна лицензия или другой шрифт.
 rk_face = face + '@font-face{font-family:Mussels;src:url(fonts/TTMussels_Medium.ttf);font-weight:500;font-display:swap}\n'
 rk_css = css + open(os.path.join(HERE, 'reklama.css'), encoding='utf8').read()
-rk_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'app.js'))
+rk_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'sonar.js', 'app.js'))
 open(os.path.join(ROOT, 'maket', 'reklama.html'), 'w', encoding='utf8').write(full(page(rk_face, rk_css, rk_js)))
 print('maket/reklama', os.path.getsize(os.path.join(ROOT, 'maket', 'reklama.html')) // 1024, 'KB')
 # Прототип «SMM»: весь сайт, примеры «Реклама» и «SMM». Фото напитков и картина серии берутся из maket/img.
 sm_css = rk_css + open(os.path.join(HERE, 'smm.css'), encoding='utf8').read()
-sm_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'app.js'))
+sm_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'sonar.js', 'app.js'))
 open(os.path.join(ROOT, 'maket', 'smm.html'), 'w', encoding='utf8').write(full(page(rk_face, sm_css, sm_js)))
 print('maket/smm', os.path.getsize(os.path.join(ROOT, 'maket', 'smm.html')) // 1024, 'KB')
+# Прототип «Бренда»: весь сайт и все четыре примера.
+bd_css = sm_css + open(os.path.join(HERE, 'brend.css'), encoding='utf8').read()
+bd_js = '\n'.join(open(os.path.join(HERE, n), encoding='utf8').read() for n in ('sayt.js', 'reklama.js', 'smm.js', 'brend.js', 'sonar.js', 'app.js'))
+open(os.path.join(ROOT, 'maket', 'brend.html'), 'w', encoding='utf8').write(full(page(rk_face, bd_css, bd_js)))
+print('maket/brend', os.path.getsize(os.path.join(ROOT, 'maket', 'brend.html')) // 1024, 'KB')

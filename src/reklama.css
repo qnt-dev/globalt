@@ -66,7 +66,7 @@
 .po .ac i{width:19px;height:19px;border:1.5px solid var(--poac);border-radius:50%}
 .po .tx{line-height:1.4;color:var(--potx);overflow:hidden;max-height:2.8em;margin-top:8px}
 .po.nz .nm,.po.nz .tx{color:var(--ponz)}
-.po.ad .lg{background:var(--red);color:#ff9a6a}
+.po.ad .lg{background:var(--red);color:#fff}
 .po.ad .lg svg{width:18px;height:18px}
 .po.ad .nm b{font-weight:600}
 .po.ad .nm small{display:block;font-size:10.5px;color:var(--potx)}

@@ -323,6 +323,9 @@ body[data-w=klienty]:not(.ink) #bar{text-shadow:0 0 5px #000,0 0 14px #000}
 /* «Сайт»: вместо кнопок вопрос заказчику и лёгкая подсказка, что дальше крутить колесо или щёлкнуть */
 #klienty[data-st="0"] #st-more{display:none}
 #st-ask,#st-hint{display:none}
+/* сетка-сонар под чёрными надписями станций, её рисует src/sonar.js */
+#sonar{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity .6s}
+#sonar.on{opacity:1}
 #klienty[data-st="0"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
 #klienty[data-st="0"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
 #klienty.exd #st-hint{display:none}
@@ -1369,6 +1372,79 @@ Object.defineProperties(api, { fast: { get: () => X.boost > 0 }, state: { get: (
 return api;
 })();
 
+/* Сетка-сонар под чёрными надписями станций мира «Клиенты»: «Сайт», «Реклама», SMM, «Бренд».
+   Точки стоят сеткой, по ним расходятся кольца: само по себе раз в 2,4 секунды и от каждого нажатия.
+   Точка на кольце растёт и светлеет. По мотивам Sonar Grid (NIMA MZ, 21st.dev, лицензия MIT): числа те же, точки белые.
+   Связь с app.js: show(true/false) каждый кадр из updateAir. Пока сетка не видна, она не рисуется. */
+window.GTSONAR = (() => {
+const kl = document.getElementById('klienty');
+if (!kl) return null;
+const RM = matchMedia('(prefers-reduced-motion:reduce)');
+/* шаг сетки, радиус точки, яркость точки, раз в сколько секунд кольцо, скорость и ширина кольца, во сколько раз растёт точка */
+const P = { gap: 26, dot: 1.4, base: .28, every: 2.4, speed: 260, ring: 90, amp: 2.2, max: 6, area: [.15, .2, .85, .8] };
+const cv = document.createElement('canvas');
+cv.id = 'sonar'; cv.setAttribute('aria-hidden', 'true');
+kl.prepend(cv);
+const c = cv.getContext('2d');
+let W = 1, H = 1, rings = [], next = 0, raf = 0, on = false, seeded = false;
+function size() {
+  const r = kl.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+  cv.width = Math.round(W * d); cv.height = Math.round(H * d); c.setTransform(d, 0, 0, d, 0, 0);
+}
+function add(x, y, t) { rings.push({ x, y, t }); while (rings.length > P.max) rings.shift(); }
+function draw(t) {
+  const life = (Math.hypot(W, H) + P.ring) / P.speed;
+  rings = rings.filter(r => (t - r.t) / 1000 < life);
+  const live = rings.map(r => { const s = (t - r.t) / 1000, rad = s * P.speed; return { x: r.x, y: r.y, rad, reach: rad + P.ring, fade: 1 - s / life }; });
+  c.clearRect(0, 0, W, H); c.fillStyle = '#fff';
+  const nx = Math.ceil(W / P.gap) + 1, ny = Math.ceil(H / P.gap) + 1, ox = (W - (nx - 1) * P.gap) / 2, oy = (H - (ny - 1) * P.gap) / 2, hot = [];
+  c.globalAlpha = P.base; c.beginPath();
+  for (let i = 0; i < nx; i++) {
+    const x = ox + i * P.gap;
+    for (let j = 0; j < ny; j++) {
+      const y = oy + j * P.gap; let k = 0;
+      for (const r of live) {
+        if (Math.abs(x - r.x) > r.reach || Math.abs(y - r.y) > r.reach) continue;
+        const e = Math.abs(Math.hypot(x - r.x, y - r.y) - r.rad);
+        if (e >= P.ring) continue;
+        const h = 1 - e / P.ring, v = h * h * (3 - 2 * h) * r.fade; if (v > k) k = v;
+      }
+      if (k < .01) { c.moveTo(x + P.dot, y); c.arc(x, y, P.dot, 0, Math.PI * 2); } else hot.push(x, y, k);
+    }
+  }
+  c.fill();
+  for (let i = 0; i < hot.length; i += 3) {
+    const k = hot[i + 2]; c.globalAlpha = P.base + (1 - P.base) * k;
+    c.beginPath(); c.arc(hot[i], hot[i + 1], P.dot * (1 + P.amp * k), 0, Math.PI * 2); c.fill();
+  }
+  c.globalAlpha = 1;
+}
+const ping = () => { const [a, b, e, f] = P.area; return [W * (a + Math.random() * (e - a)), H * (b + Math.random() * (f - b))]; };
+function tick(t) {
+  raf = 0;
+  if (!on) return;
+  /* без анимации стоит одна ровная сетка */
+  if (RM.matches) { rings = []; draw(t); return; }
+  if (t >= next) { add(...ping(), t); next = t + P.every * 1000; }
+  draw(t); raf = requestAnimationFrame(tick);
+}
+function show(v) {
+  if (v === on) return;
+  on = v; cv.classList.toggle('on', v);
+  if (!v) { cancelAnimationFrame(raf); raf = 0; return; }
+  size();
+  const t = performance.now();
+  /* одно кольцо уже летит, когда сетка появилась */
+  if (!seeded && !RM.matches) { seeded = true; const [a, b, e, f] = P.area; add(W * (a + (e - a) * .68), H * (b + (f - b) * .34), t - 500); }
+  next = Math.max(next, t + P.every * 1000);
+  raf = requestAnimationFrame(tick);
+}
+kl.addEventListener('pointerdown', e => { if (!on || RM.matches) return; const r = kl.getBoundingClientRect(); add(e.clientX - r.left, e.clientY - r.top, performance.now()); });
+addEventListener('resize', () => { if (on) size(); });
+return { show };
+})();
+
 (() => {
 'use strict';
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1895,7 +1971,7 @@ const ST = [
   { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
   { wd: 72, v: 37, name: 'Реклама', full: 'Контекстная и таргетированная реклама', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?', get: 'Подбор запросов и аудиторий, объявления, настройка кампаний и отчёт.', need: 'Адрес сайта, список услуг и доступ к рекламным кабинетам.' },
   { wd: 120, v: 63, name: 'SMM', full: 'Ведение соцсетей', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
-  { wd: 100, v: 88, name: 'Бренд', full: 'Брендбук и логотип', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
+  { wd: 100, v: 88, name: 'Бренд', full: 'Брендбук и логотип', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен узнать в вас с одного взгляда?', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
 ];
 const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
 const air = { v: 1, target: 1, q: 0, cur: -1, thr: [], snd: null, built: false };
@@ -1912,7 +1988,7 @@ function buildAir() {
   $('#klienty').addEventListener('wheel', e => {
     if (e.target.closest('#st-more')) return;
     /* На станциях с примером колесо сначала ведёт пример, потом ручку */
-    const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : null;
+    const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
     if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
     air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
   $('#st-cta').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
@@ -1946,8 +2022,9 @@ function updateAir(dt) {
   W.classList.toggle('tuned', q > .92);
   if (window.GTREK) GTREK.step(dt, { near: best === 1 && bd < 9, tuned: air.cur === 1, alpha: q });
   if (window.GTSMM) GTSMM.step(dt, { near: best === 2 && bd < 9, tuned: air.cur === 2, alpha: q });
+  if (window.GTBRD) GTBRD.step(dt, { near: best === 3 && bd < 9, tuned: air.cur === 3, alpha: q });
   /* На тёмном сайте из примера «Реклама» буквы сайта снова белые */
-  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99, air.v - ST[0].v), dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark);
+  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99, air.v - ST[0].v), dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark);
   if (window.GTSAYT) GTSAYT.step(dt, { near: best === 0 && bd < 9, alpha: J.alpha, clean: J.clean, call: J.p.find(p => p.e.classList.contains('j-call')), v: air.v });
   document.body.classList.toggle('ink', dark || js);
   document.body.classList.toggle('jk', js);
@@ -1963,8 +2040,10 @@ function updateAir(dt) {
     $$('#presets button').forEach((b, i) => b.setAttribute('aria-pressed', i === best));
   }
   if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
+  /* сетка-сонар под чёрной надписью станции: у «Сайта» после развала, у остальных, когда подключён пример. Пока идёт пример, сетки нет. */
+  if (window.GTSONAR) GTSONAR.show(q > .92 && (best === 0 ? W.classList.contains('clean') : !![window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][best]) && !W.classList.contains('ex'));
   if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + best * 55, c, .05); }
-  air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : s.col;
+  air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : best === 3 && window.GTBRD ? GTBRD.col : s.col;
 }
 function drawAir(time) {
   if (!gl) return;
@@ -2136,6 +2215,7 @@ $('#contact-open').addEventListener('click', () => openTalk(''));
 if (window.GTSAYT) GTSAYT.onTalk = () => openTalk(ST[0].full);
 if (window.GTREK) GTREK.onTalk = () => openTalk(ST[1].full);
 if (window.GTSMM) GTSMM.onTalk = () => openTalk(ST[2].full);
+if (window.GTBRD) GTBRD.onTalk = () => openTalk(ST[3].full);
 $('#talk-x').addEventListener('click', () => talk.close());
 $('#talk-f').addEventListener('submit', e => {
   e.preventDefault(); const c = !$('#t-contact').value.trim(); $('#t-contact-e').hidden = !c; if (c) { $('#t-contact').focus(); return; }

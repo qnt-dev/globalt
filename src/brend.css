@@ -1,0 +1,68 @@
+
+/* Надпись станции «Бренд» как у остальных: чёрный фон, белые буквы, вопрос и подсказка, без кнопок.
+   Отметка станции на шкале белая, это цвет станции. Работает, только когда пример подключён. */
+#klienty[data-st="3"]{background:#000}
+#klienty[data-st="3"] #air{z-index:1}
+#klienty[data-st="3"] #st-more{display:none}
+#klienty[data-st="3"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
+#klienty[data-st="3"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
+#klienty[data-st="3"].exd #st-hint{display:none}
+@media (min-width:761px) and (max-height:780px){#klienty[data-st="3"] #st-name{font-size:min(18vh,14.4vw)}#klienty[data-st="3"] #st-hint{margin-top:6px}}
+
+/* «Бренд»: брендбук кофейни ZERNO. Всё лежит внутри #x4, чтобы стили примера и сайта не мешали друг другу. */
+#x4{position:absolute;inset:0;z-index:0;pointer-events:none;visibility:hidden;font-family:var(--text);line-height:normal;color:#fff;--red:#df1f12;--ink2:#ffffffb8;--line:#ffffff1f}
+#x4.on{visibility:visible}
+#x4 button{pointer-events:auto;color:inherit;background:none;border:0;padding:0;cursor:pointer;font:inherit}
+#x4 h3,#x4 p{margin:0;padding:0}
+#x4-bg{position:absolute;inset:0;background:#0b0b0e;opacity:0;visibility:hidden}
+/* красный цвет бренда: растёт из знака на весь экран и сжимается в плашку палитры */
+#x4-flood{position:absolute;inset:0;background:var(--red);opacity:0;visibility:hidden}
+#x4-scene{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,4vw,70px);align-items:center;padding:0 var(--gutr) 0 var(--gut);pointer-events:auto;touch-action:none;opacity:0;visibility:hidden}
+
+/* Подпись: номер раздела брендбука, слово, фраза голосом сайта */
+.x4-cap small{display:block;font:500 12px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:clamp(10px,1.6vh,16px);color:#ff9a6a}
+.x4-cap h3{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:clamp(44px,6.6vw,108px);line-height:.86;font-variation-settings:"wdth" 70}
+.x4-cap p{font-family:var(--voice);font-style:italic;font-weight:500;font-size:clamp(22px,2.3vw,36px);line-height:1.1;margin-top:.45em;max-width:12em;color:var(--ink2);min-height:2.2em}
+#x4.red .x4-cap small{color:#fff}
+
+/* Лист брендбука: квадрат с тонкой рамкой, номер страницы внизу */
+#x4-stage{position:relative;height:100%;min-height:0;display:flex;align-items:center;justify-content:center;padding:30px 0 26px;will-change:transform}
+#x4-sheet{position:relative;flex:none;width:var(--s);height:var(--s);border:1px solid var(--line)}
+#x4-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#x4-sheet .pg{position:absolute;left:0;bottom:calc(100% + 9px);font:400 11px "JetBrains Mono",monospace;letter-spacing:.08em;color:#ffffff73;white-space:nowrap}
+#x4-get{position:absolute;right:0;bottom:calc(100% + 4px);padding:4px 0!important;font:500 11px "JetBrains Mono",monospace!important;letter-spacing:.08em;text-transform:uppercase;color:#ffb08a!important;box-shadow:inset 0 -1px #ffb08a80;opacity:0}
+#x4-get:hover{color:#fff!important}
+
+/* Палитра: четыре плашки. Красная плашка прозрачная: её место занимает красный, который сжался с экрана. */
+#x4-pal{position:absolute;inset:6%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4%;pointer-events:none}
+#x4-pal .ch{display:flex;flex-direction:column;gap:6px;opacity:0;visibility:hidden;font:400 11px/1.35 "JetBrains Mono",monospace;color:#ffffffb3}
+#x4-pal .sw{display:block;flex:1;min-height:0;border:1px solid #ffffff14}
+#x4-pal .ch:first-child .sw{background:transparent!important;border-color:transparent}
+#x4-pal b{font:500 13px/1.2 var(--text);color:#fff;margin-top:6px}
+
+#x4-scene .tag{position:absolute;right:var(--gutr);bottom:10px;font:500 11px var(--text);opacity:0;margin:0}
+#x4-px{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#x4-sd{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:#000a;pointer-events:auto}
+#x4-sd[hidden]{display:none}
+#x4-sd .bx{width:min(440px,calc(100vw - 32px));padding:26px 26px 22px;border:1px solid #ffffff26;background:#0b0b10;color:#e8e8ee;font-family:var(--text)}
+#x4-sd small{font:400 11px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:#8d8fa6}
+#x4-sd h3{font-weight:600;font-size:21px;margin:.5em 0 .4em}
+#x4-sd p{font-size:14px;line-height:1.5;color:#a8a9b6}
+#x4-sd .bt{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+#x4-sd button{padding:.7em 1.3em;border:1px solid #ffffff40;font-size:14px}
+#x4-sd button:hover{background:#fff;color:#000}
+#x4-sd #x4-sd-go{background:var(--red);border-color:var(--red);color:#fff}
+
+/* Телефон: подпись сверху, лист под ней */
+@media (max-width:760px){
+  #x4-scene{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);align-items:start;gap:10px;padding:10px 12px 0}
+  .x4-cap small{margin-bottom:6px}
+  .x4-cap h3{font-size:clamp(34px,11vw,46px)}
+  .x4-cap p{font-size:clamp(17px,5vw,21px);min-height:2.3em;max-width:none}
+  #x4-stage{align-items:flex-start;padding:26px 0 8px}
+  #x4-pal b{font-size:11px}
+  #x4-pal .ch{font-size:9px}
+  #x4-scene .tag{display:none}
+}
+@media (max-width:760px) and (max-height:700px){.x4-cap p{display:none}}
+@media (prefers-reduced-motion:reduce){#x4 *{transition:none!important;animation:none!important}}

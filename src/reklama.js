@@ -15,7 +15,8 @@ const vis = (el, a) => { el.style.opacity = a; el.style.visibility = a > .004 ? 
 const api = { onTalk: null };
 
 /* Разметка */
-const MARK = '<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="10.5" ry="15" transform="rotate(32 20 20)" fill="currentColor"/><path d="M24 7c-8 7 0 17-8 26" stroke="#141317" stroke-width="2.4" fill="none"/></svg>';
+/* знак ZERNO: зерно разрезано буквой Z. Разрез — цвет фона под знаком (--zbg), знак стоит на красном. */
+const MARK = '<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(24 50 50)"><ellipse cx="50" cy="50" rx="31" ry="44" fill="currentColor"/><path d="M8 34H61L39 66H92" fill="none" style="stroke:var(--zbg,#df1f12)" stroke-width="8" stroke-miterlimit="10"/></g></svg>';
 const NZROW = '<li class="nz"><div class="u"></div><div class="t"></div><div class="d"></div></li>';
 const NZPOST = '<div class="po nz"><div class="ph"><i></i><span class="nm"></span></div><div class="md"></div><div class="ac"><i></i><i></i><i></i></div><p class="tx"></p></div>';
 const ADPOST = `<div class="po ad" id="x2-post"><div class="ph"><i class="lg">${MARK}</i><span class="nm"><b>zerno.kg</b><small>Реклама</small></span></div>

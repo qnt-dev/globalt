@@ -317,6 +317,9 @@ body[data-w=klienty]:not(.ink) #bar{text-shadow:0 0 5px #000,0 0 14px #000}
 /* «Сайт»: вместо кнопок вопрос заказчику и лёгкая подсказка, что дальше крутить колесо или щёлкнуть */
 #klienty[data-st="0"] #st-more{display:none}
 #st-ask,#st-hint{display:none}
+/* сетка-сонар под чёрными надписями станций, её рисует src/sonar.js */
+#sonar{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity .6s}
+#sonar.on{opacity:1}
 #klienty[data-st="0"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
 #klienty[data-st="0"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
 #klienty.exd #st-hint{display:none}

@@ -38,7 +38,7 @@
 #x3-pf{position:relative;flex:none;width:calc(var(--pw) + 80px);padding:0 40px;margin:0 -40px;-webkit-mask-image:linear-gradient(#000 calc(100% - .35*var(--ts)),transparent);mask-image:linear-gradient(#000 calc(100% - .35*var(--ts)),transparent)}
 #x3-hd{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"av nm bt" "av ct ct";column-gap:14px;row-gap:6px;align-items:center;margin-bottom:18px}
 #x3-av{grid-area:av;position:relative;width:58px;height:58px;--ring:0}
-#x3-av .lg{position:absolute;inset:0;border-radius:50%;background:var(--red);color:#ff9a6a;display:grid;place-items:center}
+#x3-av .lg{position:absolute;inset:0;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center}
 #x3-av .lg svg{width:30px;height:30px}
 /* кольцо сторис горит, пока выходит новый пост */
 #x3-av .rg{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(#ffb03a,#ff5a1a,#e2240f,#ffb03a);-webkit-mask:radial-gradient(closest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));mask:radial-gradient(closest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));opacity:calc(.22 + .78*var(--ring));transform:scale(calc(1 + .06*var(--ring)))}
@@ -87,7 +87,7 @@
 #x3-cm .gp::before{content:'';position:absolute;right:100%;top:22px;width:var(--lw,0);height:1px;background:#35f29b;transform-origin:100% 50%;transform:scaleX(var(--ln))}
 .bb{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);background:#121216;font-size:13px;line-height:1.4;opacity:0;visibility:hidden}
 .bb .av{flex:none;width:28px;height:28px;border-radius:50%;background:#3a3a44;display:grid;place-items:center;font-style:normal;font-weight:600;font-size:12px}
-.bb .av.z{background:var(--red);color:#ff9a6a}
+.bb .av.z{background:var(--red);color:#fff}
 .bb .av svg{width:16px;height:16px}
 .bb b{display:block;font-weight:600;font-size:12px}
 .bb b small{font-weight:400;color:var(--mute);margin-left:4px}

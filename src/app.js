@@ -33,53 +33,52 @@ void main(){
   c=mix(c,stat,(1.-Q)*.85);
   o=vec4(c,1.);
 }`;
-/* Большой знак: чёрная форма на фоне белого света. При наведении на слово свет принимает цвет мира. */
-const MARK_BASE = `
-uniform vec4 A,B;uniform vec2 TL,TH,LP;uniform float MO,BW,FL;uniform vec3 MK,W;uniform vec4 RP[8];uniform vec2 FP;uniform sampler2D SD;
-float ell(vec2 p,vec4 e,float t){p-=e.xy;float c=cos(t),s=sin(t);p=vec2(c*p.x+s*p.y,-s*p.x+c*p.y);vec2 r=e.zw;float k0=length(p/r),k1=length(p/(r*r));return k1<1e-4?-min(r.x,r.y):k0*(k0-1.)/k1;}
-float field(vec2 p){
-  vec2 dm=p-M;float g=exp(-dot(dm,dm)*16.);vec2 q=p+dm*g*MA*PUSH;
-  q+=WOB*vec2(sin(q.y*9.+T*.8),cos(q.x*8.-T*.7));
-  float d=9.;
-  if(A.z>.001)d=abs(ell(q,A,TL.x))-TH.x;
-  if(B.z>.001)d=smin(d,abs(ell(q,B,TL.y))-TH.y,.03);
-  if(MO>0.){vec2 uv=(q-MK.xy)/MK.z+.5;uv.y=1.-uv.y;
-    float s=texture(SD,clamp(uv,.002,.998)).r*MK.z;
-    vec2 ov=max(abs(uv-.5)-.498,0.);s+=length(ov)*MK.z;
-    d=mix(d,s,MO);}
-  return d;
+/* Главная: Земля по картам NASA Earth Observatory (день, облака, ночные огни). Свет слева сверху. GV — поворот Земли: долгота и широта середины диска, наклон. Z — размер Земли, CY — высота её середины */
+const FS_HOME = COMMON + `
+uniform sampler2D DAY,NIGHT,CLOUD;uniform vec3 GV;uniform float Z,CY;
+const vec3 ATM=vec3(.36,.62,1.);
+vec3 C,L;mat3 WV;float CR;
+mat3 vw(float lo,float la,float rl){float cy=cos(lo),sy=sin(lo),cx=cos(la),sx=sin(la),cz=cos(rl),sz=sin(rl);
+  return mat3(cy,0.,-sy,0.,1.,0.,sy,0.,cy)*mat3(1.,0.,0.,0.,cx,-sx,0.,sx,cx)*mat3(cz,-sz,0.,sz,cz,0.,0.,0.,1.);}
+vec3 earth(vec2 p,float px,out float cov){
+  vec2 q=(p-C.xy)/C.z;float r=length(q),aa=px/C.z;
+  vec2 sd=normalize(L.xy+1e-4);float lit=dot(q/max(r,1e-4),sd),side=smoothstep(-.6,.8,lit)*.85+.15;
+  /* воздух над краем: тонкий яркий слой и долгое слабое свечение, со стороны солнца ярче */
+  float h=max(r-1.,0.)*C.z;
+  vec3 c=ATM*(exp(-h/.006)*.75+exp(-h/.028)*.24+exp(-h/.11)*.05)*side;
+  cov=smoothstep(1.+aa,1.-aa,r);
+  /* координаты карты и их шаг между соседними пикселями считаются до ветвления. На стыке карты шаг берётся с другой стороны стыка, иначе там чёрная пунктирная линия */
+  float z=sqrt(max(1.-r*r,0.));vec3 n=vec3(q,z);vec3 g=WV*n;
+  float lat=asin(clamp(g.y,-1.,1.)),lon=atan(g.x,g.z);vec2 uv=vec2(lon/6.2831853+.5,.5-lat/3.1415927),uw=vec2(fract(uv.x+.5),uv.y);
+  vec2 gx=dFdx(uv),gy=dFdy(uv),wx=dFdx(uw),wy=dFdy(uw);if(abs(wx.x)+abs(wy.x)<abs(gx.x)+abs(gy.x)){gx=wx;gy=wy;}
+  if(cov>0.){
+    vec3 day=pow(textureGrad(DAY,uv,gx,gy).rgb,vec3(2.2));
+    vec2 cu=uv+vec2(CR,0.);float cl=smoothstep(.2,.8,textureGrad(CLOUD,cu,gx,gy).r);
+    float csh=smoothstep(.2,.8,textureGrad(CLOUD,cu+vec2(.002,-.0015),gx,gy).r);
+    float ndl=dot(n,L),lam=smoothstep(-.12,.5,ndl)*max(ndl+.12,0.)/1.12;
+    float oc=smoothstep(.0,.05,day.b-max(day.r,day.g)*.9);
+    vec3 surf=mix(day*(1.-.4*csh*(1.-cl)),vec3(.95),cl*.9);
+    vec3 e=surf*lam*1.2+surf*.01;
+    /* блик солнца на море и огни городов на ночной стороне */
+    vec3 hv=normalize(L+vec3(0,0,1));e+=vec3(1.,.95,.85)*pow(max(dot(n,hv),0.),60.)*oc*(1.-cl)*.5*step(0.,ndl);
+    float nl=textureGrad(NIGHT,uv,gx,gy).r;e+=vec3(1.,.78,.5)*pow(nl,1.4)*1.1*smoothstep(.08,-.2,ndl)*(1.-cl*.8);
+    /* дымка у края: чем ближе к горизонту, тем больше воздуха между нами и землёй */
+    float dl=(1.-r)*C.z;float hz=exp(-dl/.035)*.85+exp(-dl/.16)*.25;
+    e=mix(e,ATM*(.35+.9*smoothstep(-.3,.5,ndl)),clamp(hz,0.,1.)*smoothstep(-.4,.3,ndl+.2));
+    c=mix(c,e,cov);
+  }
+  return c;
 }
-float rip(vec2 p){float s=0.;for(int i=0;i<8;i++){vec4 r=RP[i];if(r.w<=.001)continue;float d=length(p-r.xy)-r.z;s+=r.w*sin(d*70.)*exp(-d*d*160.);}return s*.0065;}
-float sig(vec2 p,float k){float s=0.;for(int i=0;i<8;i++){vec4 r=RP[i];if(r.w<=.001)continue;float d=length(p-r.xy)-r.z;s+=r.w*exp(-d*d*k);}return s;}
-float prof(float d){float w=BW;float x=clamp(-d/w,0.,1.);return w*sqrt(1.-(1.-x)*(1.-x));}
-vec3 nrm(vec2 p,float e){float h0=prof(field(p)),hx=prof(field(p+vec2(e,0))),hy=prof(field(p+vec2(0,e)));return normalize(vec3(-(hx-h0)/e,-(hy-h0)/e,1.));}
-vec3 wcol(){return W.x*vec3(1.,.36,.04)+W.y*vec3(.3,.5,1.)+W.z*vec3(1.,.2,.06);}
-float wamt(){return clamp(W.x+W.y+W.z,0.,1.);}
 float gn(vec2 c,float t){uvec2 u=uvec2(c)+uint(t)*uvec2(7919u,104729u);u*=uvec2(1597334677u,3812015801u);uint h=(u.x^u.y)*1597334677u;return float(h)/4294967295.;}
-`;
-const mark = (defs, main) => COMMON + defs + MARK_BASE + main;
-const FS_ECLIPSE = mark('#define PUSH .08\n#define WOB .0008\n', `
 void main(){
   float mn=min(R.x,R.y);vec2 p=(gl_FragCoord.xy-.5*R)/mn;float px=1.3/mn;
-  float d=field(p),ins=smoothstep(px,-px,d);
-  vec3 tint=vec3(1.,.965,.92);float wa=wamt();if(wa>.001)tint=mix(tint,wcol()/wa,wa);
-  vec2 sc=mix(FP,MK.xy+vec2(-.004,.01)*MK.z+(LP-MK.xy)*.035,MO);
-  float rs=.40*MK.z*MO*MO;vec2 f=p-sc;float x=length(f)/max(rs,.001);
-  float I=MO>0.?exp(-x*x*1.55):0.;
-  vec2 g=p-FP;I+=FL*exp(-dot(g,g)*90.);
-  I=clamp(I,0.,1.);
-  float gr=gn(gl_FragCoord.xy,floor(T*14.))-.5;
-  vec3 sun=tint*pow(I,1.35)*(1.+gr*.34*(1.-I*.7));
-  sun+=tint*.018*smoothstep(1.9,.4,x)*MO;
-  vec3 n=nrm(p,1.5/mn);vec2 to=normalize(sc-p+1e-4);
-  float rim=pow(max(dot(n.xy,to),0.),1.6)*pow(1.-n.z,.5);
-  vec3 body=vec3(.004)+tint*rim*(.7*exp(-length(f)*1.25)+.018);
-  body=mix(vec3(.96),body,smoothstep(.05,.6,MO));
-  vec3 c=mix(sun+vec3(.004),body,ins);
-  c+=sig(p,9000.)*.3*(1.-MO);
+  C=vec3(0.,CY,.5*Z);L=normalize(vec3(-.6,.45,.66));WV=vw(radians(GV.x),radians(GV.y),GV.z);CR=-T*.0006;
+  float cov;vec3 e=pow(max(earth(p,px,cov),0.),vec3(1./2.2));
+  /* диск приглушён, воздух у края ярче. Буквы разделов осветляют диск под собой и становятся окнами в Землю */
+  vec3 c=e*mix(.55,.24,cov)+.004;
   c+=(gn(gl_FragCoord.xy,floor(T*14.)+5.)-.5)*.012;
   o=vec4(c,1.);
-}`);
+}`;
 const cv = $('#gl');
 let gl = null;
 try { gl = cv.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
@@ -101,168 +100,234 @@ function resize() {
   dirty = true;
 }
 let dirty = true;
+/* карты Земли лежат на блоках текстур 5–7: блок 1 занимает «Сайт», блок 4 — переход «Распад» */
+const EARTH = [];
+let earthReady = 0;
 if (gl) {
-  prog('mark', FS_ECLIPSE); prog('radio', FS_RADIO);
+  prog('home', FS_HOME); prog('radio', FS_RADIO);
   const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, 1, 1, 0, gl.RED, gl.FLOAT, new Float32Array([1]));
-  const im = new Image();
-  im.onload = () => {
-    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0);
-    const d = x.getImageData(0, 0, c.width, c.height).data, f = new Float32Array(c.width * c.height);
-    for (let i = 0; i < f.length; i++) f[i] = (((d[i * 4] << 8 | d[i * 4 + 1]) / 65535) - .5) * 2 * .25;
-    gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, c.width, c.height, 0, gl.RED, gl.FLOAT, f); dirty = true; sdfReady = true;
-  };
-  im.src = window.GT_SDF;
+  ['assets/earth/day.webp', 'assets/earth/night.webp', 'assets/earth/clouds.webp'].forEach((url, i) => {
+    const t = gl.createTexture(), e = new Image(); EARTH.push(t);
+    e.onload = () => {
+      gl.activeTexture(gl.TEXTURE5 + i); gl.bindTexture(gl.TEXTURE_2D, t); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB8, gl.RGB, gl.UNSIGNED_BYTE, e); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.generateMipmap(gl.TEXTURE_2D);
+      gl.activeTexture(gl.TEXTURE0); earthReady++; dirty = true;
+    };
+    e.src = url;
+  });
+  const { p, u } = P.home; gl.useProgram(p); gl.uniform1i(u.DAY, 5); gl.uniform1i(u.NIGHT, 6); gl.uniform1i(u.CLOUD, 7);
 }
-let sdfReady = false;
 addEventListener('resize', resize);
 
-/* указатель: координаты как в шейдере */
-const ptr = { x: 9, y: 9, amp: 0, lx: 0, ly: 0, tr: 0 };
-function toP(e) { const m = Math.min(innerWidth, innerHeight); return [(e.clientX - innerWidth / 2) / m, -(e.clientY - innerHeight / 2) / m]; }
-addEventListener('pointermove', e => { const [x, y] = toP(e); ptr.x = x; ptr.y = y; ptr.amp = 1; if (RM) dirty = true; });
-
-/* ---------- ПРОЛОГ: история про два поиска ---------- */
-const say = $('#say'), hint = $('#hint'), skip = $('#skip');
-const S = { phase: 'dark', t: 0, a: { x: 0, y: 0, r: 0 }, b: { x: 0, y: 0, r: 0 }, tl: [0, 0], th: [.0048, .0048], mo: 0, fl: 0, fp: [0, 0], hold: false, rip: [], w: [0, 0, 0], wt: [0, 0, 0], em: 0, from: null, lp: [-.2, .6], clock: 0 };
-const LINES = {
-  you: 'Это вы. Вы тоже ищете.',
-  him: 'А это тот, кто ищет вас. Вы друг друга ещё не видите.',
-  hit: 'Вот эта точка.',
-  morph: 'В ней работаем мы.'
-};
-function sayNow(t) { if (!t) { say.classList.add('out'); return; } say.classList.add('out'); setTimeout(() => { say.textContent = t; say.classList.remove('out'); }, RM ? 0 : 280); }
-function mkAim() { const land = innerWidth > innerHeight, asp = land ? innerWidth / innerHeight : innerHeight / innerWidth; return land ? { x: asp * .5 - .5, y: .035, z: 1.08 } : { x: 0, y: asp * .5 - .58, z: .74 }; }
-function addRip(x, y, a) { S.rip.push({ x, y, r: 0, a }); if (S.rip.length > 8) S.rip.shift(); }
-function startYou(x, y) {
-  if (S.phase !== 'dark') return;
-  S.phase = 'you'; S.a = { x, y, r: .01 }; hint.style.opacity = 0; sayNow(LINES.you); addRip(x, y, .9);
-  $('#hint-t').textContent = '';
-}
-if (matchMedia('(pointer:coarse)').matches) $('#hint-t').textContent = 'Коснитесь и держите';
-const home = $('#home');
-home.addEventListener('pointerdown', e => {
-  if (e.target.closest('a,button') || S.phase === 'choice') return;
-  const [x, y] = toP(e); S.hold = true; if (S.phase === 'dark') startYou(x, y); else addRip(x, y, .7);
-});
-addEventListener('pointerup', () => { S.hold = false; });
-addEventListener('keydown', e => {
-  if (world === 'home' && S.phase === 'dark' && (e.key === 'Enter' || e.key === ' ') && (document.activeElement === document.body)) { e.preventDefault(); startYou(-.22, -.08); }
-  if (e.key === 'Escape' && world === 'rabota' && vacCur && !talk.open) vacClose();
-});
-function toChoice(fast) {
-  S.phase = 'choice'; S.mo = 1; S.a.r = 0; S.b.r = 0; S.th = [.0048, .0048];
-  say.classList.add('out'); hint.style.display = 'none'; skip.hidden = true; $('#what').hidden = true;
-  $('#choice').classList.add('on'); home.style.cursor = 'default'; home.style.touchAction = 'auto';
-  try { sessionStorage.setItem('gt-seen', '1'); } catch (e) {}
-  dirty = true;
-}
-skip.addEventListener('click', e => { e.stopPropagation(); beginMorph(); });
-function beginMorph() {
-  if (S.phase === 'morph' || S.phase === 'choice') return;
-  if (S.a.r < .02) { S.a = { x: -.24, y: -.08, r: .3 }; S.b = { x: .28, y: .12, r: .3 }; }
-  if (S.b.r < .02) { S.b = { x: -S.a.x * .9, y: -S.a.y * .9 + .05, r: .24 }; }
-  S.phase = 'morph'; S.t = 0; S.from = { ax: S.a.x, ay: S.a.y, ar: S.a.r, bx: S.b.x, by: S.b.y, br: S.b.r }; sayNow(LINES.morph); hint.style.opacity = 0; skip.hidden = true;
-}
+/* ---------- ГЛАВНАЯ: Земля ведёт в разделы ---------- */
+/* У каждого раздела своё место на Земле, и Земля поворачивается к нему: Работа — Казахстан и Урал, где объекты вахты, Люди — Москва и Европа,
+   Клиенты — Индия, Китай и Восточная Азия. c — цвет кнопки «Перейти»: оранжевые огни, белые облака, голубой воздух */
+const HUB = [
+  { w: 'rabota', n: 'Работа', s: 'Вакансии и помощь с трудоустройством', v: [66, 36, -.2], c: '#ff5c0a' },
+  { w: 'lyudi', n: 'Люди', s: 'Подбор персонала для вашей компании', v: [37, 48, -.2], c: '#fff' },
+  { w: 'klienty', n: 'Клиенты', s: 'Сайты, реклама, SMM, брендбук и логотип', v: [100, 28, -.2], c: '#8ec3ff' }
+];
+/* k — выбранный раздел (-1: не выбран, Земля медленно вращается), v — поворот Земли, vel — инерция после вращения рукой, lat — широта, к которой Земля возвращается, dv — доля перехода «Распад» */
+const S = { k: -1, v: [40, 30, -.2], vel: 0, lat: 30, drag: 0, dv: 0 };
+/* размер Земли и высота её середины в долях меньшей стороны экрана. Стоя Земля во всю ширину и выше середины: слова встают на неё столбиком */
+const earthZ = () => innerWidth > innerHeight ? 1.08 : .96, earthY = () => innerWidth > innerHeight ? .08 : .17;
+const home = $('#home'), hub = $('#hub'), cis = $('#cis'), tabs = $$('#hub .hub-t button'), hubS = $('#hub .hub-s'), hubGo = $('#hub .hub-go');
 function updateHome(dt) {
-  S.t += dt;
-  const aim = mkAim();
-  ptr.amp = Math.max(0, ptr.amp - dt * .75);
-  if (S.phase === 'dark' && S.t > 5.5) startYou(-.22, -.08);
-  if (S.phase === 'you' || S.phase === 'him') {
-    S.a.r += dt * (S.hold ? .135 : .085);
-    S.em += dt; if (S.em > .55) { S.em = 0; addRip(S.a.x, S.a.y, .45); if (S.b.r > 0) addRip(S.b.x, S.b.y, .45); }
-  }
-  if (S.phase === 'you' && S.a.r > .17) {
-    const land = innerWidth > innerHeight, asp = Math.max(innerWidth, innerHeight) / Math.min(innerWidth, innerHeight), ex = land ? asp * .5 - .2 : .3, ey = land ? .3 : asp * .5 - .22;
-    S.b = { x: clamp(-S.a.x * 1.1 + .1, -ex, ex), y: clamp(-S.a.y * 1.1 + .12, -ey, ey), r: .006 };
-    S.phase = 'him'; sayNow(LINES.him); addRip(S.b.x, S.b.y, .9);
-  }
-  if (S.phase === 'him') {
-    S.b.r += dt * .125;
-    const dx = S.b.x - S.a.x, dy = S.b.y - S.a.y, L = Math.hypot(dx, dy) || 1;
-    if (L <= S.a.r + S.b.r) {
-      S.phase = 'hit'; S.t = 0; const k = S.a.r / L;
-      S.fp = [S.a.x + dx * k, S.a.y + dy * k]; S.fl = 1.5; addRip(S.fp[0], S.fp[1], 1.4); sayNow(LINES.hit); skip.hidden = true;
-    }
-  }
-  if (S.phase === 'hit') {
-    S.a.r += dt * .02; S.b.r += dt * .02; S.th[0] = lerp(S.th[0], .006, dt * 2); S.th[1] = lerp(S.th[1], .006, dt * 2);
-    if (S.t > 1.75) beginMorph();
-  }
-  if (S.phase === 'morph') {
-    const k = clamp(S.t / 2.6), e = k * k * (3 - 2 * k), F = S.from;
-    S.a.x = lerp(F.ax, aim.x, e); S.a.y = lerp(F.ay, aim.y + .02, e); S.a.r = lerp(F.ar, .36, e);
-    S.b.x = lerp(F.bx, aim.x, e); S.b.y = lerp(F.by, aim.y - .03, e); S.b.r = lerp(F.br, .3, e);
-    S.tl = [lerp(0, -.1, e), lerp(0, .85, e)]; S.th = [lerp(.005, .02, e), lerp(.005, .012, e)];
-    S.mo = sstep(.45, 1, k);
-    S.fp = [lerp(S.fp[0], aim.x - .03 * aim.z, dt * 3), lerp(S.fp[1], aim.y + .16 * aim.z, dt * 3)];
-    if (k > .86 && S.fl < .4 && !S.flashed) { S.flashed = 1; S.fl = 1.1; S.fp = [aim.x - .022 * aim.z, aim.y + .155 * aim.z]; }
-    if (k >= 1) toChoice();
-  }
-  S.fl = Math.max(0, S.fl - dt * (S.phase === 'hit' ? .9 : 1.25));
-  S.rip.forEach(r => { r.r += dt * .34; r.a *= Math.pow(.42, dt); });
-  S.rip = S.rip.filter(r => r.a > .01);
-  if (ptr.tr > 0) ptr.tr -= dt;
-  if (ptr.tr <= 0 && (Math.hypot(ptr.x - ptr.lx, ptr.y - ptr.ly) > .045) && ptr.x < 9) { addRip(ptr.x, ptr.y, .2); ptr.lx = ptr.x; ptr.ly = ptr.y; ptr.tr = .12; }
-  for (let i = 0; i < 3; i++) S.w[i] = lerp(S.w[i], S.wt[i], clamp(dt * 3.5));
-  S.clock += dt;
-  const lx = ptr.amp > .02 ? ptr.x : aim.x + Math.cos(S.clock * .23 + 2.2) * .5 * aim.z, ly = ptr.amp > .02 ? ptr.y : aim.y + Math.sin(S.clock * .23 + 2.2) * .5 * aim.z;
-  S.lp[0] = lerp(S.lp[0], lx, clamp(dt * 1.6)); S.lp[1] = lerp(S.lp[1], ly, clamp(dt * 1.6));
+  const k = 1 - Math.exp(-dt * 2.4);
+  if (S.k < 0) { if (!S.drag) { S.v[0] += dt * (3 + S.vel); S.vel *= Math.exp(-dt * 2.2); S.v[1] += (S.lat - S.v[1]) * k; } }
+  else { const t = HUB[S.k].v; S.v[0] += (((t[0] - S.v[0]) % 360 + 540) % 360 - 180) * k; S.v[1] += (t[1] - S.v[1]) * k; }
 }
 function drawHome(time) {
   if (!gl) return;
-  const { p, u } = P.mark, aim = mkAim(); gl.useProgram(p); gl.uniform2f(u.LP, S.lp[0], S.lp[1]);
-  gl.uniform2f(u.R, cv.width, cv.height); gl.uniform1f(u.T, time); gl.uniform2f(u.M, ptr.x, ptr.y); gl.uniform1f(u.MA, ptr.amp);
-  gl.uniform4f(u.A, S.a.x, S.a.y, S.a.r, S.phase === 'morph' ? lerp(S.a.r, .21, S.mo) : S.a.r);
-  gl.uniform4f(u.B, S.b.x, S.b.y, S.b.r, S.phase === 'morph' ? lerp(S.b.r, .17, S.mo) : S.b.r);
-  gl.uniform2f(u.TL, S.tl[0], S.tl[1]); gl.uniform2f(u.TH, S.th[0], S.th[1]);
-  gl.uniform1f(u.BW, lerp(.011, .042, S.mo)); gl.uniform1f(u.MO, sdfReady ? S.mo : 0); gl.uniform3f(u.MK, aim.x, aim.y, aim.z);
-  const r = new Float32Array(32); S.rip.forEach((x, i) => { r.set([x.x, x.y, x.r, x.a], i * 4); }); gl.uniform4fv(u.RP, r);
-  gl.uniform3f(u.W, S.w[0], S.w[1], S.w[2]); gl.uniform1f(u.FL, S.fl); gl.uniform2f(u.FP, S.fp[0], S.fp[1]);
+  /* пока идёт «Распад», кадр Земли рисуется в память, а на экран его выводит распад */
+  const D = S.dv > 0 ? dustTex() : null;
+  if (D) { gl.bindFramebuffer(gl.FRAMEBUFFER, D.f); gl.viewport(0, 0, D.w, D.h); }
+  const { p, u } = P.home; gl.useProgram(p);
+  EARTH.forEach((t, i) => { gl.activeTexture(gl.TEXTURE5 + i); gl.bindTexture(gl.TEXTURE_2D, t); }); gl.activeTexture(gl.TEXTURE0);
+  gl.uniform2f(u.R, cv.width, cv.height); gl.uniform1f(u.T, time); gl.uniform3f(u.GV, S.v[0], S.v[1], S.v[2]); gl.uniform1f(u.Z, earthZ()); gl.uniform1f(u.CY, earthY());
   gl.drawArrays(gl.TRIANGLES, 0, 3);
+  if (D) dustDraw(D);
 }
-$$('.pick').forEach(a => {
-  const i = +a.dataset.t, on = () => { if (world !== 'home') return; S.wt = [0, 0, 0]; S.wt[i] = 1; dirty = true; if (RM) S.w = S.wt.slice(); }, off = () => { if (world !== 'home') return; S.wt = [0, 0, 0]; dirty = true; if (RM) S.w = [0, 0, 0]; };
-  a.addEventListener('pointerenter', on); a.addEventListener('focus', on); a.addEventListener('pointerleave', off); a.addEventListener('blur', off);
+/* выбранное слово вырастает из мелкой сетки точек, как печатный растр */
+const dotsIn = i => { tabs.forEach(x => x.classList.remove('play')); if (RM) return; void tabs[i].offsetWidth; tabs[i].classList.add('play'); };
+/* кнопка берёт цвет раздела: новый цвет ложится мелкими плитками, как пазл, слева направо */
+const tiles = document.createElement('span'); tiles.className = 'tiles'; tiles.setAttribute('aria-hidden', 'true'); hubGo.prepend(tiles);
+function paint(k) {
+  const c = HUB[k].c; clearTimeout(hubGo._t);
+  if (hubGo.classList.contains('off')) hubGo.style.setProperty('--c0', 'transparent');
+  if (RM) { hubGo.style.setProperty('--c0', c); return; }
+  const r = hubGo.getBoundingClientRect(), cw = 12, ch = 13, nx = Math.ceil(r.width / cw), ny = Math.ceil(r.height / ch); let h = '';
+  for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) h += `<i style="left:${x * cw}px;top:${y * ch}px;animation-delay:${Math.round(x * 22 + Math.random() * 70)}ms"></i>`;
+  tiles.style.setProperty('--cn', c); tiles.innerHTML = h;
+  hubGo._t = setTimeout(() => { hubGo.style.setProperty('--c0', c); tiles.innerHTML = ''; }, nx * 22 + 70 + 260);
+}
+function hubSay(t) { hubS.style.opacity = 0; setTimeout(() => { hubS.textContent = t; hubS.style.opacity = ''; }, RM ? 0 : 180); }
+function pick(k) {
+  k = clamp(k, 0, 2); clearTimeout(hub._off); if (S.k === k) return; S.k = k; S.lat = 30; S.vel = 0;
+  tabs.forEach((b, i) => { b.classList.toggle('on', i === k); b.setAttribute('aria-selected', i === k); });
+  dotsIn(k); hubSay(HUB[k].s); paint(k); hubGo.dataset.go = HUB[k].w; hubGo.href = '#' + HUB[k].w; hubGo.classList.remove('off'); dirty = true;
+}
+/* человек увёл указатель и ещё не решил: выбор снимается, Земля снова вращается с того же места */
+function unpick() { S.k = -1; tabs.forEach(b => { b.classList.remove('on'); b.setAttribute('aria-selected', false); }); hubSay('Что вы ищете?'); hubGo.classList.add('off'); }
+hub.addEventListener('pointerleave', e => { if (e.pointerType === 'touch') return; clearTimeout(hub._off); hub._off = setTimeout(unpick, 1000); });
+hub.addEventListener('pointerenter', () => clearTimeout(hub._off));
+tabs.forEach((b, i) => {
+  b.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') pick(i); }); b.addEventListener('focus', () => { if (b.matches(':focus-visible')) pick(i); });
+  /* на телефоне первое касание выбирает раздел, второе ведёт в него */
+  b.addEventListener('click', () => { if (S.k === i) go(HUB[i].w); else pick(i); });
+});
+/* Землю можно крутить мышью или пальцем: тянете — она поворачивается за рукой, отпустили — ещё немного крутится и идёт своим ходом */
+let drag = null;
+home.addEventListener('pointerdown', e => {
+  if (world !== 'home' || e.target.closest('#hub,a,button')) return;
+  if (S.k >= 0) unpick(); drag = { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId, vel: 0 }; S.drag = 1; S.vel = 0;
+  try { home.setPointerCapture(e.pointerId); } catch (x) {} home.classList.add('drag');
+});
+home.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return; const now = performance.now(), m = Math.min(innerWidth, innerHeight), dx = (e.clientX - drag.x) / m, dy = (e.clientY - drag.y) / m, K = 105;
+  S.v[0] -= dx * K; S.v[1] = clamp(S.v[1] + dy * K, -20, 70); dirty = true;
+  const dt = Math.max(.008, (now - drag.t) / 1000); drag.vel = drag.vel * .6 + (-dx * K / dt) * .4; drag.x = e.clientX; drag.y = e.clientY; drag.t = now;
+});
+const drop = e => { if (!drag || (e && e.pointerId !== drag.id)) return; S.vel = performance.now() - drag.t < 90 ? clamp(drag.vel, -120, 120) : 0; S.lat = S.v[1]; S.drag = 0; drag = null; home.classList.remove('drag'); };
+home.addEventListener('pointerup', drop); home.addEventListener('pointercancel', drop); home.addEventListener('lostpointercapture', drop);
+/* бегущая строка: названия идут по дуге снаружи Земли, по воздуху вдоль её нижнего края, у середины они светлее, к краям гаснут */
+const cisArc = $('#cis path'), cisTp = $('#cis textPath'), cisG = $('#cis linearGradient');
+cisTp.textContent = (cisTp.textContent + ' ').repeat(4); let cisUnit = 0;
+function cisLay() {
+  const m = Math.min(innerWidth, innerHeight), R = .5 * earthZ() * m, cx = innerWidth / 2, cy = innerHeight / 2 - earthY() * m, r = R + clamp(R * .05, 14, 26), a0 = Math.PI * .22;
+  cis.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+  const x0 = cx - r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a0);
+  cisArc.setAttribute('d', `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r.toFixed(1)} ${r.toFixed(1)} 0 0 0 ${x1.toFixed(1)} ${y0.toFixed(1)}`);
+  cisG.setAttribute('x1', x0); cisG.setAttribute('x2', x1);
+  $('#cis text').style.fontSize = clamp(R * .03, 11, 15) + 'px';
+  cisUnit = cisTp.getComputedTextLength() / 4;
+}
+document.fonts.ready.then(cisLay); addEventListener('resize', cisLay);
+const cisRun = now => { if (world === 'home' && cisUnit) cisTp.setAttribute('startOffset', (-((now * .028) % cisUnit)).toFixed(1)); requestAnimationFrame(cisRun); };
+if (!RM) requestAnimationFrame(cisRun);
+/* колесо и стрелки листают разделы */
+let hubAcc = 0, hubLock = 0;
+home.addEventListener('wheel', e => { if (world !== 'home') return; e.preventDefault(); const now = performance.now(); if (now < hubLock) return; hubAcc += e.deltaY; if (Math.abs(hubAcc) > 40) { pick(S.k < 0 ? 0 : S.k + Math.sign(hubAcc)); hubAcc = 0; hubLock = now + 650; } }, { passive: false });
+addEventListener('keydown', e => {
+  if (world === 'home') { if (e.key === 'ArrowRight' || e.key === 'ArrowDown') pick(S.k + 1); if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') pick(S.k < 0 ? 0 : S.k - 1); }
+  if (e.key === 'Escape' && world === 'rabota' && vacCur && !talk.open) vacClose();
 });
 
-/* ---------- Переход сквозь звезду ---------- */
-const WC = { home: '#000', rabota: '#000', lyudi: '#fff', klienty: '#6f6f6f' }, WF = { home: '#000', rabota: '#ff5c0a', lyudi: '#fff', klienty: '#6f6f6f' };
-const wipe = $('#wipe'), wp = $('#wipe-p');
-let busy = false, lastClick = [innerWidth / 2, innerHeight / 2];
-addEventListener('pointerdown', e => { lastClick = [e.clientX, e.clientY]; }, true);
+/* ---------- Переход «Распад» (по образцу motionin.design/gallery/cipher) ----------
+   Земля распадается на квадратики своих цветов, граница идёт справа налево, квадратики уносит вправо, как пыль. Раздел собирается из квадратиков.
+   Обратно — тем же путём назад. Между разделами текущий рассыпается в квадратики, новый собирается из них */
+let DT = null;
+function dustTex() {
+  const w = cv.width, h = cv.height; if (DT && DT.w === w && DT.h === h) return DT;
+  if (DT) { gl.deleteTexture(DT.t); gl.deleteFramebuffer(DT.f); }
+  gl.activeTexture(gl.TEXTURE4); const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.activeTexture(gl.TEXTURE0); DT = { t, f, w, h }; return DT;
+}
+/* когда квадратик отрывается: граница идёт справа налево с рваным краем. 0 и меньше — ещё на месте, дальше — возраст полёта */
+const DUSTF = `
+float hs(vec2 v){return fract(sin(dot(v,vec2(12.9898,78.233)))*43758.5453);}
+float rel(vec2 cell){vec2 cc=(cell+.5)*CS;float n=hs(cell),n2=hs(cell+17.3),xf=R.x*(.92-1.25*K);
+  return (cc.x-xf+(n-.5)*R.x*.1+sin(cc.y/R.y*9.+n2*.8)*R.x*.035)/(R.x*.4);}`;
+let DP = null;
+if (gl) {
+  /* фон: где квадратик ещё на месте — сама Земля во всю резкость, где оторвался — пустой космос */
+  prog('dustbg', `#version 300 es
+precision highp float;uniform sampler2D S0;uniform vec2 R;uniform float K,CS;out vec4 o;${DUSTF}
+void main(){vec2 fc=gl_FragCoord.xy;float a=rel(floor(fc/CS));o=vec4(a>0.?vec3(0.):texture(S0,fc/R).rgb,1.);}`);
+  /* частицы: по одной на квадратик. Цвет — цвет Земли в этом месте, полёт вправо с лёгким вихрем, к концу частица мельче и гаснет */
+  const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) console.error('dust', gl.getShaderInfoLog(x)); return x; };
+  const p = gl.createProgram();
+  gl.attachShader(p, sh(gl.VERTEX_SHADER, `#version 300 es
+precision highp float;uniform sampler2D S0;uniform vec2 R;uniform float K,CS;uniform int NX;out vec4 vc;${DUSTF}
+void main(){int id=gl_VertexID;vec2 cell=vec2(float(id%NX),float(id/NX)),cc=(cell+.5)*CS;float a=rel(cell);
+  vec3 c=textureLod(S0,cc/R,log2(CS)).rgb;float L=dot(c,vec3(.3,.59,.11));
+  if(a<=0.||a>=1.||L<.012){gl_Position=vec4(2.,2.,0.,1.);gl_PointSize=0.;vc=vec4(0.);return;}
+  float n=hs(cell+3.1),n2=hs(cell+9.7),e=pow(a,1.45);
+  vec2 off=vec2(1.,(n2-.5)*.5+.1)*e*R.x*.34+vec2(sin(a*7.+n*9.),cos(a*5.+n2*7.))*a*R.y*.035;
+  gl_Position=vec4((cc+off)/R*2.-1.,0.,1.);gl_PointSize=max(1.,CS*(1.-.6*a)*(.7+.5*n));
+  float al=1.-smoothstep(.5,1.,a);vc=vec4(min(c*2.2+.02,vec3(1.))*al,al);}`));
+  gl.attachShader(p, sh(gl.FRAGMENT_SHADER, '#version 300 es\nprecision highp float;in vec4 vc;out vec4 o;void main(){o=vc;}'));
+  gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('dust', gl.getProgramInfoLog(p));
+  DP = { p, vao: gl.createVertexArray(), u: n => gl.getUniformLocation(p, n) };
+}
+function dustDraw(D) {
+  const W = cv.width, H = cv.height, CS = Math.max(3, Math.round(4 * W / innerWidth)), NX = Math.ceil(W / CS), NY = Math.ceil(H / CS);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
+  gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, D.t); gl.generateMipmap(gl.TEXTURE_2D);
+  const bg = P.dustbg; gl.useProgram(bg.p); gl.uniform1i(bg.u.S0, 4); gl.uniform2f(bg.u.R, W, H); gl.uniform1f(bg.u.K, S.dv); gl.uniform1f(bg.u.CS, CS); gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.useProgram(DP.p); gl.uniform1i(DP.u('S0'), 4); gl.uniform2f(DP.u('R'), W, H); gl.uniform1f(DP.u('K'), S.dv); gl.uniform1f(DP.u('CS'), CS); gl.uniform1i(DP.u('NX'), NX);
+  gl.bindVertexArray(DP.vao); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.drawArrays(gl.POINTS, 0, NX * NY); gl.disable(gl.BLEND); gl.bindVertexArray(null);
+  gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0);
+}
+/* завеса из квадратиков поверх раздела: раздел собирается из них и рассыпается в них. q=0 — всё закрыто, q=1 — всё открыто */
+const veil = $('#veil'), vx = veil.getContext('2d'), VB = 6; let VR = null;
+function veilDraw(q) {
+  const d = Math.min(devicePixelRatio || 1, 1.5), w = innerWidth, h = innerHeight, nx = Math.ceil(w / VB), ny = Math.ceil(h / VB);
+  if (veil.width !== Math.round(w * d) || veil.height !== Math.round(h * d)) { veil.width = Math.round(w * d); veil.height = Math.round(h * d); }
+  if (!VR || VR.n !== nx * ny) { VR = new Float32Array(nx * ny); VR.n = nx * ny; for (let k = 0; k < VR.length; k++) VR[k] = Math.random(); }
+  vx.setTransform(d, 0, 0, d, 0, 0); vx.clearRect(0, 0, w, h); vx.fillStyle = '#000'; vx.beginPath();
+  for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const v = (x / nx) * .72 + VR[y * nx + x] * .28; if (1 - v > q * 1.02) vx.rect(x * VB, y * VB, VB, VB); }
+  vx.fill();
+}
+function veilRun(q0, q1, D, done) { veil.style.display = 'block'; const t0 = performance.now(); const st = now => { const k = clamp((now - t0) / D); veilDraw(q0 + (q1 - q0) * sstep(0, 1, k)); if (k < 1) requestAnimationFrame(st); else done(); }; requestAnimationFrame(st); }
+const hubFade = o => { hub.style.opacity = cis.style.opacity = o; };
+/* в раздел: Земля распадается, раздел собирается из квадратиков */
+function dustDive(w, done) {
+  const t0 = performance.now(), D = 1500;
+  const st = now => {
+    const k = clamp((now - t0) / D); S.dv = Math.max(k, 1e-4); dirty = true; hubFade(1 - sstep(0, .18, k));
+    /* последние пылинки уже почти погасли: раздел начинает собираться, не дожидаясь пустого экрана */
+    if (k < .88) { requestAnimationFrame(st); return; }
+    veilDraw(0); veil.style.display = 'block'; show(w); S.dv = 0; hubFade('');
+    veilRun(0, 1, 760, () => { veil.style.display = 'none'; done(); });
+  };
+  requestAnimationFrame(st);
+}
+/* на главную: раздел рассыпается в квадратики, частицы летят назад и собирают Землю, слово раздела проступает точками */
+function dustRise(from, done) {
+  const i = HUB.findIndex(h => h.w === from);
+  veilRun(1, 0, 620, () => {
+    if (i >= 0) { S.k = i; S.v = HUB[i].v.slice(); }
+    S.dv = 1; hubFade(0); show('home'); requestAnimationFrame(() => { veil.style.display = 'none'; });
+    const t0 = performance.now(), D = 1500; let shown = false;
+    const st = now => {
+      const k = 1 - clamp((now - t0) / D); S.dv = Math.max(k, 1e-4); dirty = true; hubFade(1 - sstep(0, .2, k));
+      if (!shown && k < .2) { shown = true; if (i >= 0) { S.k = -1; pick(i); } }
+      if (k > 0) { requestAnimationFrame(st); return; }
+      S.dv = 0; hubFade(''); done();
+    };
+    requestAnimationFrame(st);
+  });
+}
+function dustSwap(w, done) { veilRun(1, 0, 560, () => { show(w); requestAnimationFrame(() => veilRun(0, 1, 700, () => { veil.style.display = 'none'; done(); })); }); }
+
+/* ---------- Миры ---------- */
+const WC = { home: '#000', rabota: '#000', lyudi: '#fff', klienty: '#6f6f6f' };
+let busy = false;
 function show(w) {
   $$('.world').forEach(s => { s.hidden = s.id !== w; });
   world = w; document.body.dataset.w = w; document.body.classList.remove('ink', 'barhide'); document.body.classList.toggle('ink', w === 'lyudi'); document.body.style.background = WC[w];
+  /* на главной слой Земли лежит внутри неё: так буквы разделов смешиваются с Землёй. В других мирах он возвращается на место */
+  if (w === 'home') { if (cv.parentNode !== home) home.prepend(cv); } else if (cv.parentNode === home) document.body.insertBefore(cv, home);
   cv.style.display = gl && (w === 'home' || w === 'klienty') ? 'block' : 'none';
   $$('#nav a').forEach(a => { if (a.dataset.go === w) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   try { history.replaceState(null, '', w === 'home' ? '#top' : '#' + w); } catch (e) {}
-  if (w === 'rabota') enterWork(); if (w === 'lyudi') enterPeople(); if (w === 'klienty') enterAir(); if (w === 'home') { $('#home').scrollTop = 0; }
-  S.wt = [0, 0, 0]; S.w = [0, 0, 0];
+  if (w === 'rabota') enterWork(); if (w === 'lyudi') enterPeople(); if (w === 'klienty') enterAir();
   dirty = true;
 }
 function go(w) {
   if (busy) return; if (w === world) { if (w === 'rabota') { if (vacCur) vacClose(); } if (w === 'lyudi') ly.scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' }); return; }
-  if (w === 'home' && S.phase !== 'choice') toChoice();
   if (RM) { show(w); return; }
-  busy = true; wipe.style.display = 'block'; wipe.style.opacity = 1; wp.setAttribute('fill', WF[w]);
-  const vb = Math.max(innerWidth, innerHeight) / 2, cx = (lastClick[0] - innerWidth / 2) / vb, cy = (lastClick[1] - innerHeight / 2) / vb;
-  const t0 = performance.now(), D = 820;
-  const step = now => {
-    const k = clamp((now - t0) / D), e = k * k * k, s = lerp(.001, 11, e), rot = lerp(0, .9, ease(k));
-    wp.setAttribute('transform', `translate(${cx * (1 - e)} ${cy * (1 - e)}) rotate(${rot * 57.3}) scale(${s})`);
-    if (k < 1) requestAnimationFrame(step); else {
-      show(w); const t1 = performance.now();
-      const fade = n2 => { const q = clamp((n2 - t1) / 340); wipe.style.opacity = 1 - q; if (q < 1) requestAnimationFrame(fade); else { wipe.style.display = 'none'; busy = false; } };
-      requestAnimationFrame(fade);
-    }
-  };
-  requestAnimationFrame(step);
+  busy = true; const done = () => { busy = false; };
+  if (world === 'home') { if (gl) dustDive(w, done); else { show(w); done(); } }
+  else if (w === 'home') { if (gl) dustRise(world, done); else { show('home'); done(); } }
+  else dustSwap(w, done);
 }
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-go]'); if (a) { e.preventDefault(); go(a.dataset.go); return; }
@@ -493,6 +558,18 @@ function buildPeople() {
   if (lyBuilt) return; lyBuilt = true;
   LP.im.forEach(m => { m.src = window.GT_IMG[m.dataset.i]; });
   ly.addEventListener('scroll', () => { lyPaint(); barScroll(); }, { passive: true }); addEventListener('resize', () => { LP.f = -1; lyPaint(); });
+  /* одно движение колеса — один экран, и портрет меняется сразу, а не через десяток щелчков. Экран выше окна сначала прокручивается до своего края */
+  let lyAcc = 0, lyLock = 0;
+  ly.addEventListener('wheel', e => {
+    if (e.ctrlKey) return;
+    const fs = LP.frames, top = ly.scrollTop, H = ly.clientHeight, dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1);
+    let i = 0; fs.forEach((f, k) => { if (f.offsetTop <= top + 2) i = k; });
+    const f = fs[i]; if (dy > 0 ? f.offsetTop + f.offsetHeight > top + H + 2 : top > f.offsetTop + 2) return;
+    e.preventDefault(); const now = performance.now(); if (now < lyLock) return;
+    lyAcc += dy; if (Math.abs(lyAcc) < 30) return;
+    const j = clamp(i + Math.sign(lyAcc), 0, fs.length - 1); lyAcc = 0; if (j === i) return;
+    lyLock = now + (RM ? 150 : 800); ly.scrollTo({ top: fs[j].offsetTop, behavior: RM ? 'auto' : 'smooth' });
+  }, { passive: false });
   const test = document.createElement('div'); try { test.contentEditable = 'plaintext-only'; if (test.contentEditable === 'plaintext-only') plain = 'plaintext-only'; } catch (e) {}
   $('#my-letter').innerHTML = FIELDS.map(f => `<span class="ln">${f.before} <span class="nb"><span class="bl" data-k="${f.k}" data-ph="${f.ph}" role="textbox" aria-label="${f.label}" tabindex="0" contenteditable="${plain}"></span><span class="dot">${f.after}</span></span></span>`).join(' ');
   $('#ly-skip').addEventListener('click', () => { myReveal(true); $('.bl').focus({ preventScroll: true }); });
@@ -522,10 +599,10 @@ function enterPeople() {
 /* ---------- МИР 3: эфир ---------- */
 /* Номер станции — её место в ST, по нему подключены примеры. Порядок на шкале задаёт v: Сайт, Бренд, Реклама, SMM. */
 const ST = [
-  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?', get: 'Структура, тексты, дизайн, вёрстка и форма заявки.', need: 'Описание услуг, фотографии, доступ к домену.' },
-  { wd: 72, v: 63, name: 'Реклама', full: 'Контекстная и таргетированная реклама', go: 'Обсудить рекламу', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?', get: 'Подбор запросов и аудиторий, объявления, настройка кампаний и отчёт.', need: 'Адрес сайта, список услуг и доступ к рекламным кабинетам.' },
-  { wd: 120, v: 88, name: 'SMM', full: 'Ведение соцсетей', go: 'Обсудить SMM', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?', get: 'План публикаций, тексты и оформление.', need: 'Человек с вашей стороны, который согласует.' },
-  { wd: 100, v: 37, name: 'Бренд', full: 'Брендбук и логотип', go: 'Обсудить бренд', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен запомнить о вас с первого взгляда?', get: 'Логотип, цвета, шрифты, правила и примеры применения.', need: 'Разговор о компании и конкурентах.' }
+  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?' },
+  { wd: 72, v: 63, name: 'Реклама', full: 'Контекстная и таргетированная реклама', go: 'Обсудить рекламу', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?' },
+  { wd: 120, v: 88, name: 'SMM', full: 'Ведение соцсетей', go: 'Обсудить SMM', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?' },
+  { wd: 100, v: 37, name: 'Бренд', full: 'Брендбук и логотип', go: 'Обсудить бренд', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен запомнить о вас с первого взгляда?' }
 ];
 const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
 /* станции слева направо по шкале */
@@ -542,12 +619,14 @@ function buildAir() {
   $$('#presets button').forEach(b => b.addEventListener('click', () => { const v = ST[+b.dataset.i].v; air.target = v; if (RM) air.v = v; $('#tun').value = v; dirty = true; }));
   const t = $('#tun'); t.addEventListener('input', () => { air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
   $('#klienty').addEventListener('wheel', e => {
-    if (e.target.closest('#st-more')) return;
     /* На станциях с примером колесо сначала ведёт пример, потом ручку */
     const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
     if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
-    air.target = clamp(air.target + Math.sign(e.deltaY) * 1.2, 0, 100); t.value = air.target; e.preventDefault(); dirty = true; }, { passive: false });
-  $('#st-cta').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
+    /* ручка встаёт на каждой станции: быстрое колесо не проскакивает станцию, пока её пример не успел включиться */
+    e.preventDefault(); dirty = true; const now = performance.now(); if (now < (air.lock || 0)) return;
+    const dir = Math.sign(e.deltaY), nt = clamp(air.target + dir * 1.2, 0, 100), hit = ORD.map(i => ST[i]).find(st => (st.v - air.target) * dir > .01 && (st.v - nt) * dir <= 0);
+    if (hit) { air.target = hit.v; air.lock = now + (RM ? 0 : 900); } else air.target = nt;
+    t.value = air.target; }, { passive: false });
   $('#st-go').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
   $('#sound').addEventListener('click', toggleSound);
 }
@@ -588,11 +667,12 @@ function updateAir(dt) {
   $('#air').style.setProperty('--air', dark ? '#000' : '#fff');
   W.style.setProperty('--air', dark ? '#000' : '#fff');
   $('#air-noise').style.opacity = (1 - q) * .95;
+  $('#scale').style.setProperty('--p', (air.v / 100).toFixed(4));
   $('#st-name').style.setProperty('--wd', q > .92 ? (innerWidth <= 760 ? Math.max(50, s.wd * .6) : s.wd) : (innerWidth <= 760 ? 60 : 70));
   if (near) { scramble($('#st-name'), s.name, Math.min(1, q * 1.6), best + 1); scramble($('#st-line'), s.line, q, best + 3); }
   else { if ($('#st-name').textContent !== 'Шум') $('#st-name').textContent = 'Шум'; if ($('#st-line').textContent) $('#st-line').textContent = ''; }
   if (q > .92 && air.cur !== best) {
-    air.cur = best; W.dataset.st = best; if (s.ask) $('#st-ask').textContent = s.ask; $('#st-get').innerHTML = `<b>${s.full}. Что получите:</b> ${s.get}`; $('#st-need').innerHTML = `<b>Что нужно от вас:</b> ${s.need}`; $('#st-go span').textContent = s.go + ' →';
+    air.cur = best; W.dataset.st = best; if (s.ask) $('#st-ask').textContent = s.ask; $('#st-go span').textContent = s.go + ' →';
     $('#st-name').setAttribute('aria-label', s.full);
     $$('#presets button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.i === best));
   }
@@ -869,14 +949,11 @@ function frame(now) {
 }
 resize();
 const h0 = (location.hash || '').slice(1);
-const seen = (() => { try { return sessionStorage.getItem('gt-seen'); } catch (e) { return null; } })();
-if (RM) { S.mo = 1; toChoice(); }
-else if (seen) toChoice();
 const dm = h0.match(/^([a-z]+)(?:-(\d+))?$/), dv = dm && VAC.find(V => V.id === dm[1]);
-if (dv) { S.deep = { id: dv.id, n: dm[2] ? dm[2] - 1 : null }; toChoice(); show('rabota'); }
-else if (h0 === 'obyavlenie') { toChoice(); show('lyudi'); myReveal(); }
-else if (['rabota', 'lyudi', 'klienty'].includes(h0)) { toChoice(); show(h0); }
+if (dv) { S.deep = { id: dv.id, n: dm[2] ? dm[2] - 1 : null }; show('rabota'); }
+else if (h0 === 'obyavlenie') { show('lyudi'); myReveal(); }
+else if (['rabota', 'lyudi', 'klienty'].includes(h0)) show(h0);
 else show('home');
-window.__gt = { objSet, hi() { window.__fixed = 1; scale = 1.5; resize(); }, LP, vacOpen, vacClose, go, show, S, air, beginMorph, toChoice };
+window.__gt = { objSet, hi() { window.__fixed = 1; scale = 1.5; resize(); }, LP, vacOpen, vacClose, go, show, S, air, pick, earth: () => earthReady };
 requestAnimationFrame(frame);
 })();

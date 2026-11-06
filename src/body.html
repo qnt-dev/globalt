@@ -9,19 +9,12 @@
 </div>
 
 <section id="home" class="world" aria-label="Начало">
-  <p id="say" class="voice" aria-live="polite">Прямо сейчас кто-то ищет вас.</p>
-  <p id="hint"><i></i><span id="hint-t">Нажмите и держите</span></p>
-  <p id="what">Вакансии, подбор персонала и маркетинг</p>
-  <button id="skip" type="button">Пропустить</button>
-  <img class="fallback-mark" src="{{MARK}}" alt="">
-  <div id="choice">
-    <p id="ask" class="voice">А что ищете вы?</p>
-    <div class="words">
-      <a class="pick" href="#rabota" data-go="rabota" data-t="0"><b class="dsp">Работу</b><span>Вакансии и помощь с трудоустройством</span></a>
-      <a class="pick" href="#lyudi" data-go="lyudi" data-t="1"><b class="dsp">Людей</b><span>Подбор персонала для вашей компании</span></a>
-      <a class="pick" href="#klienty" data-go="klienty" data-t="2"><b class="dsp">Клиентов</b><span>Сайты, реклама, SMM, брендбук и логотип</span></a>
-    </div>
-    <div id="thesis"><h1>GLOBAL TRIUMPH сводит тех, кто ищет друг друга: человека с работой, компанию с сотрудниками, бизнес с клиентами.</h1></div>
+  <h1 class="vh">GLOBAL TRIUMPH: вакансии, подбор персонала и маркетинг</h1>
+  <svg id="cis" aria-label="Крупные компании СНГ" role="img"><defs><path id="cis-arc" d="M0 0"/><linearGradient id="cis-g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset=".8" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><text fill="url(#cis-g)"><textPath href="#cis-arc" startOffset="0">Яндекс ✦ Сбер ✦ Ozon ✦ Wildberries ✦ Kaspi ✦ X5 Group ✦ Магнит ✦ МТС ✦ Билайн ✦ Т-Банк ✦ Авито ✦ VK ✦ Альфа-Банк ✦ Аэрофлот ✦</textPath></text></svg>
+  <div id="hub">
+    <div class="hub-t" role="tablist" aria-label="Что вы ищете"><button type="button" role="tab" aria-selected="false"><span class="w0" aria-hidden="true">Работа</span><span class="w1">Работа</span><span class="w2" aria-hidden="true">Работа</span></button><button type="button" role="tab" aria-selected="false"><span class="w0" aria-hidden="true">Люди</span><span class="w1">Люди</span><span class="w2" aria-hidden="true">Люди</span></button><button type="button" role="tab" aria-selected="false"><span class="w0" aria-hidden="true">Клиенты</span><span class="w1">Клиенты</span><span class="w2" aria-hidden="true">Клиенты</span></button></div>
+    <p class="hub-s" aria-live="polite">Что вы ищете?</p>
+    <a class="btn hub-go off" href="#rabota" data-go="rabota">Перейти →</a>
   </div>
 </section>
 
@@ -137,11 +130,6 @@
       <p id="st-ask">Что вы хотите, чтобы человек видел, когда открывает ваш сайт?</p>
       <p id="st-hint" aria-hidden="true"><i></i><span class="hm">Крутите колесо или щёлкните</span><span class="ht">Проведите вверх или коснитесь</span></p>
       <button class="btn" id="st-go" type="button"><span>Обсудить сайт →</span></button>
-      <div id="st-more">
-        <p id="st-get"></p>
-        <p id="st-need"></p>
-        <button class="go" id="st-cta" type="button" style="--go-ink:#fff"><span>Обсудить эту частоту</span></button>
-      </div>
     </div>
     <div id="air-foot">
       <button id="sound" type="button">Включить звук</button>
@@ -155,7 +143,7 @@
   </div>
 </section>
 
-<svg id="wipe" viewBox="-1 -1 2 2" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path id="wipe-p" d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>
+<canvas id="veil" aria-hidden="true"></canvas>
 
 
 <dialog id="talk" aria-labelledby="talk-t">

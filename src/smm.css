@@ -3,7 +3,6 @@
    Зелёная только отметка станции на шкале. Работает, только когда пример подключён. */
 #klienty[data-st="2"]{background:#000}
 #klienty[data-st="2"] #air{z-index:1}
-#klienty[data-st="2"] #st-more{display:none}
 #klienty[data-st="2"] #presets button[aria-pressed=true]{color:#35f29b}
 #klienty[data-st="2"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
 #klienty[data-st="2"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
@@ -45,11 +44,11 @@
 #x3-hd .who{grid-area:nm;min-width:0}
 #x3-hd .who b{display:block;font-weight:600;font-size:15px}
 #x3-hd .who span{display:block;font-size:12px;color:var(--ink2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#x3-sub{grid-area:bt;padding:8px 14px!important;background:var(--red)!important;color:#08080a!important;font:500 12px/1 Mussels,Montserrat,sans-serif!important;text-transform:uppercase;letter-spacing:.04em}
+#x3-sub{grid-area:bt;padding:8px 14px!important;background:var(--red)!important;color:#08080a!important;font:500 12px/1 Tektur,Montserrat,sans-serif!important;text-transform:uppercase;letter-spacing:.04em}
 #x3-sub:hover{background:#ff6a1a!important}
 #x3-ct{grid-area:ct;display:flex;gap:22px}
 #x3-ct div{display:flex;align-items:baseline;gap:6px}
-#x3-ct dd{font:500 19px/1 Mussels,Montserrat,sans-serif;font-variant-numeric:tabular-nums}
+#x3-ct dd{font:500 19px/1 Tektur,Montserrat,sans-serif;font-variant-numeric:tabular-nums}
 #x3-ct dt{font-size:12px;color:var(--ink2)}
 #x3-gw{position:relative}
 #x3-grid{position:absolute;left:0;top:0;width:var(--pw);height:calc(3*var(--ts) + 2*var(--g))}
@@ -58,7 +57,7 @@
 
 /* Плитки постов. Размеры текста считаются от ширины плитки. */
 .x3-t{position:absolute;left:0;top:0;width:var(--ts);height:var(--ts);overflow:hidden;background:#1b1a20;transform-origin:0 0;container-type:inline-size;visibility:hidden;will-change:transform}
-.x3-t b{position:absolute;left:8%;right:8%;bottom:17%;font:500 10cqw/1 Mussels,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.x3-t b{position:absolute;left:8%;right:8%;bottom:17%;font:500 10cqw/1 Tektur,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.02em}
 .x3-t em{position:absolute;left:8%;bottom:7%;font:400 6.4cqw/1 "JetBrains Mono",monospace;font-style:normal;color:#ff5a45}
 .x3-t.ph{background:radial-gradient(circle at 50% 40%,#2a2830,#141317 72%)}
 .x3-t.ph img{position:absolute;left:12%;top:6%;width:76%;height:62%;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.6))}
@@ -72,7 +71,7 @@
 .x3-t.sr{background:var(--grid) var(--bx) var(--by)/300% 300% no-repeat #3a2216}
 /* в конце сборки поверх кусков встаёт картина целиком, с теми же надписями: так между кусками нет швов */
 #x3-big{position:absolute;left:0;top:0;width:calc(3*var(--ts));height:calc(3*var(--ts));background:var(--grid) center/100% 100% no-repeat;opacity:0;container-type:inline-size;pointer-events:none}
-#x3-big .ov{position:absolute;left:2.667%;top:4.667%;font:500 5.667cqw/1 Mussels,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.02em;color:#fff;text-shadow:0 2px 10px #0006}
+#x3-big .ov{position:absolute;left:2.667%;top:4.667%;font:500 5.667cqw/1 Tektur,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.02em;color:#fff;text-shadow:0 2px 10px #0006}
 #x3-big .ov.r{left:auto;right:2.667%;text-align:right;font-size:4.333cqw}
 #x3-big .ov em{display:block;margin-top:.5em;font:400 .5em/1 "JetBrains Mono",monospace;color:#ffb08a}
 .x3-t.sr .no{position:absolute;right:6%;bottom:6%;font:400 6cqw/1 "JetBrains Mono",monospace;font-style:normal;color:#fff;opacity:calc(.7*(1 - var(--rv)));text-shadow:0 1px 3px #000a}
@@ -134,6 +133,8 @@
   #x3-ct{gap:14px}
   #x3-ct dd{font-size:16px}
   #x3-ct dt{font-size:11px}
+  /* Tektur шире прежнего шрифта: на самых узких экранах счётчики теснее */
+  @media (max-width:360px){#x3-ct{gap:10px}#x3-ct div{gap:4px}#x3-ct dd{font-size:15px}#x3-ct dt{font-size:10.5px}}
   #x3-cm{position:absolute;left:0;right:0;bottom:8px;width:auto;pointer-events:none}
   #x3-cm .gp{bottom:auto}
   #x3-cm #x3-g1{bottom:0}

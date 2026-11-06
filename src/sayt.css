@@ -1,4 +1,4 @@
-/* «Сайт»: пример сайта-абстракции, который поднимается из воды после развала плохого сайта. Перенесён из maket/vitrina.html.
+/* «Сайт»: пример сайта-абстракции, который поднимается из воды после развала плохого сайта. Перенесён из прототипа «Витрина» (есть в истории git).
    Всё лежит внутри #x1, чтобы стили примера и сайта не мешали друг другу. */
 #x1{position:absolute;left:0;right:0;top:0;height:var(--f,100%);z-index:0;pointer-events:none;visibility:hidden;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:#fff;font-weight:300;line-height:normal}
 #x1.on{visibility:visible}

@@ -20,10 +20,14 @@ with sync_playwright() as pw:
         p.goto(url+hash,wait_until='load'); p.wait_for_timeout(900); return c,p
     for w,h in SIZES:
         c,p=page(w,h)
-        p.evaluate('window.__gt.toChoice()'); p.wait_for_timeout(500)
-        r=p.evaluate(CLIP%"'.pick b,.pick span,#ask,#thesis h1,#contact-open'"); check(f'home clip {w}x{h}',not r['out'] and r['sw']<=r['W'],r)
-        v=p.evaluate("(()=>{const c=document.querySelector('.pick:last-of-type span').getBoundingClientRect(),a=document.querySelector('#ask').getBoundingClientRect(),th=document.querySelector('#thesis').getBoundingClientRect();return [Math.round(a.top),Math.round(Math.max(c.bottom,th.bottom)),innerHeight]})()")
-        check(f'home fits height {w}x{h}',v[0]>=60 and v[1]<=v[2],v)
+        # главная: Земля и три раздела на ней. Слова не выходят за экран и не наезжают друг на друга, когда одно выбрано (меряем строку слова, а не запас шрифта над и под буквами)
+        WORDS="(()=>{const b=[...document.querySelectorAll('#hub .hub-t span.w1')].map(e=>e.getBoundingClientRect());let hit=0;for(let i=0;i<b.length;i++)for(let k=i+1;k<b.length;k++){const x=b[i],y=b[k];if(x.left<y.right-1&&y.left<x.right-1&&x.top<y.bottom-1&&y.top<x.bottom-1)hit++}return hit})()"
+        r=p.evaluate(CLIP%"'#hub .hub-t span.w1,#hub .hub-s,#contact-open'"); check(f'home clip {w}x{h}',not r['out'] and r['sw']<=r['W'],r)
+        for k in (0,1,2):
+            p.evaluate(f"window.__gt.pick({k})"); p.wait_for_timeout(800)
+            r=p.evaluate(CLIP%"'#hub .hub-t span.w1,#hub .hub-s,#hub .hub-go'"); check(f'home clip pick {k} {w}x{h}',not r['out'] and r['sw']<=r['W'] and p.evaluate(WORDS)==0,[r,p.evaluate(WORDS)])
+        v=p.evaluate("(()=>{const q=s=>document.querySelector(s).getBoundingClientRect(),t=q('#hub .hub-t'),s=q('#hub .hub-s'),g=q('#hub .hub-go');return [Math.round(t.top),Math.round(t.bottom),Math.round(s.top),Math.round(g.bottom),innerHeight]})()")
+        check(f'home fits height {w}x{h}',v[0]>=60 and v[1]<=v[2]+1 and v[3]<=v[4],v)
         check(f'home has way to write {w}x{h}',p.is_visible('#contact-open'))
         # работа: стена
         p.evaluate("window.__gt.show('rabota')"); p.wait_for_timeout(300)
@@ -68,16 +72,21 @@ with sync_playwright() as pw:
         for i in range(4):
             p.click(f'#presets button[data-i="{i}"]'); p.wait_for_timeout(1800 if w>800 else 1200)
             if i==0: p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(300)
-            r=p.evaluate(CLIP%"'#st-name,#st-line,#st-ask,#st-hint,#st-get,#st-need,#presets button'"); check(f'air clip st{i} {w}x{h}',not r['out'],r)
-            m=p.evaluate("(()=>{const a=document.querySelector('#st-more').getBoundingClientRect(),d=document.querySelector('#air-foot').getBoundingClientRect(),n=document.querySelector('#st-name').getBoundingClientRect();return [Math.round(a.bottom),Math.round(d.top),Math.round(n.top)]})()")
+            r=p.evaluate(CLIP%"'#st-name,#st-line,#st-ask,#st-hint,#presets button'"); check(f'air clip st{i} {w}x{h}',not r['out'],r)
+            m=p.evaluate("(()=>{const a=document.querySelector('#st-hint').getBoundingClientRect(),d=document.querySelector('#air-foot').getBoundingClientRect(),n=document.querySelector('#st-name').getBoundingClientRect();return [Math.round(a.bottom),Math.round(d.top),Math.round(n.top)]})()")
             check(f'air fits st{i} {w}x{h}',m[0]<=m[1]+1 and m[2]>=40,m)
         check(f'no errors {w}x{h}',not p.E,p.E); c.close()
-    # история без действий посетителя
-    c,p=page(1000,640); p.wait_for_function('window.__gt.S.phase!=="dark"',timeout=60000); check('story autostarts',True); check('no err',not p.E,p.E); c.close()
-    # кнопка «Пропустить» и переход сквозь звезду
-    c,p=page(1000,640); p.click('#skip'); p.wait_for_function('window.__gt.S.phase==="choice"',timeout=120000); check('skip reaches choice',p.is_visible('.pick[data-t="0"]'))
-    p.hover('.pick[data-t="0"]'); p.click('.pick[data-t="0"]'); p.wait_for_selector('#w-rows',timeout=30000); p.wait_for_timeout(1500)
-    check('wipe into work',p.is_visible('#w-rows') and p.evaluate("getComputedStyle(document.querySelector('#wipe')).display")=='none')
+    # главная: вступления нет, сразу Земля. Без выбора она вращается, наведение выбирает раздел и поворачивает Землю к нему
+    c,p=page(1000,640); p.wait_for_function('window.__gt.earth()>=3',timeout=60000); check('earth maps load',True)
+    a=p.evaluate('window.__gt.S.v[0]'); p.mouse.move(990,10); p.wait_for_timeout(1200); check('earth turns by itself',p.evaluate('window.__gt.S.v[0]')>a+1 and p.evaluate('window.__gt.S.k')==-1 and not p.is_visible('#hub .hub-go'))
+    p.hover('#hub .hub-t button:nth-child(1)'); p.wait_for_timeout(1500)
+    check('hover picks work',p.evaluate('window.__gt.S.k')==0 and 'Вакансии' in p.inner_text('#hub .hub-s') and p.is_visible('#hub .hub-go') and p.get_attribute('#hub .hub-t button:nth-child(1)','aria-selected')=='true' and abs(p.evaluate('window.__gt.S.v[0]')-66)<3)
+    # Землю можно крутить мышью: выбор снимается, Земля идёт за рукой
+    p.mouse.move(500,150); p.mouse.down(); p.mouse.move(380,170,steps=6); p.mouse.up(); p.wait_for_timeout(200); check('drag turns the earth',p.evaluate('window.__gt.S.k')==-1)
+    # «Распад»: Земля распадается на квадратики, раздел собирается из них
+    p.hover('#hub .hub-t button:nth-child(1)'); p.wait_for_timeout(600); p.click('#hub .hub-go'); p.wait_for_timeout(500); check('dust runs',p.evaluate('window.__gt.S.dv')>0)
+    p.wait_for_selector('#w-rows',timeout=30000); p.wait_for_timeout(1500)
+    check('dust into work',p.is_visible('#w-rows') and p.evaluate("getComputedStyle(document.querySelector('#veil')).display")=='none' and p.evaluate('window.__gt.S.dv')==0)
     check('brand orange kept',p.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--or').trim()")=='#ff5c0a')
     # шапка ведёт в миры
     p.click('#nav a[data-go=lyudi]'); p.wait_for_timeout(1500); check('bar goes to people',p.evaluate("document.body.dataset.w")=='lyudi' and p.get_attribute('#nav a[data-go=lyudi]','aria-current')=='page'); p.click('#nav a[data-go=rabota]'); p.wait_for_timeout(1500)
@@ -128,6 +137,10 @@ with sync_playwright() as pw:
     PV="i=>+document.querySelectorAll('.ly-im img')[i].style.getPropertyValue('--p')"
     SC="n=>{const r=document.querySelector('#lyudi');r.style.scrollSnapType='none';r.scrollTop=document.querySelectorAll('.ly-f')[n].offsetTop}"
     check('first screen is the contour',p.evaluate(PV,0)==1 and p.evaluate(PV,1)==0 and p.evaluate(PV,2)==0)
+    # один щелчок колеса — следующий экран, портрет сразу меняется
+    p.mouse.move(500,320); p.mouse.wheel(0,100); p.wait_for_timeout(1300)
+    check('one wheel notch is one screen',abs(p.evaluate("document.querySelector('#lyudi').scrollTop-document.querySelectorAll('.ly-f')[1].offsetTop"))<3 and p.evaluate(PV,1)>.9,p.evaluate("document.querySelector('#lyudi').scrollTop"))
+    p.mouse.wheel(0,-100); p.wait_for_timeout(1300); check('one notch back',abs(p.evaluate("document.querySelector('#lyudi').scrollTop"))<3)
     p.evaluate(SC,1); p.wait_for_timeout(250); check('step 1 gets lines',p.evaluate(PV,1)>.9 and p.evaluate(PV,2)==0)
     p.evaluate(SC,3); p.wait_for_timeout(250); check('step 3 gets the engraving',p.evaluate(PV,2)>.9 and p.evaluate("document.body.classList.contains('ink')"))
     p.evaluate(SC,4); p.wait_for_timeout(800); check('step 4 is alive on black',not p.evaluate("document.body.classList.contains('ink')") and p.evaluate("getComputedStyle(document.querySelector('#lyudi')).backgroundColor")=='rgb(0, 0, 0)' and p.evaluate("getComputedStyle(document.querySelectorAll('.ly-im img')[3]).opacity")=='1')
@@ -147,12 +160,12 @@ with sync_playwright() as pw:
     p.click('#nav a[data-go=rabota]'); p.wait_for_timeout(1500); check('reset removes my ad',p.locator('#moe').count()==0 and p.evaluate("document.body.dataset.w")=='rabota')
     check('people accent is the brand orange',p.evaluate("getComputedStyle(document.querySelector('#lyudi')).getPropertyValue('--or').trim()")=='#ff5c0a')
     # возврат на главную: знак снова на месте
-    p.click('#logo'); p.wait_for_timeout(1600); check('home shows mark again',p.evaluate("getComputedStyle(document.querySelector('#gl')).display")=='block' and p.is_visible('.pick[data-t="0"]'))
+    p.click('#logo'); p.wait_for_timeout(2800); check('home shows earth again',p.evaluate("getComputedStyle(document.querySelector('#gl')).display")=='block' and p.is_visible('#hub .hub-t') and p.evaluate("document.querySelector('#gl').parentNode.id")=='home' and p.evaluate('window.__gt.S.dv')==0)
     check('no err people',not p.E,p.E); c.close()
     # эфир с клавиатуры
     c,p=page(1000,640,'#klienty'); p.focus('#tun'); [p.keyboard.press('ArrowRight') for _ in range(22)]; p.wait_for_selector('#klienty.clean',state='attached',timeout=40000)
     check('keyboard tunes to station',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
-    p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1600); p.click('#st-cta'); check('talk opens',p.is_visible('#talk') and 'реклам' in p.input_value('#t-what').lower()); p.click('#talk-f button[type=submit]'); check('talk error',p.is_visible('#t-contact-e'))
+    p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1600); p.click('#contact-open'); check('talk opens',p.is_visible('#talk')); p.click('#talk-f button[type=submit]'); check('talk error',p.is_visible('#t-contact-e'))
     p.fill('#t-contact','t@example.test'); p.click('#talk-f button[type=submit]'); check('talk done',p.is_visible('#talk-done')); p.click('#talk-x')
     check('no err air',not p.E,p.E); c.close()
     # белый шум не гаснет, когда страница открыта долго
@@ -182,7 +195,7 @@ with sync_playwright() as pw:
         # куча не закрывает текст: под вопросом и подсказкой обломки ниже подсказки, сбоку от них не выше нижнего края вопроса
         r=p.evaluate("(()=>{const P=[...document.querySelectorAll('#junk .jp.fell')].map(e=>e.getBoundingClientRect()),f=document.querySelector('#air-foot').getBoundingClientRect(),a=document.querySelector('#st-hint').getBoundingClientRect(),R=s=>{const g=document.createRange();g.selectNodeContents(document.querySelector(s));return g.getBoundingClientRect()},ht=R('#st-hint'),ak=R('#st-ask'),L=Math.min(ht.left,ak.left),Rt=Math.max(ht.right,ak.right),u=P.filter(q=>q.right>L&&q.left<Rt),sd=P.filter(q=>!(q.right>L&&q.left<Rt)),mn=A=>A.length?Math.round(Math.min(...A.map(q=>q.top))):9999;return {n:P.length,out:P.filter(q=>q.left<-3||q.right>innerWidth+3||q.bottom>f.top+8).length,top:mn(u),side:mn(sd),hint:Math.round(a.bottom),ask:Math.round(ak.bottom),sheet:getComputedStyle(document.querySelector('#j-sheet')).visibility}})()")
         check(f'junk pile on floor {w}x{h}',r['n']>=10 and r['out']==0,r); check(f'junk sheet gone {w}',r['sheet']=='hidden',r); check(f'junk leaves text {w}x{h}',r['top']>=r['hint']-30 and r['side']>=r['ask'],r)
-        check(f'site station: face and question, no buttons {w}',p.is_visible('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta') and p.locator('#st-x').count()==0 and 'лицо компании' in p.text_content('#st-line'))
+        check(f'site station: face and question, no buttons {w}',p.is_visible('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and p.locator('#st-x').count()==0 and 'лицо компании' in p.text_content('#st-line'))
         check(f'logo back after junk {w}',p.evaluate("getComputedStyle(document.querySelector('#logo')).visibility")=='visible')
         r=p.evaluate("(()=>{const q=document.querySelector('#junk .jp.j-modal').getBoundingClientRect();return [q.left+q.width/2,q.top+q.height/2]})()"); y0=r[1]; p.mouse.move(r[0],r[1]); p.mouse.down(); p.mouse.move(r[0],max(90,r[1]-160),steps=5); p.wait_for_timeout(500)
         y1=p.evaluate("(()=>{const q=document.querySelector('#junk .jp.j-modal').getBoundingClientRect();return q.top+q.height/2})()"); p.mouse.up(); check(f'junk can be grabbed {w}',y1<y0-40,(y0,y1)); p.wait_for_timeout(300)
@@ -217,7 +230,7 @@ with sync_playwright() as pw:
         p.mouse.click(*s['c']); until(p,ST+".shape==1",6000); s=p.evaluate(ST); check(f'click shows next form {w}',s['shape']==1,s)
         if w>760: p.click('#x1-hd .h3c'); check(f'example contact opens talk {w}',p.is_visible('#talk') and 'сайт' in p.input_value('#t-what').lower()); p.click('#talk-x')
         check(f'site no err {w}',not p.E,p.E); c.close()
-    c,p=page(1000,640,'#klienty'); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1300); check('other stations keep their text',p.is_visible('#st-get') and p.is_visible('#st-cta') and not p.is_visible('#st-ask')); check('junk hidden on other stations',not p.is_visible('#junk'))
+    c,p=page(1000,640,'#klienty'); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1300); check('junk hidden on other stations',not p.is_visible('#junk'))
     p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000)
     # ручка уходит вправо: развалившийся сайт не собирается и при возвращении справа сразу лежит кучей
     KJ="(()=>{const k=document.querySelector('#klienty');return k.classList.contains('clean')&&!k.classList.contains('junk')})()"
@@ -235,8 +248,8 @@ with sync_playwright() as pw:
     check('junk whole before it falls',not r['f'] and not r['m'] and r['txt'],r); check('no err junk tune',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',rm='reduce'); p.click('#presets button[data-i="0"]'); p.wait_for_timeout(300); check('reduced: junk already fallen',p.evaluate("document.querySelector('#klienty').classList.contains('clean') && document.querySelectorAll('#junk .jp.fell').length>=10"))
     p.mouse.move(500,320); [p.mouse.wheel(0,100) for _ in range(8)]; p.wait_for_timeout(300); check('reduced: example by wheel',p.evaluate(ST)['ph']==2); check('no err rm site',not p.E,p.E); c.close()
-    # «Реклама», прототип maket/reklama.html: поиск, лента, сайт кофейни, назад теми же шагами. В index.html станция пока прежняя.
-    RK='http://127.0.0.1:4391/maket/reklama.html'; RS="window.GTREK.state"
+    # «Реклама»: поиск, лента, сайт кофейни, назад теми же шагами
+    RK=U; RS="window.GTREK.state"
     # остановки шкалы в щелчках колеса из 32,4: выдача, лента, сайт, меню
     S1,S2,S3,S4=7.8/32.4,16.4/32.4,22.6/32.4,27.2/32.4
     FOOT="document.querySelector('#air-foot').getBoundingClientRect().top"
@@ -250,7 +263,7 @@ with sync_playwright() as pw:
         p.wait_for_timeout(800)
     for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
         c,p=page(w,h,'#klienty',url=RK); p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1800)
-        check(f'ads card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'привести' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta'))
+        check(f'ads card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'привести' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go'))
         p.mouse.move(w/2,h*.45); to(p,S1)
         check(f'ads search {w}',p.is_visible('#x2-find') and p.text_content('#x2-q')=='кофе с доставкой бишкек' and p.text_content('#x2-ad .t')=='ZERNO — кофе за 20 минут' and not p.is_visible('#st-name'))
         r=p.evaluate(CLIP%"'#x2-find h3,#x2-find p,#x2-fld,#x2-ad .t,#x2-ad .d'"); check(f'ads search clip {w}x{h}',not r['out'],r)
@@ -288,8 +301,8 @@ with sync_playwright() as pw:
     c,p=page(1000,640,'#klienty',rm='reduce',url=RK); p.click('#presets button[data-i="1"]'); p.wait_for_timeout(400); p.mouse.move(500,300)
     for _ in range(21): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: ads site by wheel',p.evaluate(RS)['land']==1); check('no err rm ads',not p.E,p.E); c.close()
-    # «SMM», прототип maket/smm.html: профиль кофейни за три месяца, серия постов складывается в картину, назад теми же шагами
-    SM='http://127.0.0.1:4391/maket/smm.html'; SS="window.GTSMM.state"
+    # SMM: профиль кофейни за три месяца, серия постов складывается в картину, назад теми же шагами
+    SM=U; SS="window.GTSMM.state"
     # остановки шкалы в щелчках колеса из 28: день 1, посты месяца, разговор, серия, картина
     T1,T2,T3,T4,T5=3.2/28,9.4/28,14/28,20.2/28,22.6/28
     def to3(p,t):
@@ -301,7 +314,7 @@ with sync_playwright() as pw:
     VIS="(s=>getComputedStyle(document.querySelector(s)).visibility=='visible'&&+getComputedStyle(document.querySelector(s)).opacity>.9)"
     for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
         c,p=page(w,h,'#klienty',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1800)
-        check(f'smm card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'подписаться' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta'))
+        check(f'smm card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'подписаться' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go'))
         p.mouse.move(w/2,h*.45); to3(p,T1)
         check(f'smm day 1 {w}',p.is_visible('#x3-scene') and p.text_content('#x3-h')=='День 1' and p.text_content('#x3-np')=='0' and not p.is_visible('#st-name'))
         r=p.evaluate("(()=>{const q=s=>document.querySelector(s).getBoundingClientRect(),f=q('#air-foot').top,hd=q('#x3-hd'),b=q('#bar'),g=q('#x3-grid'),ts=parseFloat(getComputedStyle(document.querySelector('#x3')).getPropertyValue('--ts'));return {hd:Math.round(hd.top),bar:Math.round(b.bottom),rows:Math.round(g.top+3*ts),foot:Math.round(f),right:Math.round(g.right),W:innerWidth,ink:document.body.classList.contains('ink')}})()")
@@ -332,8 +345,8 @@ with sync_playwright() as pw:
     c,p=page(1000,640,'#klienty',rm='reduce',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(400); p.mouse.move(500,300)
     for _ in range(22): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: smm image by wheel',p.evaluate("+getComputedStyle(document.querySelector('#x3-big')).opacity")>.99); check('no err rm smm',not p.E,p.E); c.close()
-    # «Бренд», прототип maket/brend.html: брендбук кофейни по шагам, назад теми же шагами
-    BD='http://127.0.0.1:4391/maket/brend.html'; BS="window.GTBRD.state"
+    # «Бренд»: брендбук кофейни по шагам, назад теми же шагами
+    BD=U; BS="window.GTBRD.state"
     # сетка-сонар: под чёрной надписью станции, пока пример не идёт
     SON="document.querySelector('#sonar').classList.contains('on')"
     SONPX="(()=>{const c=document.querySelector('#sonar'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=16)if(d[i]>0)n++;return n})()"
@@ -347,7 +360,7 @@ with sync_playwright() as pw:
         p.wait_for_timeout(800)
     for w,h in [(320,640),(390,844),(1024,768),(1280,720),(1440,900)]:
         c,p=page(w,h,'#klienty',url=BD); p.click('#presets button[data-i="3"]'); p.wait_for_timeout(1800)
-        check(f'brand card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'взгляда' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go') and not p.is_visible('#st-cta'))
+        check(f'brand card: question and hint, no buttons {w}',p.is_visible('#st-ask') and 'взгляда' in p.text_content('#st-ask') and p.is_visible('#st-hint') and not p.is_visible('#st-go'))
         check(f'brand card: sonar draws {w}',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX))
         p.mouse.move(w/2,h*.45); to4(p,B1)
         check(f'brand sign {w}',p.is_visible('#x4-scene') and p.text_content('#x4-h')=='Знак' and not p.is_visible('#st-name') and not p.evaluate(SON))
@@ -372,7 +385,7 @@ with sync_playwright() as pw:
         p.wait_for_timeout(1200); s=p.evaluate(BS); check(f'brand back the same steps {w}',back>={'ZERNO','Узнали?','Везде','Правила','Буквы','Цвет','Знак'} and s['u']==0 and s['ph']==0 and p.is_visible('#st-ask') and abs(float(p.evaluate('__gt.air.v'))-37)<1.5,(back,s))
         p.mouse.click(w*.5,h*.4); p.wait_for_timeout(2000); s=p.evaluate(BS); check(f'brand click plays the sign {w}',abs(s['u']-B1)<.002,s)
         check(f'brand no err {w}',not p.E,p.E); c.close()
-    # сетка есть на всех четырёх надписях прототипа, пока пример идёт, её нет
+    # сетка есть на всех четырёх надписях станций, пока пример идёт, её нет
     c,p=page(1000,640,'#klienty',url=BD); DO="[...document.querySelectorAll('#presets button')].map(b=>b.textContent+b.style.left).join()"; check('dial order: site, brand, ads, smm',p.evaluate(DO)=='Сайт12%,Бренд37%,Реклама63%,SMM88%',p.evaluate(DO))
     p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(700); on=[p.evaluate(SON)]
     for i in (1,2,3): p.click(f'#presets button[data-i="{i}"]'); p.wait_for_timeout(1800); on.append(p.evaluate(SON))
@@ -382,13 +395,8 @@ with sync_playwright() as pw:
     c,p=page(1000,640,'#klienty',rm='reduce',url=BD); p.click('#presets button[data-i="3"]'); p.wait_for_timeout(400); check('reduced: sonar is a still grid',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX)); p.mouse.move(500,300)
     for _ in range(27): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: brand check by wheel',p.text_content('#x4-h')=='ZERNO',p.text_content('#x4-h')); check('no err rm brand',not p.E,p.E); c.close()
-    # в index.html пример есть только у «Сайта», поэтому сетка только там
-    c,p=page(1000,640,'#klienty'); p.click('#presets button[data-i="0"]'); p.wait_for_selector('#klienty.clean',state='attached',timeout=40000); p.wait_for_timeout(700)
-    check('sonar on the site card',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX))
-    p.wait_for_timeout(7500); check('sonar off while the site example runs',p.evaluate(ST)['ph']==2 and not p.evaluate(SON))
-    p.click('#presets button[data-i="2"]'); p.wait_for_timeout(1500); check('sonar off on stations without example',not p.evaluate(SON)); check('sonar no err',not p.E,p.E); c.close()
     # без анимации
-    c,p=page(1000,640,rm='reduce'); p.wait_for_timeout(300); check('reduced: choice at once',p.is_visible('.pick[data-t="0"]')); p.click('.pick[data-t="2"]'); p.wait_for_timeout(200); check('reduced: instant world',p.is_visible('#st-name')); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(300); check('reduced: tuned',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
+    c,p=page(1000,640,rm='reduce'); p.wait_for_timeout(300); check('reduced: earth and words at once',p.is_visible('#hub .hub-t')); p.click('#hub .hub-t button:nth-child(3)'); p.wait_for_timeout(200); check('reduced: hover picks, click goes at once',p.is_visible('#st-name')); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(300); check('reduced: tuned',p.evaluate("document.querySelector('#klienty').classList.contains('tuned')"))
     p.evaluate("window.__gt.show('rabota')"); p.wait_for_timeout(200); check('reduced: wall is still',p.evaluate("getComputedStyle(document.querySelector('.w-track')).animationName")=='none')
     p.evaluate("window.__gt.vacOpen('komplektovshchik')"); p.wait_for_timeout(100); check('reduced: job opens at once',p.is_visible('#komplektovshchik .v-t') and not p.is_visible('#w-wall') and p.evaluate("getComputedStyle(document.querySelector('#komplektovshchik .v-t')).opacity")=='1')
     p.click('#komplektovshchik .v-back'); p.wait_for_timeout(100); check('reduced: back at once',p.is_visible('#w-rows') and p.locator('.vac:visible').count()==0)
@@ -401,7 +409,7 @@ with sync_playwright() as pw:
     c,p=page(1000,640,'#obyavlenie'); check('deep form',abs(p.evaluate("document.querySelector('.ly-end').getBoundingClientRect().top"))<3); c.close()
     # без WebGL
     NOGL="HTMLCanvasElement.prototype.getContext=(g=>function(t,...a){return t==='webgl2'?null:g.call(this,t,...a)})(HTMLCanvasElement.prototype.getContext);"
-    c,p=page(1000,640,init=NOGL); p.click('#skip'); p.wait_for_timeout(200); check('nogl class',p.evaluate("document.body.classList.contains('nogl')"))
+    c,p=page(1000,640,init=NOGL); p.wait_for_timeout(200); check('nogl class',p.evaluate("document.body.classList.contains('nogl')")); check('nogl: words readable',p.is_visible('#hub .hub-t') and p.evaluate("getComputedStyle(document.querySelector('#hub .hub-t .w1')).mixBlendMode")=='normal')
     p.evaluate("window.__gt.show('rabota')"); p.wait_for_timeout(200); check('nogl: work readable',p.is_visible('#w-rows')); p.evaluate("window.__gt.show('lyudi')"); p.wait_for_timeout(200); check('nogl: people readable',p.is_visible('#ly-t') and p.evaluate("document.querySelector('.ly-im img').naturalWidth")>500); check('no err nogl',not p.E,p.E); c.close()
     b.close()
 print('PASS',len(ok),'FAIL',len(bad))

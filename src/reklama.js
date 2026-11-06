@@ -1,7 +1,7 @@
 /* «Реклама»: пример на станции «Реклама» мира «Клиенты». Контекст и таргет показаны одним рассказом про кофейню ZERNO, такой кофейни нет.
    Порядок: человек ищет «кофе с доставкой бишкек», первой отвечает реклама ZERNO. Это контекст.
    Потом человек листает ленту, и среди постов встаёт пост ZERNO. Это таргет. Пост раскрывается в сайт кофейни.
-   Сайт кофейни сделан в стиле красного сайта из maket/kontekst.html. В конце он распадается растром в сетку-сонар, возвращается надпись станции, дальше колесо крутит ручку.
+   Сайт кофейни сделан в стиле красного сайта из прошлого прототипа «Контекст» (есть в истории git). В конце он распадается растром в сетку-сонар, возвращается надпись станции, дальше колесо крутит ручку.
    В начале сетка-сонар (sonar.js) слетается в линию поля поиска, прорастает в ней чёрточками, и линия становится линией поля.
    Связь с app.js: step() каждый кадр из updateAir, wheel() из колеса мира, onTalk открывает разговор. Разметку модуль строит сам. */
 window.GTREK = (() => {
@@ -25,7 +25,7 @@ const NZPOST = '<div class="po nz"><div class="ph"><i></i><span class="nm"></spa
 const ADPOST = `<div class="po ad" id="x2-post"><div class="ph"><i class="lg">${MARK}</i><span class="nm"><b>zerno.kg</b><small>Реклама</small></span></div>
   <div class="md x2-md" id="x2-md"><canvas id="x2-pgl" aria-hidden="true"></canvas><div class="word" id="x2-p1"><canvas></canvas></div><div class="word" id="x2-p2"><canvas></canvas></div><span>минут до вашей двери</span></div>
   <div class="by">Заказать<i>›</i></div><p class="tx"><b>zerno.kg</b> Свежая обжарка. Привезём горячим, пока вы на работе.</p></div>`;
-/* Меню кофейни: название, цена, фото из maket/img/zerno. Авторы фото в maket/PHOTOS.txt. */
+/* Меню кофейни: название, цена, фото из assets/zerno. Авторы фото в PHOTOS.txt. */
 const MENU = [['Эспрессо', 120, 'espresso'], ['Американо', 140, 'americano'], ['Капучино', 190, 'cappuccino'], ['Латте', 200, 'latte'], ['Флэт уайт', 210, 'flatwhite'], ['Раф', 230, 'raf'], ['Колд брю', 220, 'coldbrew'], ['Матча', 240, 'matcha'], ['Какао', 180, 'cocoa'], ['Чай', 110, 'tea'], ['Круассан', 150, 'croissant'], ['Сырники', 260, 'syrniki']];
 const R = document.createElement('div');
 R.id = 'x2'; R.setAttribute('role', 'region'); R.setAttribute('aria-label', 'Пример рекламы. Такой кофейни нет');
@@ -98,7 +98,7 @@ function tune(q) {
 }
 const Q = 'кофе с доставкой бишкек';
 
-/* Ленты красного сайта: свой шейдер из maket/kontekst.html. Они живут уже в картинке поста и растут вместе с ним до сайта. */
+/* Ленты красного сайта: свой шейдер из прототипа «Контекст». Они живут уже в картинке поста и растут вместе с ним до сайта. */
 const canvas = $('#x2-gl'), pcv = $('#x2-pgl');
 let gl = null, RB = null, RP = null;
 const VS_LINE = `attribute vec2 a;attribute vec2 d;uniform vec2 uRes;varying vec2 vD;
@@ -189,7 +189,7 @@ function wave(xf, H, T, ap) {
   return H * k * (g - .46) + H * .006 * Math.sin(T * .22 + xf * 5);
 }
 
-/* Буквы из квадратов: блоки идут за скоростью курсора, клик разбрасывает всё слово. Перенесено из maket/kontekst.html. */
+/* Буквы из квадратов: блоки идут за скоростью курсора, клик разбрасывает всё слово. Перенесено из прототипа «Контекст». */
 class Word {
   constructor(box, text, fill) {
     this.box = box; this.c = box.querySelector('canvas'); this.x = this.c.getContext('2d'); this.text = text; this.fill = fill;
@@ -207,10 +207,10 @@ class Word {
     this.c.width = this.src.width = w; this.c.height = this.src.height = h;
     const s = this.src.getContext('2d', { willReadFrequently: true });
     s.clearRect(0, 0, w, h); s.textBaseline = 'alphabetic';
-    let fs = h; s.font = `500 ${fs}px Mussels,Montserrat,sans-serif`;
+    let fs = h; s.font = `500 ${fs}px Tektur,Montserrat,sans-serif`;
     let mt = s.measureText(this.text);
     fs *= Math.min(w * .97 / mt.width, h * .94 / (mt.actualBoundingBoxAscent + mt.actualBoundingBoxDescent));
-    s.font = `500 ${fs}px Mussels,Montserrat,sans-serif`;
+    s.font = `500 ${fs}px Tektur,Montserrat,sans-serif`;
     mt = s.measureText(this.text);
     const y = (h + mt.actualBoundingBoxAscent - mt.actualBoundingBoxDescent) / 2;
     /* где стоят сами буквы внутри коробки, в пикселях экрана: туда прилетают буквы поста */
@@ -353,8 +353,8 @@ class Pic {
   }
 }
 const PIC = new Pic($('#x2-pic'));
-/* Фото грузятся, когда ручка подходит к станции. Целые фото лежат в maket/img/zerno, вырезанные — в maket/img/zerno-cut. */
-const ZIMG = window.GT_ZERNO_CUT || 'img/zerno-cut/', PICS = [];
+/* Фото грузятся, когда ручка подходит к станции. Фото напитков без фона лежат в assets/zerno. */
+const ZIMG = 'assets/zerno/', PICS = [];
 let pick = 2;
 const cur = i => { const im = PICS[i]; return im && im.complete && im.naturalWidth ? im : null; };
 function loadPics() {
@@ -396,7 +396,7 @@ function layout() {
    зазор — около трети высоты букв (замерено по референсу: 0,31). Подпись слева стоит на уровне низа цифр. Пост — маленькая копия этого экрана. */
 function hero() {
   const { W, wide } = G, m = document.createElement('canvas').getContext('2d');
-  const met = t => { m.font = '500 100px Mussels,Montserrat,sans-serif'; const r = m.measureText(t); return [r.width, r.actualBoundingBoxAscent + r.actualBoundingBoxDescent]; };
+  const met = t => { m.font = '500 100px Tektur,Montserrat,sans-serif'; const r = m.measureText(t); return [r.width, r.actualBoundingBoxAscent + r.actualBoundingBoxDescent]; };
   const [aw, ah] = met('ZERNO'), [bw, bh] = met('20');
   /* ширина коробки слова по её высоте: буквы занимают 94% высоты и 97% ширины, как в Word.fit */
   const wOf = h => h * .94 / ah * aw / .97, w2Of = h => h * .94 / bh * bw / .97;
@@ -600,7 +600,7 @@ addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) { X.ring = null; layout(); } });
 /* Холст букв не просит шрифт сам, поэтому шрифт грузится заранее, и буквы пересобираются */
-document.fonts?.load('500 100px Mussels').then(() => { if (X.on) layout(); }).catch(() => {});
+document.fonts?.load('500 100px Tektur').then(() => { if (X.on) layout(); }).catch(() => {});
 /* высота фото зависит от места под меню, поэтому холст фото подгоняется при каждом её изменении */
 if (window.ResizeObserver) new ResizeObserver(() => { if (X.on) PIC.fit(); }).observe($('#x2-pic'));
 

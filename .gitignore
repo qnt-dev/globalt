@@ -1,15 +1,4 @@
 __pycache__/
 *.pyc
-# снимки проверок и макетов пересобираются скриптами
+# снимки проверок (src/look.py, src/motion.py) пишутся сюда и пересобираются
 review/
-maket/*.png
-# та же страница, что index.html, без каркаса
-artifact.html
-# шрифт TT Mussels для прототипов, нужна лицензия, в репозиторий не кладём
-maket/fonts/
-# прототип «Рекламы» собирает src/build.py
-maket/reklama.html
-# прототип «SMM» тоже
-maket/smm.html
-# прототип «Бренда» тоже
-maket/brend.html

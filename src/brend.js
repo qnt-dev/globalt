@@ -2,7 +2,7 @@
    Знак-зерно чертится на сетке, заливается красным, красный заливает экран и делится на палитру,
    рядом со знаком из квадратов собирается слово ZERNO, потом правила, потом знак встаёт на вещи.
    В конце мелькает только кусок знака из нескольких квадратов, и его узнают. Потом надпись станции возвращается.
-   Образцы в review/obraztsy-brend.jpg: брендбук NASA 1975, Dropbox Brand, Red Roaster Coffee (Pop & Pac), McDonald's «Guess who's back».
+   Образцы: брендбук NASA 1975, Dropbox Brand, Red Roaster Coffee (Pop & Pac), McDonald's «Guess who's back».
    Связь с app.js: step() каждый кадр из updateAir, wheel() из колеса мира, onTalk открывает разговор. Разметку модуль строит сам. */
 window.GTBRD = (() => {
 const kl = document.getElementById('klienty');
@@ -18,7 +18,7 @@ const api = { onTalk: null };
 /* Цвета и знак ZERNO. Знак — зерно 7 : 10 под углом 24°, разрезанное буквой Z: бороздка зерна и есть первая буква ZERNO.
    Те же числа, что в значке рекламного поста и аватара: там знак нарисован в квадрате 100 × 100, зерно 31 × 44, разрез толщиной 8.
    Лист брендбука рисуется в тысячных долях своей стороны. */
-const RED = '#df1f12', WHITE = '#fff', INK = 'rgba(255,255,255,.62)', FAINT = 'rgba(255,255,255,.08)', MONO = '"JetBrains Mono",monospace', WORD = 'Mussels,Montserrat,sans-serif';
+const RED = '#df1f12', WHITE = '#fff', INK = 'rgba(255,255,255,.62)', FAINT = 'rgba(255,255,255,.08)', MONO = '"JetBrains Mono",monospace', WORD = 'Tektur,Montserrat,sans-serif';
 const AZ = 24 * Math.PI / 180, K = 300 / 44, RX = 31 * K, RY = 300, GAP = 8 * K;
 /* средняя линия разреза Z в осях зерна и сам разрез: эта линия толщиной GAP с острыми углами */
 const ZL = [[-42, -16], [11, -16], [-11, 16], [42, 16]].map(([x, y]) => [x * K, y * K]);

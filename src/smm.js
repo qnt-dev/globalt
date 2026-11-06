@@ -5,7 +5,7 @@
    Последние девять постов — серия: вместе они складываются в одну картину, чашку эспрессо ZERNO.
    В конце картина распадается растром в сетку-сонар, возвращается надпись станции.
    В начале сетка-сонар (sonar.js) слетается в пунктир пустых клеток профиля: точки вытягиваются в чёрточки, и это клетки.
-   Образцы в review/obraztsy-smm.jpg: сетка-пазл в Instagram, Mario Mosaic 2.0, Codrops Grid Scroll Animations, If the Moon Were Only 1 Pixel.
+   Образцы: сетка-пазл в Instagram, Mario Mosaic 2.0, Codrops Grid Scroll Animations, If the Moon Were Only 1 Pixel.
    Связь с app.js: step() каждый кадр из updateAir, wheel() из колеса мира, onTalk открывает разговор. Разметку модуль строит сам. */
 window.GTSMM = (() => {
 const kl = document.getElementById('klienty');
@@ -20,7 +20,7 @@ const pw = (P, n) => { if (n <= P[0][0]) return P[0][1]; for (let i = 1; i < P.l
 const num = v => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
 const api = { onTalk: null };
 
-/* Посты первого месяца: напитки из меню ZERNO и посты-объявления. Фото вырезаны из фона, авторы в maket/PHOTOS.txt. */
+/* Посты первого месяца: напитки из меню ZERNO и посты-объявления. Фото вырезаны из фона, авторы в PHOTOS.txt. */
 const EARLY = [
   { h: 'Мы открылись', s: 'Бишкек, доставка за 20 минут', red: 1 },
   { f: 'cappuccino', h: 'Капучино', s: '190 с' },
@@ -55,7 +55,7 @@ const FANS = [[3.6, 14], [6, 61], [9.2, 540], [14.2, 810], [19.6, 4800]];
 /* Разметка */
 /* знак ZERNO: зерно разрезано буквой Z. Разрез — цвет фона под знаком (--zbg), знак стоит на красном. */
 const MARK = '<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(24 50 50)"><ellipse cx="50" cy="50" rx="31" ry="44" fill="currentColor"/><path d="M8 34H61L39 66H92" fill="none" style="stroke:var(--zbg,#df1f12)" stroke-width="8" stroke-miterlimit="10"/></g></svg>';
-const ZIMG = window.GT_ZERNO_CUT || 'img/zerno-cut/', GRID = window.GT_SMM_GRID || 'img/smm/espresso-grid.webp';
+const ZIMG = 'assets/zerno/', GRID = 'assets/zerno/espresso-grid.webp';
 const tile = (p, k) => p.f
   ? `<div class="x3-t ph${p.reel ? ' reel' : ''}" data-k="${k}"><img src="${ZIMG + p.f}.webp" alt="" decoding="async"><b>${p.h}</b><em>${p.s}</em></div>`
   : `<div class="x3-t tx${p.red ? ' red' : ''}" data-k="${k}"><b>${p.h}</b><em>${p.s}</em></div>`;
@@ -254,7 +254,7 @@ R.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !e.tar
 addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.clientY; ty = e.clientY; wheel(d * 2.4); }, { passive: true });
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) layout(); });
-document.fonts?.load('500 100px Mussels').then(() => { if (X.on) layout(); }).catch(() => {});
+document.fonts?.load('500 100px Tektur').then(() => { if (X.on) layout(); }).catch(() => {});
 
 /* «Подписаться»: окно примера и разговор про SMM */
 const sd = $('#x3-sd');

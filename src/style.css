@@ -34,6 +34,8 @@ body.barhide #bar{transform:translateY(-110%)}
 #bar a,#bar button{pointer-events:auto}
 #logo{grid-column:2;grid-row:1;display:block;width:clamp(92px,8vw,118px);transition:filter .3s,opacity .3s}
 #logo img{display:block;width:100%;height:auto}
+/* на главной логотип в 1,55 раза крупнее, в разделах прежний. Телефон со знаком 34 px не меняется */
+@media (min-width:761px){body[data-w=home] #logo{width:clamp(143px,12.4vw,183px)}}
 .lg-m{display:none!important}
 body.ink #bar{color:#000}
 body.ink #logo{filter:invert(1)}

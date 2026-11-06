@@ -74,8 +74,9 @@ void main(){
   float mn=min(R.x,R.y);vec2 p=(gl_FragCoord.xy-.5*R)/mn;float px=1.3/mn;
   C=vec3(0.,CY,.5*Z);L=normalize(vec3(-.6,.45,.66));WV=vw(radians(GV.x),radians(GV.y),GV.z);CR=-T*.0006;
   float cov;vec3 e=pow(max(earth(p,px,cov),0.),vec3(1./2.2));
-  /* диск приглушён, воздух у края ярче. Буквы разделов осветляют диск под собой и становятся окнами в Землю */
-  vec3 c=e*mix(.55,.24,cov)+.004;
+  /* диск приглушён, воздух у края ярче. Буквы разделов осветляют диск под собой и становятся окнами в Землю.
+     Диск .36 (вариант C, было .24). Запасной вариант B — .30: над облаками в выбранном слове меньше белых пятен */
+  vec3 c=e*mix(.55,.36,cov)+.004;
   c+=(gn(gl_FragCoord.xy,floor(T*14.)+5.)-.5)*.012;
   o=vec4(c,1.);
 }`;
@@ -315,6 +316,8 @@ function show(w) {
   world = w; document.body.dataset.w = w; document.body.classList.remove('ink', 'barhide'); document.body.classList.toggle('ink', w === 'lyudi'); document.body.style.background = WC[w];
   /* на главной слой Земли лежит внутри неё: так буквы разделов смешиваются с Землёй. В других мирах он возвращается на место */
   if (w === 'home') { if (cv.parentNode !== home) home.prepend(cv); } else if (cv.parentNode === home) document.body.insertBefore(cv, home);
+  /* скрытая главная не даёт измерить строку компаний: длина выходит 0, и строка стоит. Поэтому меряем её каждый раз, когда главная открывается */
+  if (w === 'home') cisLay();
   cv.style.display = gl && (w === 'home' || w === 'klienty') ? 'block' : 'none';
   $$('#nav a').forEach(a => { if (a.dataset.go === w) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   try { history.replaceState(null, '', w === 'home' ? '#top' : '#' + w); } catch (e) {}

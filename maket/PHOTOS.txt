@@ -32,3 +32,8 @@
 Эспрессо, колд брю и какао заменены по просьбе заказчика: прежние выглядели некрасиво. Эспрессо заменён ещё раз: белая чашка с блюдцем сбоку.
 Пример SMM (maket/img/smm/espresso-grid.webp): квадрат 1080×1080 вырезан из того же фото эспрессо (https://unsplash.com/photos/white-ceramic-teacup-filled-with-brown-coffee-niAkR1H24tE, автор @gabimirandan). Посты первого месяца берут напитки без фона из maket/img/zerno-cut.
 Плохой сайт на станции «Сайт» (assets/photo/j_kofe.webp, стоковая чашка шаблона кофейни): эспрессо на блюдце, https://unsplash.com/photos/3v0vppDjvMI, автор @kattgalvan, бесплатная лицензия Unsplash. Кадр обрезан и уменьшен до 440×505.
+Земля на главной (maket/glavnaya-z2.html, maket/img/zemlya), карты NASA Earth Observatory, свободное использование с указанием NASA:
+  blue-marble-2004-07.jpg — Blue Marble Next Generation, июль 2004, с рельефом и дном (world.topo.bathy.200407, 5400×2700), https://visibleearth.nasa.gov/collection/1484/blue-marble (Reto Stöckli, NASA Earth Observatory).
+  clouds-2048.jpg — облака Blue Marble (cloud_combined_2048.jpg), Visible Earth, NASA.
+  black-marble-2016-gray.jpg — ночные огни Black Marble 2016 (BlackMarble_2016_01deg_gray.jpg), https://earthobservatory.nasa.gov/features/NightLights (NASA Earth Observatory).
+  mark-sdf-2048.png — поле расстояний знака GLOBAL TRIUMPH, посчитано из assets/mark-white.svg.

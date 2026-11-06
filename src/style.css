@@ -313,11 +313,17 @@ body.nogl #hub .hub-t .w1{mix-blend-mode:normal;color:#8a8a8a}body.nogl #hub .hu
 
 /* МИР 3. ЭФИР */
 #klienty{--air:#fff}
+/* на пойманной станции палец листает её пример по всему экрану, поэтому браузер не забирает касание себе на прокрутку */
+#klienty[data-st]{touch-action:none}
 body.nogl #klienty{background:#3c3c3c}
 body[data-w=klienty]:not(.ink) #bar{text-shadow:0 0 5px #000,0 0 14px #000}
 /* знак в шапке — картинка, тень текста его не задевает: на шуме ему нужна своя тёмная тень */
 body[data-w=klienty]:not(.ink) #logo img{filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 5px #000) drop-shadow(0 0 12px #000) drop-shadow(0 0 24px #000c)}
 #klienty.tuned{--air:#000}
+/* на шуме белая стрелка теряется: пока станция не поймана, курсор оранжевый с чёрной обводкой. Над кнопками — рука, над шкалой — стрелки в стороны */
+#klienty:not(.tuned){cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath d='M4 2.5v16.6l4.3-4.1 2.9 6.6 2.9-1.3-2.9-6.4h6z' fill='%23ff5c0a' stroke='%23000' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") 5 3,auto}
+#klienty:not(.tuned) button,#klienty:not(.tuned) a,body[data-w=klienty]:has(#klienty:not(.tuned)) #bar :is(a,button){cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath d='M8.6 3.4a1.6 1.6 0 0 1 3.2 0V10l.1-.1a1.5 1.5 0 0 1 2.9.5v.4a1.5 1.5 0 0 1 2.9.4v.5a1.4 1.4 0 0 1 2.7.6V16c0 3.4-2.4 6-5.6 6h-1.7c-1.9 0-3.4-.9-4.4-2.5L4.9 15a1.5 1.5 0 0 1 2.5-1.6l1.2 1.5z' fill='%23ff5c0a' stroke='%23000' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") 12 2,pointer}
+#klienty:not(.tuned) #tun{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Cpath d='M2 12l5-5v3h10V7l5 5-5 5v-3H7v3z' fill='%23ff5c0a' stroke='%23000' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E") 14 14,ew-resize}
 #air-noise{position:absolute;inset:0;overflow:hidden;pointer-events:none;font-family:var(--disp);text-transform:uppercase;font-weight:800}
 #air-noise span{position:absolute;white-space:nowrap;line-height:.9;color:rgba(255,255,255,.34);font-variation-settings:"wdth" var(--wd,80);animation:jit .42s infinite steps(3)}
 @keyframes jit{0%{transform:translate(0,0) skewX(0)}33%{transform:translate(-5px,2px) skewX(-3deg)}66%{transform:translate(6px,-3px) skewX(2deg)}}
@@ -326,12 +332,15 @@ body[data-w=klienty]:not(.ink) #logo img{filter:drop-shadow(0 0 1.5px #000) drop
 #air-top span{background:#000;color:#fff;padding:.02em .28em .08em;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-color .3s,color .3s}
 #air-top{transition:opacity .4s}
 #klienty.tuned #air-top{opacity:0}
-#klienty:not(.tuned) #air-foot,#klienty:not(.tuned) #presets{text-shadow:0 0 5px #000,0 0 12px #000}
+/* станции и шкала лежат на тёмном стекле от края до края: шум за ним размыт и притушен, станции, деления и ручку видно всегда.
+   На пойманной станции шума нет, и стекло растворяется (--g = 1 − сила сигнала, ставит app.js). На светлом фоне стекло светлое, иначе тёмные буквы на нём потеряются */
+#dial::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:rgba(8,8,10,calc(.6*var(--g,1)));border-top:1px solid rgba(255,255,255,calc(.22*var(--g,1)));-webkit-backdrop-filter:blur(calc(16px*var(--g,1))) saturate(calc(1 - .35*var(--g,1)));backdrop-filter:blur(calc(16px*var(--g,1))) saturate(calc(1 - .35*var(--g,1)))}
+body.ink #dial::before{background:rgba(255,255,255,calc(.64*var(--g,1)));border-top-color:rgba(0,0,0,calc(.14*var(--g,1)))}
 #klienty:not(.tuned) #st-name{text-shadow:0 0 40px rgba(0,0,0,.7)}
 #air-main{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;gap:clamp(6px,1.4vh,14px)}
 #st-name{font-size:min(23vh,14.4vw);--wd:70;white-space:nowrap;line-height:.84;transition:font-variation-settings .5s cubic-bezier(.2,.9,.2,1)}
 #st-line{font-size:clamp(25px,3.6vw,58px);max-width:21em;min-height:2.2em;text-wrap:pretty}
-#dial{position:relative;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));margin:0 calc(-1*var(--gutr)) 0 calc(-1*var(--gut));padding-inline:var(--gut) var(--gutr)}
+#dial{position:relative;z-index:0;padding-top:4px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px));margin:0 calc(-1*var(--gutr)) 0 calc(-1*var(--gut));padding-inline:var(--gut) var(--gutr)}
 #presets{position:relative;height:44px}
 #presets button{position:absolute;top:0;transform:translateX(-50%);min-height:44px;padding:0 6px;background:none;border:0;font-family:var(--disp);text-transform:uppercase;font-weight:800;font-size:clamp(13px,1.45vw,21px);font-variation-settings:"wdth" 80;cursor:pointer;white-space:nowrap;color:inherit}
 #presets button:hover{text-decoration:underline;text-underline-offset:4px}
@@ -345,6 +354,8 @@ body[data-w=klienty]:not(.ink) #logo img{filter:drop-shadow(0 0 1.5px #000) drop
 #tun::-moz-range-track{height:52px;background:transparent}
 #tun::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:52px;background:linear-gradient(90deg,transparent 13px,var(--air) 13px 17px,transparent 17px)}
 #tun::-moz-range-thumb{width:30px;height:52px;border:0;border-radius:0;background:linear-gradient(90deg,transparent 13px,var(--air) 13px 17px,transparent 17px)}
+/* с мышью полоса ниже: стекло не забирает лишнюю высоту. Под пальцем остаются крупные цели */
+@media (pointer:fine){#presets{height:36px}#presets button{min-height:36px}#scale{height:40px}#tun::-webkit-slider-runnable-track{height:40px}#tun::-moz-range-track{height:40px}#tun::-webkit-slider-thumb{height:40px}#tun::-moz-range-thumb{height:40px}}
 #sound{background:none;border:0;padding:0;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:4px;color:inherit;align-self:flex-start}
 #air-foot{display:flex;flex-wrap:wrap;gap:0 22px;align-items:center;font-size:13px;font-weight:600}
 #air-foot button{color:inherit;background:none;border:0;padding:0;min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;font-weight:600;font-size:13px}
@@ -380,7 +391,6 @@ body.jk #logo{opacity:0;visibility:hidden;transition:filter .3s,opacity .3s,visi
 /* пока плохой сайт пробивается сквозь шум, надпись станции гаснет вместе с шумом (--jt из app.js) */
 #klienty.junk #air-top,#klienty.junk #air-main{opacity:var(--jt,0)}
 #klienty.junk2 #air-top,#klienty.junk2 #air-main{visibility:hidden}
-#klienty.junk #air-foot,#klienty.junk #presets{text-shadow:none}
 
 /* Плохой сайт: нарочно шаблонный, нарочно узнаваемый. Падает и становится обломками */
 #junk{position:absolute;inset:0;z-index:0;display:none;overflow:hidden;font-family:Tahoma,Arial,sans-serif;color:#223;--u:1px}

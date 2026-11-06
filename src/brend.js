@@ -435,7 +435,8 @@ function next() {
 kl.addEventListener('click', e => { if (X.on && !e.target.closest('button,a,input,#air-foot,#dial,#x4-sd')) next(); });
 /* На телефоне пример листается пальцем вверх и вниз */
 let ty = null;
-R.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !e.target.closest('button,a')) ty = e.clientY; });
+/* слой примера не ловит касания (pointer-events: none), поэтому палец ловим на всём экране «Клиентов», кроме кнопок, ссылок и шкалы */
+kl.addEventListener('pointerdown', e => { if (X.on && e.pointerType === 'touch' && !e.target.closest('button,a,input,#dial,#air-foot')) ty = e.clientY; });
 addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.clientY; ty = e.clientY; wheel(d * 2.4); }, { passive: true });
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) layout(); });
@@ -459,7 +460,7 @@ function dots() {
   for (let i = 1; i < 20; i++) for (let j = 1; j < 20; j++) out.push([r.left - kr.left + r.width * i / 20, r.top - kr.top + r.height * j / 20]);
   return out;
 }
-Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0] });
+Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0], notch: TOTAL });
 /* grid: ход перехода сетки-сонара, 0 сетка на надписи, 1 точки в узлах листа. В начале идёт по первому щелчку, в уходе обратно с GO до конца. */
 Object.defineProperty(api, 'grid', { get: () => { if (!X.on) return 1; const n = X.uc * TOTAL; return n < EXIT ? clamp((n - .1) / .9) : 1 - clamp((n - GO) / 1.5); } });
 /* пример всегда на тёмном или красном фоне, поэтому буквы сайта белые, пока пример включён */

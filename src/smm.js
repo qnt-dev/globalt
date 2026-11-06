@@ -250,7 +250,8 @@ function next() {
 kl.addEventListener('click', e => { if (X.on && !e.target.closest('button,a,input,#air-foot,#dial,#x3-hd,#x3-cm,#x3-sd')) next(); });
 /* На телефоне пример листается пальцем вверх и вниз */
 let ty = null;
-R.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !e.target.closest('button,a')) ty = e.clientY; });
+/* слой примера не ловит касания (pointer-events: none), поэтому палец ловим на всём экране «Клиентов», кроме кнопок, ссылок и шкалы */
+kl.addEventListener('pointerdown', e => { if (X.on && e.pointerType === 'touch' && !e.target.closest('button,a,input,#dial,#air-foot')) ty = e.clientY; });
 addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.clientY; ty = e.clientY; wheel(d * 2.4); }, { passive: true });
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) layout(); });
@@ -280,7 +281,7 @@ function dots() {
 }
 /* точки вытягиваются в чёрточки (g), чёрточки становятся пунктиром клеток: 1 пиксель цвета --line (th), потом отдаются клеткам (out) */
 function trace(n) { return { g: ss(1, 1.4, n), th: ss(1.2, 1.7, n), w: 1, a: .122, out: ss(1.6, 1.9, n) }; }
-Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0] });
+Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0], notch: TOTAL });
 /* пример всегда на тёмном фоне, поэтому буквы сайта белые, пока пример включён.
    grid: 0 сетка на надписи, 1 сетки нет. В начале сетка слетается в клетки профиля, в уходе встаёт из растра. */
 Object.defineProperties(api, {

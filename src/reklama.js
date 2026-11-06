@@ -595,7 +595,8 @@ function next() {
 kl.addEventListener('click', e => { if (X.on && !e.target.closest('button,a,input,#air-foot,#dial,#x2-hd,#x2-wall,#x2-pick,#x2-sd,#x2-th,.word')) next(); });
 /* На телефоне пример листается пальцем вверх и вниз */
 let ty = null;
-R.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !e.target.closest('button,a')) ty = e.clientY; });
+/* слой примера не ловит касания (pointer-events: none), поэтому палец ловим на всём экране «Клиентов», кроме кнопок, ссылок и шкалы */
+kl.addEventListener('pointerdown', e => { if (X.on && e.pointerType === 'touch' && !e.target.closest('button,a,input,#dial,#air-foot')) ty = e.clientY; });
 addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.clientY; ty = e.clientY; wheel(d * 2.4); }, { passive: true });
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) { X.ring = null; layout(); } });
@@ -634,7 +635,7 @@ function trace(n) {
   const lt = R.classList.contains('lt');
   return { g: ss(1, 1.5, n), th: lt ? ss(1.6, 2.1, n) : ss(1.4, 1.9, n), w: 2, a: lt ? 1 : .349, rgb: lt ? [0, 0, 0] : null, out: lt ? ss(2, 2.3, n) : ss(1.8, 2.1, n) };
 }
-Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0] });
+Object.assign(api, { step, wheel, reset, next, dots, col: [0, 0, 0], notch: TOTAL });
 /* dark и state читаются каждый раз заново, поэтому это свойства с геттером, а не копия.
    grid: 0 сетка на надписи, 1 сетки нет. В начале сетка слетается в линию поля, в уходе встаёт из растра. */
 Object.defineProperties(api, {

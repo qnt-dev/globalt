@@ -615,7 +615,8 @@ function dots() {
   const [cx, cy, r] = X.ring, n = Math.max(24, Math.round(2 * Math.PI * G.R / 26)), a0 = X.call ? X.call.a : 0, h = Math.PI * r / n;
   return Array.from({ length: n }, (_, k) => { const a = a0 + 2 * Math.PI * k / n, s = Math.sin(a), c = Math.cos(a); return [cx + r * c, cy + r * s, -s, c, h]; });
 }
-Object.assign(api, { step, wheel, reset, next, dots });
+/* notch: делений хода на единицу u — один щелчок колеса (100) двигает u на 1/notch */
+Object.assign(api, { step, wheel, reset, next, dots, notch: 26 * ZS / 5.02 });
 /* fast и state читаются каждый раз заново, поэтому это свойства с геттером, а не копия */
 /* grid: 0 сетка на надписи, 1 сетки нет. Во вступлении сетка слетается на край круга, в конце встаёт за волной от стрелки шкалы.
    trace: линия из точек на краю круга, она тает, когда рождается кольцо воды. ping: верх стрелки шкалы, оттуда идёт волна.

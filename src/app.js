@@ -319,6 +319,7 @@ function show(w) {
   $$('#nav a').forEach(a => { if (a.dataset.go === w) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   try { history.replaceState(null, '', w === 'home' ? '#top' : '#' + w); } catch (e) {}
   if (w === 'rabota') enterWork(); if (w === 'lyudi') enterPeople(); if (w === 'klienty') enterAir();
+  if (air.snd && w !== 'klienty') air.snd.ng.gain.setTargetAtTime(0, air.snd.ctx.currentTime, .1);
   dirty = true;
 }
 function go(w) {
@@ -622,24 +623,61 @@ function buildAir() {
     /* На станциях с примером колесо сначала ведёт пример, потом ручку */
     const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
     if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
-    /* ручка встаёт на каждой станции: быстрое колесо не проскакивает станцию, пока её пример не успел включиться */
+    /* ручка встаёт на каждой станции: быстрое колесо не проскакивает станцию, пока её пример не успел включиться.
+       Ручка прыгает на отметку за 2,5 деления до неё: сигнал ловится за 2,1, и пример иначе забрал бы колесо, не дав ручке дойти до отметки */
     e.preventDefault(); dirty = true; const now = performance.now(); if (now < (air.lock || 0)) return;
-    const dir = Math.sign(e.deltaY), nt = clamp(air.target + dir * 1.2, 0, 100), hit = ORD.map(i => ST[i]).find(st => (st.v - air.target) * dir > .01 && (st.v - nt) * dir <= 0);
+    const dir = Math.sign(e.deltaY), nt = clamp(air.target + dir * 1.2, 0, 100), hit = ORD.map(i => ST[i]).find(st => (st.v - air.target) * dir > .01 && (st.v - nt) * dir <= 2.5);
     if (hit) { air.target = hit.v; air.lock = now + (RM ? 0 : 900); } else air.target = nt;
     t.value = air.target; }, { passive: false });
   $('#st-go').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
   $('#sound').addEventListener('click', toggleSound);
 }
 function enterAir() { buildAir(); air.v = air.target = +$('#tun').value; J.done = false; }
+/* звук ручки приёмника: тихий мягкий шорох эфира с редким потрескиванием, тихий щелчок на каждом делении шкалы, мягкий глухой щелчок на каждой станции,
+   на пойманной станции шорох стихает и звучит короткий мягкий аккорд — у каждой станции свой. Ровного гудка нет.
+   Пока пример станции листают колесом или пальцем, на каждом делении его хода звучит тот же мягкий щелчок, только тише.
+   Звук включён сразу. Браузер даёт его запустить только после первого нажатия на странице (щелчок, касание, клавиша; колесо не считается). Выключенный звук сайт помнит */
+const SND = { want: (() => { try { return localStorage.getItem('gt-sound') !== 'off'; } catch (e) { return true; } })() };
+function sndLabel() { $('#sound').textContent = SND.want ? 'Выключить звук' : 'Включить звук'; }
 function toggleSound() {
-  const b = $('#sound');
-  if (air.snd) { air.snd.ctx.close(); air.snd = null; b.textContent = 'Включить звук'; return; }
+  /* звук выбран, но браузер ещё не дал ему играть: первое нажатие на кнопку включает звук, а не выключает тишину */
+  if (SND.want && !(air.snd && air.snd.ctx.state === 'running')) { if (air.snd) air.snd.ctx.resume(); else sndStart(); return; }
+  SND.want = !SND.want; try { localStorage.setItem('gt-sound', SND.want ? 'on' : 'off'); } catch (e) {} if (SND.want) sndStart(); else if (air.snd) { air.snd.ctx.close(); air.snd = null; } sndLabel(); }
+sndLabel();
+/* касание на телефоне разрешает звук только на отпускании пальца, поэтому слушаем и pointerup, и touchend, и будим остановленный звук */
+['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'].forEach(t => addEventListener(t, e => {
+  if (!SND.want || (e.target && e.target.closest && e.target.closest('#sound'))) return;
+  if (!air.snd) sndStart(); else if (air.snd.ctx.state === 'suspended') air.snd.ctx.resume();
+}, true));
+function sndStart() {
+  if (air.snd) return; const b = $('#sound');
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const n = ctx.createBufferSource(); n.buffer = buf; n.loop = true; const ng = ctx.createGain(); ng.gain.value = .05; n.connect(ng).connect(ctx.destination); n.start();
-    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 330; const og = ctx.createGain(); og.gain.value = 0; o.connect(og).connect(ctx.destination); o.start();
-    air.snd = { ctx, ng, og, o }; b.textContent = 'Выключить звук';
+    const ctx = new (window.AudioContext || window.webkitAudioContext)(), R = ctx.sampleRate, out = ctx.createGain(); out.gain.value = .9; out.connect(ctx.destination);
+    const buf = ctx.createBuffer(1, R * 2, R), d = buf.getChannelData(0); let br = 0;
+    /* шорох: шум с завалом верхов, через полосу 300–1800 Гц он звучит как далёкий эфир, а не как резкое шипение. Редкие тихие щелчки — потрескивание */
+    for (let i = 0; i < d.length; i++) { br = br * .82 + (Math.random() * 2 - 1) * .18; d[i] = br * 2.4 + (Math.random() < .0004 ? (Math.random() - .5) * 1.6 : 0); }
+    const n = ctx.createBufferSource(); n.buffer = buf; n.loop = true;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 300; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
+    const ng = ctx.createGain(); ng.gain.value = 0; n.connect(hp).connect(lp).connect(ng).connect(out); n.start();
+    /* щелчок деления: очень короткий шум через узкую полосу 2,6 кГц */
+    const cb = ctx.createBuffer(1, Math.round(R * .012), R), cd = cb.getChannelData(0); for (let i = 0; i < cd.length; i++) cd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (R * .0016));
+    let last = 0;
+    const click = () => { const t = ctx.currentTime; if (t - last < .022) return; last = t; const s1 = ctx.createBufferSource(); s1.buffer = cb; const f1 = ctx.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = 2600; f1.Q.value = 2.2; const g = ctx.createGain(); g.gain.value = .12; s1.connect(f1).connect(g).connect(out); s1.start(t); air.snd.clicks++; };
+    /* щелчок станции: мягкий глухой «тук», как у ручки с фиксацией — тон 380→150 Гц быстро падает и гаснет, под ним приглушённый шорох.
+       Ниже 150 Гц не опускаемся: динамики ноутбука и телефона такие частоты почти не играют */
+    let lastSoft = -1;
+    const soft = (k = 1) => { const t = ctx.currentTime; if (t - lastSoft < .045) return; lastSoft = t; const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(380, t); o.frequency.exponentialRampToValueAtTime(150, t + .07);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.14 * k, t + .003); g.gain.exponentialRampToValueAtTime(.0005, t + .12); o.connect(g).connect(out); o.start(t); o.stop(t + .14);
+      const s2 = ctx.createBufferSource(); s2.buffer = cb; const f2 = ctx.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 1400; const g2 = ctx.createGain(); g2.gain.value = .3 * k; s2.connect(f2).connect(g2).connect(out); s2.start(t); air.snd.softs++; };
+    /* аккорд станции: основной тон, квинта и октава, мягкое начало и долгое затухание */
+    const ROOT = [261.63, 293.66, 329.63, 392];
+    const chord = st => {
+      const t = ctx.currentTime, f0 = ROOT[ORD.indexOf(st)] || 261.63, g = ctx.createGain(), lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 2400;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.06, t + .03); g.gain.exponentialRampToValueAtTime(.0008, t + 1.6); g.connect(lpf).connect(out);
+      [1, 1.5, 2].forEach((m, k) => { const o = ctx.createOscillator(); o.type = k ? 'sine' : 'triangle'; o.frequency.value = f0 * m; o.connect(g); o.start(t + k * .04); o.stop(t + 1.7); });
+      air.snd.chords++;
+    };
+    air.snd = { ctx, ng, click, soft, chord, clicks: 0, softs: 0, chords: 0, tk: Math.floor(air.v), pv: air.v, z: -1, en: null, ek: -1 };
   } catch (e) { b.hidden = true; }
 }
 function scramble(el, text, q, seed) {
@@ -667,11 +705,12 @@ function updateAir(dt) {
   $('#air').style.setProperty('--air', dark ? '#000' : '#fff');
   W.style.setProperty('--air', dark ? '#000' : '#fff');
   $('#air-noise').style.opacity = (1 - q) * .95;
-  $('#scale').style.setProperty('--p', (air.v / 100).toFixed(4));
+  $('#scale').style.setProperty('--p', (air.v / 100).toFixed(4)); $('#dial').style.setProperty('--g', (1 - q).toFixed(3));
   $('#st-name').style.setProperty('--wd', q > .92 ? (innerWidth <= 760 ? Math.max(50, s.wd * .6) : s.wd) : (innerWidth <= 760 ? 60 : 70));
   if (near) { scramble($('#st-name'), s.name, Math.min(1, q * 1.6), best + 1); scramble($('#st-line'), s.line, q, best + 3); }
   else { if ($('#st-name').textContent !== 'Шум') $('#st-name').textContent = 'Шум'; if ($('#st-line').textContent) $('#st-line').textContent = ''; }
   if (q > .92 && air.cur !== best) {
+    if (air.snd) air.snd.chord(best);
     air.cur = best; W.dataset.st = best; if (s.ask) $('#st-ask').textContent = s.ask; $('#st-go span').textContent = s.go + ' →';
     $('#st-name').setAttribute('aria-label', s.full);
     $$('#presets button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.i === best));
@@ -681,7 +720,18 @@ function updateAir(dt) {
      по силе сигнала расходится в шум и собирается, в начале примера становится им, в конце встаёт из него. После развала «Сайта» встаёт за волной от телефона. */
   if (window.GTSONAR) { const mod = near ? [window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][best] : null;
     GTSONAR.frame({ q: near ? q : 0, ok: best === 0 ? W.classList.contains('clean') : !!mod, at: best === 0 ? junkCall : null, mod: mod && 'grid' in mod ? mod : null }); }
-  if (air.snd) { const c = air.snd.ctx.currentTime; air.snd.ng.gain.setTargetAtTime((1 - q) * .05, c, .05); air.snd.og.gain.setTargetAtTime(q * .035, c, .05); air.snd.o.frequency.setTargetAtTime(220 + ORD.indexOf(best) * 55, c, .05); }
+  if (air.snd) {
+    const A = air.snd, c = A.ctx.currentTime, tk = Math.floor(air.v); A.ng.gain.setTargetAtTime(world === 'klienty' ? (1 - q) * .045 : 0, c, .08); if (tk !== A.tk) { A.tk = tk; A.click(); }
+    /* станция: ручка вошла в её отметку или проскочила её за один кадр */
+    let z = -1; ST.forEach((st, k) => { if (Math.abs(air.v - st.v) < .3) z = k; });
+    const jump = ST.some(st => (A.pv - st.v) * (air.v - st.v) < 0 && Math.abs(A.pv - st.v) > .3 && Math.abs(air.v - st.v) > .3);
+    if ((z >= 0 && z !== A.z) || jump) A.soft(); A.z = z; A.pv = air.v;
+    /* пример пойманной станции: щелчок на каждом делении его хода — колесом, пальцем или когда он сам доматывает до следующей части */
+    const mod = air.cur >= 0 ? [window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][air.cur] : null, ms = mod && mod.notch ? mod.state : null;
+    /* деления стоят на целых: колесо ставит ход ровно на них, поэтому граница щелчка посередине между делениями */
+    const en = ms && ms.on ? Math.round(ms.u * mod.notch) : null;
+    if (en != null && A.en != null && A.ek === air.cur && en !== A.en) A.soft(.6); A.en = en; A.ek = air.cur;
+  }
   air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : best === 3 && window.GTBRD ? GTBRD.col : s.col;
 }
 function drawAir(time) {

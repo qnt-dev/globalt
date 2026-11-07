@@ -82,6 +82,12 @@ body[data-w=home] .nq{visibility:hidden}
 #hub .hub-s{margin:0;min-height:1.4em;font:500 clamp(14px,1.1vw,17px) var(--text);color:#d0d0d0;transition:opacity .18s}
 #hub .hub-go{min-height:52px;text-decoration:none;transition:opacity .3s,visibility .3s,filter .2s}
 #hub .hub-go.off{opacity:0;visibility:hidden}
+/* вместо стрелки знак фирменной графики раздела: Работа — летящие звёзды, Люди — «глаз», Клиенты — орбита с двумя звёздами.
+   Знак чёрный, как текст, высотой с заглавные буквы; кнопка показывает знак того раздела, куда ведёт */
+#hub .hub-go{gap:12px}
+#hub .hub-go .go-s{display:inline-flex;height:1.05em}
+#hub .hub-go .go-s svg{display:none;height:100%;width:auto;max-width:2.4em}
+#hub .hub-go[data-go=rabota] svg[data-s=rabota],#hub .hub-go[data-go=lyudi] svg[data-s=lyudi],#hub .hub-go[data-go=klienty] svg[data-s=klienty]{display:block}
 @property --dr{syntax:"<length>";inherits:true;initial-value:6px}
 /* точки: буквы вырастают из сетки точек */
 #hub .hub-t button.play{animation:fx-dots .95s cubic-bezier(.55,0,.45,1) both}

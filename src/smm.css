@@ -147,3 +147,6 @@
   #x3-ru{margin-top:6px}
 }
 @media (prefers-reduced-motion:reduce){#x3 *{transition:none!important;animation:none!important}}
+/* поле клавиш станции SMM (smm-keys.js): слой над примером, под шкалой; пока оно на экране, сетка-сонар не видна */
+#kx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;visibility:hidden}
+body.kx-hide #sonar{opacity:0!important}

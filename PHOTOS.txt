@@ -37,3 +37,11 @@
   clouds.webp — облака Blue Marble (cloud_combined_2048.jpg), Visible Earth, NASA.
   night.webp — ночные огни Black Marble 2016 (BlackMarble_2016_01deg_gray.jpg), https://earthobservatory.nasa.gov/features/NightLights (NASA Earth Observatory).
 Шрифт кофейни ZERNO в примерах — Tektur (assets/tektur.ttf), The Tektur Project Authors, лицензия SIL Open Font License 1.1, текст в assets/tektur-OFL.txt. Источник: https://github.com/google/fonts/tree/main/ofl/tektur
+
+Поле клавиш станции SMM (src/smm-keys.js): эффект повторяет код-компонент Framer со страницы образца, лицензия на него есть у владельца сайта.
+Библиотека three.js 0.165.0 (лицензия MIT) грузится с jsdelivr: https://cdn.jsdelivr.net/npm/three@0.165.0/
+Знаки соцсетей встроены контуром, это товарные знаки их владельцев:
+Instagram, TikTok, Telegram, WhatsApp, YouTube, Facebook, Threads, VK — Simple Icons 13.21.0, лицензия CC0: https://simpleicons.org
+Дзен: https://commons.wikimedia.org/wiki/File:Zen_logo_icon_2024.svg (общественное достояние)
+Яндекс: https://commons.wikimedia.org/wiki/File:Yandex_icon.svg (общественное достояние)
+MAX: https://commons.wikimedia.org/wiki/File:Логотип_MAX.svg (общественное достояние)

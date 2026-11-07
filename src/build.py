@@ -16,6 +16,8 @@ if not os.path.exists(tek):
 # примеры станций «Клиентов» (Сайт, Реклама, SMM, Бренд) идут перед app.js, потому что app.js их вызывает
 css = read('style.css') + ''.join(read(n + '.css') for n in ('sayt', 'reklama', 'smm', 'brend'))
 js = '\n'.join(read(n + '.js') for n in ('sayt', 'reklama', 'smm', 'brend', 'sonar', 'app'))
+# поле клавиш станции SMM: модуль на three.js (с jsdelivr, версия закреплена). Он идёт после основного скрипта и дополняет пример SMM
+keys = read('smm-keys.js')
 body = read('body.html')
 face = ('@font-face{font-family:"Science Gothic";font-weight:100 900;font-stretch:50%% 200%%;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}\n' % b64(small)
         + '@font-face{font-family:Tektur;font-weight:500;font-display:swap;src:url(data:font/woff2;base64,%s) format("woff2")}\n' % b64(tek))
@@ -34,6 +36,9 @@ html = f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name
 <script>window.GT_IMG={imgs};</script>
 <script>
 {js}</script>
+<script type="importmap">{{"imports":{{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.min.js"}}}}</script>
+<script type="module">
+{keys}</script>
 </body></html>'''
 open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf8').write(html)
 print('index', os.path.getsize(os.path.join(ROOT, 'index.html')) // 1024, 'KB')

@@ -17,7 +17,10 @@ with sync_playwright() as pw:
         if init: p.add_init_script(init)
         p.on('pageerror',lambda e:p.E.append('ERR '+str(e)))
         p.on('console',lambda m:p.E.append(m.text[:300]) if m.type=='error' and 'favicon' not in m.text and '404' not in m.text else None)
-        p.goto(url+hash,wait_until='load'); p.wait_for_timeout(900); return c,p
+        # внешний запрос (шрифты Google) изредка зависает, и загрузка не наступает: один повтор открытия
+        try: p.goto(url+hash,wait_until='load')
+        except Exception: p.goto(url+hash,wait_until='load')
+        p.wait_for_timeout(900); return c,p
     for w,h in SIZES:
         c,p=page(w,h)
         # главная: Земля и три раздела на ней. Слова не выходят за экран и не наезжают друг на друга, когда одно выбрано (меряем строку слова, а не запас шрифта над и под буквами)
@@ -342,6 +345,39 @@ with sync_playwright() as pw:
     c,p=page(1000,640,'#klienty',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(10500); check('smm start by itself',abs(p.evaluate(SS)['u']-T1)<.002,p.evaluate(SS))
     p.click('#presets button[data-i="1"]'); p.wait_for_timeout(1500); check('smm off on ads',not p.evaluate(SS)['on'] and p.evaluate(RS)['on'])
     p.click('#presets button[data-i="3"]'); p.wait_for_timeout(1500); check('smm off on brand',not p.evaluate(SS)['on'] and p.evaluate("window.GTBRD.state")['on']); check('smm no err idle',not p.E,p.E); c.close()
+    # поле клавиш SMM (smm-keys.js) рисуется только на настоящей видеокарте: на программной (SwiftShader) его нет, станция идёт прежним путём
+    c,p=page(1000,640,'#klienty',url=SM); p.wait_for_timeout(800); check('keys off on software gpu',p.evaluate("!document.querySelector('#kx')")); c.close()
+    bg=pw.chromium.launch(channel='chrome',args=['--use-angle=d3d11','--ignore-gpu-blocklist'])
+    def gpage(w,h):
+        c=bg.new_context(viewport={'width':w,'height':h}); p=c.new_page(); p.E=[]
+        p.on('pageerror',lambda e:p.E.append('ERR '+str(e)))
+        p.on('console',lambda m:p.E.append(m.text[:300]) if m.type=='error' and 'favicon' not in m.text and '404' not in m.text else None)
+        try: p.goto(SM+'#klienty',wait_until='load')
+        except Exception: p.goto(SM+'#klienty',wait_until='load')
+        p.wait_for_timeout(1500); p.click('#presets button[data-i="2"]'); return c,p
+    KX="({k:window.__kx.K.k,kx:getComputedStyle(document.querySelector('#kx')).visibility,son:+getComputedStyle(document.querySelector('#sonar')).opacity,st:document.querySelector('#st-name').style.opacity})"
+    c,p=gpage(1440,900); p.wait_for_function("window.__kx&&window.__kx.ready&&window.__gt.air.cur===2",timeout=30000); p.wait_for_timeout(1200)
+    r=p.evaluate(KX); check('keys field on gpu',r['kx']=='visible' and r['son']==0 and r['k']==0,r)
+    # 6 щелчков колеса: 9 клавиш встают в клетки профиля, пример ещё не начался, надпись станции погасла
+    p.mouse.move(720,450)
+    for _ in range(6): p.mouse.wheel(0,100); p.wait_for_timeout(350)
+    p.wait_for_timeout(1500); r=p.evaluate(KX); s2=p.evaluate(SS); check('keys 6 notches: tiles in cells',r['k']==1 and s2['u']==0 and r['kx']=='visible' and float(r['st'] or 1)<.05,[r,s2])
+    # ещё 2 щелчка: плитки становятся пунктиром клеток, поле уходит, «День 1», надпись станции снова своя
+    for _ in range(2): p.mouse.wheel(0,100); p.wait_for_timeout(450)
+    p.wait_for_timeout(2500); r=p.evaluate(KX)
+    check('keys hand over to day 1',r['kx']=='hidden' and r['st']=='' and p.text_content('#x3-h')=='День 1' and p.evaluate("+getComputedStyle(document.querySelector('#x3-bg')).opacity")>.99,r)
+    # назад: пример до начала, потом клавиши обратно в поле
+    for _ in range(40):
+        if p.evaluate(SS)['u']<=0 and p.evaluate('window.__kx.K.k')<=0: break
+        p.mouse.wheel(0,-100); p.wait_for_timeout(120)
+    p.wait_for_timeout(1500); r=p.evaluate(KX); check('keys back to the field',r['k']==0 and r['kx']=='visible' and r['st']=='',r)
+    check('keys no err',not p.E,p.E); c.close()
+    # 6 секунд покоя на станции: переход идёт сам, потом пример сам доходит до «Дня 1»
+    c,p=gpage(1000,640); p.wait_for_timeout(11000); r=p.evaluate(KX); s2=p.evaluate(SS)
+    check('keys start by themselves',r['k']==1 and abs(s2['u']-T1)<.002,[r,s2]); check('keys no err idle',not p.E,p.E); c.close()
+    # телефон: поля нет и three.js не грузится, станция идёт прежним путём
+    c,p=gpage(390,844); p.wait_for_timeout(2000); check('keys off on phone',p.evaluate("!document.querySelector('#kx')")); c.close()
+    bg.close()
     c,p=page(1000,640,'#klienty',rm='reduce',url=SM); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(400); p.mouse.move(500,300)
     for _ in range(22): p.mouse.wheel(0,100); p.wait_for_timeout(20)
     p.wait_for_timeout(300); check('reduced: smm image by wheel',p.evaluate("+getComputedStyle(document.querySelector('#x3-big')).opacity")>.99); check('no err rm smm',not p.E,p.E); c.close()

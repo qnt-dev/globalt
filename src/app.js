@@ -476,7 +476,14 @@ function vacClose(now) {
   $('#q').focus({ preventScroll: true });
 }
 let barT = 0;
-function barScroll() { document.body.classList.add('barhide'); clearTimeout(barT); barT = setTimeout(() => document.body.classList.remove('barhide'), 320); }
+/* шапка прячется на время прокрутки и возвращается после остановки. В «Работе» между стеной и лентой
+   под шапку может встать полоса поиска «Кем вас ищут?»: тогда шапка ждёт, пока полоса уйдёт, и не ложится на неё */
+function barClash() {
+  if (world !== 'rabota' || rab.classList.contains('v')) return false;
+  const f = $('#w-foot').getBoundingClientRect();
+  return f.bottom > 0 && f.top < $('#bar').offsetHeight + 8;
+}
+function barScroll() { document.body.classList.add('barhide'); clearTimeout(barT); barT = setTimeout(() => { if (!barClash()) document.body.classList.remove('barhide'); }, 320); }
 /* профессия со стены открывается в ленте под стеной (на компьютере). На телефоне ленты пока нет,
    там и из открытой вакансии («Следующая профессия») открывается страница вакансии */
 function openJob(id) {

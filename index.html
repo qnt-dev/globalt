@@ -4096,7 +4096,14 @@ function vacClose(now) {
   $('#q').focus({ preventScroll: true });
 }
 let barT = 0;
-function barScroll() { document.body.classList.add('barhide'); clearTimeout(barT); barT = setTimeout(() => document.body.classList.remove('barhide'), 320); }
+/* шапка прячется на время прокрутки и возвращается после остановки. В «Работе» между стеной и лентой
+   под шапку может встать полоса поиска «Кем вас ищут?»: тогда шапка ждёт, пока полоса уйдёт, и не ложится на неё */
+function barClash() {
+  if (world !== 'rabota' || rab.classList.contains('v')) return false;
+  const f = $('#w-foot').getBoundingClientRect();
+  return f.bottom > 0 && f.top < $('#bar').offsetHeight + 8;
+}
+function barScroll() { document.body.classList.add('barhide'); clearTimeout(barT); barT = setTimeout(() => { if (!barClash()) document.body.classList.remove('barhide'); }, 320); }
 /* профессия со стены открывается в ленте под стеной (на компьютере). На телефоне ленты пока нет,
    там и из открытой вакансии («Следующая профессия») открывается страница вакансии */
 function openJob(id) {
@@ -4659,34 +4666,34 @@ const SITES = [
 ['Маркетплейс', 'Распределит. центр', 'Склад электроники', 'Логистический склад', 'Пищевое производство', 'Кондитерская фабрика', 'Завод фурнитуры'].forEach((m, i) => { SITES[i].m = m; });
 const money = n => n ? String(n).replace(/\B(?=(\d{3})+$)/g, ' ') : '[Сумма]';   // нет суммы — заглушка, как на сайте
 const PANELS = [
-  { eb: '01 · склад · вахта', tt: 'Комплектовщик', img: 'h_komplekt', pos: '56% 62%',
+  { eb: 'склад · вахта', tt: 'Комплектовщик', img: 'h_komplekt', pos: '56% 62%',
     bd: 'Собирать заказы по списку на сканере. Опыт не нужен: сканеру обучат на месте. Семь объектов, от маркетплейса до завода фурнитуры. Жильё на всех объектах бесплатно, а ставка зависит от объекта.',
     lb: '7 объектов · можно без опыта', fx: [['Ставка', '3 500 – 6 000 за смену'], ['Вахта', '30–60 смен'], ['Жильё', 'Бесплатно']] },
-  { eb: '02 · склад · учёт', tt: 'Кладовщик', img: 'h_sklad', pos: '50% 62%',
+  { eb: 'склад · учёт', tt: 'Кладовщик', img: 'h_sklad', pos: '50% 62%',
     bd: 'Принимать товар, сверять накладные и размещать поставки. Нужна внимательность к документам, опыт на складе будет плюсом. Четыре объекта: распределительный центр, маркетплейс, логистический склад и завод фурнитуры.',
     lb: '4 объекта · вахта на склады', fx: [['Ставка', '3 600 – 4 500 за смену'], ['Вахта', '30–60 смен'], ['Аванс', 'Каждую неделю']] },
-  { eb: '03 · производство', tt: 'Фасовщик', img: 'h_fasov', pos: '74% 32%',
+  { eb: 'производство', tt: 'Фасовщик', img: 'h_fasov', pos: '74% 32%',
     bd: 'Фасовать и укладывать готовую продукцию. Опыт не нужен. Три объекта: пищевое производство, кондитерская фабрика и завод фурнитуры. На пищевом производстве кормят три раза в день.',
     lb: '3 объекта · питание на объекте', fx: [['Ставка', '3 500 – 4 200 за смену'], ['Вахта', '30–45 смен'], ['Еда', 'От обеда до 3 раз в день']] },
-  { eb: '04 · склад · вахта', tt: 'Грузчик', img: 'h_gruz', pos: '30% 58%',
+  { eb: 'склад · вахта', tt: 'Грузчик', img: 'h_gruz', pos: '30% 58%',
     bd: 'Разгружать и перемещать паллеты, готовить их к отгрузке. Опыт не нужен, всё покажем на месте. Нужна хорошая физическая форма. Четыре объекта: логистический склад, распределительный центр, маркетплейс и завод фурнитуры.',
     lb: '4 объекта · можно без опыта', fx: [['Ставка', '3 500 – 4 500 за смену'], ['Вахта', '30–60 смен'], ['Опыт', 'Не нужен']] },
-  { eb: '05 · склад · техника', tt: 'ВВШ, водитель погрузчика', img: 'h_vvsh', pos: '50% 34%',
+  { eb: 'склад · техника', tt: 'ВВШ, водитель погрузчика', img: 'h_vvsh', pos: '50% 34%',
     bd: 'Размещать и снимать паллеты на высотных стеллажах. Нужны удостоверение на технику и опыт работы на погрузчике. Три объекта: распределительный центр, маркетплейс и логистический склад.',
     lb: '3 объекта · нужно удостоверение', fx: [['Ставка', '4 000 – 6 500 за смену'], ['Вахта', '30–60 смен'], ['Аванс', 'Каждую неделю']] },
-  { eb: '06 · склад и производство', tt: 'Стикеровщик, упаковщик', img: 'h_upak', pos: '40% 62%',
+  { eb: 'склад и производство', tt: 'Стикеровщик, упаковщик', img: 'h_upak', pos: '40% 62%',
     bd: 'Клеить этикетки и штрихкоды, упаковывать заказы. Опыт не нужен, всё покажем на месте. Можно работать сидя. Пять объектов: маркетплейс, распределительный центр, логистический склад, пищевое производство и кондитерская фабрика.',
     lb: '5 объектов · можно без опыта', fx: [['Ставка', '3 300 – 4 200 за смену'], ['Вахта', '30–60 смен'], ['Опыт', 'Не нужен']] },
-  { eb: '07 · производство', tt: 'Сборщик', img: 'h_sborka', pos: '50% 50%',
+  { eb: 'производство', tt: 'Сборщик', img: 'h_sborka', pos: '50% 50%',
     bd: 'Собирать изделия за столом и проверять их на брак. Опыт не нужен, всё покажем на месте. Работа сидя или стоя. Два объекта: завод фурнитуры и склад электроники.',
     lb: '2 объекта · сидячая работа', fx: [['Ставка', '3 600 – 4 000 за смену'], ['Вахта', '30 смен'], ['Опыт', 'Не нужен']] },
-  { eb: '08 · производство', tt: 'Оператор линии', img: 'h_liniya', pos: '50% 45%',
+  { eb: 'производство', tt: 'Оператор линии', img: 'h_liniya', pos: '50% 45%',
     bd: 'Следить за работой конвейера, подавать сырьё и упаковку. Обучим на месте. Два объекта: пищевое производство и завод фурнитуры.',
     lb: '2 объекта · с обучением', fx: [['Ставка', '3 500 – 4 200 за смену'], ['Вахта', '30 смен'], ['Обучение', 'На месте']] },
-  { eb: '09 · склад и производство', tt: 'Бригадир', img: 'h_brigada', pos: '42% 50%',
+  { eb: 'склад и производство', tt: 'Бригадир', img: 'h_brigada', pos: '42% 50%',
     bd: 'Вести смену: распределять людей и отвечать за план. Нужен опыт руководства сменой или бригадой и опыт работы на складе или производстве. Три объекта: маркетплейс, распределительный центр и пищевое производство.',
     lb: '3 объекта · нужен опыт', fx: [['Ставка', '[Сумма] за смену'], ['Вахта', '30–45 смен'], ['Опыт', 'Руководство сменой']] },
-  { eb: '10 · удалённо', tt: 'Менеджер по клиентам', img: 'h_menedzher', pos: '60% 50%',
+  { eb: 'удалённо', tt: 'Менеджер по клиентам', img: 'h_menedzher', pos: '60% 50%',
     bd: 'Отвечать клиентам и вести новые обращения. Работа из дома, это не вахта. Нужен опыт общения с клиентами и умение держать договорённости.',
     lb: 'из дома · полный день', fx: [['Зарплата', '[Зарплата]'], ['График', 'Полный день'], ['Где', 'Из дома']] }
 ];
@@ -5172,6 +5179,9 @@ function colorsDk(t) {
 const cv = document.getElementById('cy-cv'), ctx = cv.getContext('2d'), stage = document.querySelector('#cy .cy-stage'), sec = document.getElementById('cy'), rab = document.getElementById('rabota');
 const V = {};
 let SETS = null;
+// экраны, которые ещё надо пересобрать после перестановки; пока телефон собирается, по одному за кадр
+let PEND = [];
+function flushPend() { while (PEND.length) rebuild(PEND.shift()); }
 function layout() {
   V.w = innerWidth; V.h = innerHeight;
   V.ch = Math.max(9, Math.min(16, Math.floor(Math.min(.7 * V.h, V.h - 80) / ROWS)));
@@ -5186,18 +5196,21 @@ function layout() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.textBaseline = 'top';
   const AT = PROF.map((x, i) => i % 2 ? V.right : V.left);
   SETS = { at: AT, out: [], inn: [] };
+  PEND = [];
   for (let i = 0; i < NP; i++) rebuild(i);
   SETS.en = enterSet(FRAMES[0], AT[0], 90210);
   sec.style.height = (SEG.total + 1) * 100 + 'vh';
-  PN.forEach((el, i) => { const L = i % 2 === 1; Object.assign(el.style, { top: V.ty + 'px', bottom: V.ty + 'px', width: V.tw + 'px', left: (L ? V.txL : V.txR) + 'px' }); });
+  placePanels();
   dirty = true;
 }
+function placePanels() { PN.forEach((el, i) => { const L = i % 2 === 1; Object.assign(el.style, { top: V.ty + 'px', bottom: V.ty + 'px', width: V.tw + 'px', left: (L ? V.txL : V.txR) + 'px' }); }); }
 
 /* ---------- колонки текста ---------- */
+const num = n => String(n + 1).padStart(2, '0');
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 document.getElementById('cy-panels').innerHTML = PANELS.map((p, i) => `<div class="cy-pn">
   <div>
-    <p class="cy-eb cy-mono">${esc(p.eb)}</p>
+    <p class="cy-eb cy-mono">${num(i)} · ${esc(p.eb)}</p>
     <h2 class="cy-tt">${esc(p.tt)}</h2>
     <p class="cy-bd">${esc(p.bd)}</p>
   </div>
@@ -5214,7 +5227,7 @@ document.getElementById('cy-panels').innerHTML = PANELS.map((p, i) => `<div clas
 const PN = [...document.querySelectorAll('.cy-pn')];
 
 // время ленты в долях высоты окна: первый экран держится коротко, средние дольше, переход длинный
-const T_FIRST = .12, T_HOLD = .7, T_LAST = .6, T_TRANS = 1.2;
+const T_FIRST = .7, T_HOLD = .7, T_LAST = .6, T_TRANS = 1.2;
 const SEG = (() => {
   const L = [], total = T_FIRST + (NP - 2) * T_HOLD + T_LAST + (NP - 1) * T_TRANS;
   let t = 0;
@@ -5271,6 +5284,7 @@ function active() { if (document.body.dataset.w !== 'rabota' || rab.classList.co
 function frame(now) {
   if (!active()) { last = 0; requestAnimationFrame(frame); return; }
   if (!entered && !t0 && sec.getBoundingClientRect().top > innerHeight * .45) { requestAnimationFrame(frame); return; }
+  if (PEND.length) rebuild(PEND.shift());
   const dt = last ? Math.min(.1, (now - last) / 1000) : 0; last = now;
   const d = target - prog;
   if (Math.abs(d) > 1e-4) { prog += d * (1 - Math.exp(-dt / .14)); dirty = true; } else if (prog !== target) { prog = target; dirty = true; }
@@ -5300,6 +5314,7 @@ function drawJump() {
   placeInput(); navDraw(1);
 }
 function draw() {
+  if (entered && PEND.length) flushPend();
   if (JUMP) { drawJump(); return; }
   const C = colors(prog);
   bgc.style.backgroundColor = C.bg; stage.style.color = C.fg;
@@ -5372,6 +5387,7 @@ function send(i) {
 let JUMP = null;
 const JUMP_MS = 1500;
 function goTo(k) {
+  flushPend();
   const ph = phase(prog), i = JUMP ? JUMP.to : ph.hold != null ? ph.hold : ph.t < .5 ? ph.from : ph.to;
   const top = sec.getBoundingClientRect().top - rab.getBoundingClientRect().top + rab.scrollTop, span = sec.offsetHeight - innerHeight;
   if (k !== i && entered && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -5480,10 +5496,25 @@ Promise.all([document.fonts.load(font, 'AЖжё0'), document.fonts.load('640 40p
 });
 // клик по профессии на стене: страница сразу встаёт на эту профессию в ленте, телефон собирается из частиц.
 // Возвращает false, если ленты нет (телефон) или профессии в ленте нет: тогда сайт открывает старую страницу вакансии
+// Порядок: выбранная профессия первая, остальные как обычно. Сразу пересобирается только первый экран, остальные — по одному за кадр,
+// колонки текста переносятся готовыми — фото заново не грузятся
+const ORIG = { prof: PROF.slice(), panels: PANELS.slice(), st: ST.slice(), pn: PN.slice() }, pnBox = document.getElementById('cy-panels');
+function setOrder(id) {
+  const k = ORIG.prof.findIndex(p => p.id === id);
+  const ord = [k, ...ORIG.prof.map((_, j) => j).filter(j => j !== k)];
+  if (ord.every((j, n) => PROF[n] === ORIG.prof[j])) return;
+  if (hovI >= 0) { ST[hovI].hov = null; hovI = -1; }
+  ord.forEach((j, n) => { PROF[n] = ORIG.prof[j]; PANELS[n] = ORIG.panels[j]; ST[n] = ORIG.st[j]; PN[n] = ORIG.pn[j]; });
+  PN.forEach((el, n) => { pnBox.appendChild(el); el.querySelector('.cy-cta').dataset.reply = n; el.querySelector('.cy-eb').textContent = num(n) + ' · ' + PANELS[n].eb; });
+  NB.forEach((b, n) => { const t = PANELS[n].tt, m = b.querySelector('.cy-nm'); b.setAttribute('aria-label', t); cancelAnimationFrame(m._raf); m.dataset.t = m.textContent = t; b.querySelector('.cy-np').textContent = navPay(n); });
+  rebuild(0); PEND = Array.from({ length: NP - 1 }, (_, n) => n + 1);
+  placePanels();
+}
 function openProf(id) {
-  const i = PROF.findIndex(p => p.id === id);
-  if (i < 0 || getComputedStyle(sec).display === 'none') return false;
+  if (!ORIG.prof.some(p => p.id === id) || getComputedStyle(sec).display === 'none') return false;
   JUMP = null; if (FOC) { ST[FOC.i].foc = null; FOC = null; fi.blur(); }
+  setOrder(id);
+  const i = 0;
   const top = sec.getBoundingClientRect().top - rab.getBoundingClientRect().top + rab.scrollTop, span = sec.offsetHeight - innerHeight;
   rab.scrollTo({ top: top + HOLD_P[i] * span, behavior: 'instant' });
   readScroll(); prog = target;
@@ -5497,7 +5528,7 @@ document.getElementById('cy-panels').addEventListener('click', e => {
 });
 window.__reel = { sync: syncInk, open: openProf };
 // мир «Работа» мог открыться по адресу раньше, чем загрузилась лента: сразу ставим цвет шапки
-window.__cy = { get prog() { return prog; }, set prog(v) { target = prog = v; dirty = true; }, skipEnter() { entered = true; enter = 1; dirty = true; }, V, ST, HITS, act, holdNow, HOLD_P, SEG, PALS, redraw() { dirty = true; } };
+window.__cy = { order: () => PROF.map(p => p.id), get prog() { return prog; }, set prog(v) { target = prog = v; dirty = true; }, skipEnter() { entered = true; enter = 1; dirty = true; }, V, ST, HITS, act, holdNow, HOLD_P, SEG, PALS, redraw() { dirty = true; } };
 syncInk();
 })();
 </script>

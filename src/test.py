@@ -113,17 +113,25 @@ with sync_playwright() as pw:
     # от стены к отклику
     REEL="(()=>{const r=document.querySelector('#rabota');return {v:r.classList.contains('v'),hold:window.__cy.holdNow(),wall:document.querySelector('#w-rows').getBoundingClientRect().bottom,hash:location.hash}})()"
     check('reel under the wall',p.is_visible('#cy-cv') and p.locator('#cy-nav button').count()==10 and p.locator('.cy-pn').count()==10)
-    p.fill('#q','кладов'); p.keyboard.press('Enter'); held(p,1); r=p.evaluate(REEL); check('enter opens the profession in the reel',not r['v'] and r['hold']==1 and r['wall']<=0 and r['hash']=='#rabota',r)
+    # между стеной и лентой шапка не ложится на полосу поиска; у ленты и наверху стены возвращается
+    BH="(st=>{document.querySelector('#rabota').scrollTop=st})"; FH=p.evaluate("document.querySelector('#w-foot').offsetHeight")
+    p.evaluate(BH,640-FH+10); p.wait_for_timeout(700); check('header waits while the search band is under it',p.evaluate("document.body.classList.contains('barhide')"))
+    p.evaluate(BH,640+40); p.wait_for_timeout(700); check('header back over the reel',not p.evaluate("document.body.classList.contains('barhide')"))
+    p.evaluate(BH,0); p.wait_for_timeout(700); check('header back over the wall',not p.evaluate("document.body.classList.contains('barhide')"))
+    p.fill('#q','кладов'); p.keyboard.press('Enter'); held(p,0); r=p.evaluate(REEL); check('enter opens the profession in the reel',not r['v'] and r['hold']==0 and r['wall']<=0 and r['hash']=='#rabota',r)
+    ORD="[window.__cy.order(),document.querySelector('.cy-pn .cy-eb').textContent,document.querySelector('#cy-nav .cy-nm').dataset.t,document.querySelector('#cy-hn').textContent]"
+    o=p.evaluate(ORD); check('chosen profession first, the rest in order',o[0]==['kladovshchik','komplektovshchik','fasovshchik','gruzchik','vvsh','upakovshchik','sborshchik','operator','brigadir','menedzher'] and o[1].startswith('01 · ') and o[2]=='Кладовщик' and o[3]=='01 / 10',o)
+    p.mouse.move(700,450); p.mouse.wheel(0,100); p.wait_for_timeout(700); check('one wheel step keeps the chosen profession',p.evaluate('window.__cy.holdNow()')==0 and p.evaluate("+document.querySelector('.cy-pn').style.opacity")>.99)
     check('header ink over the reel',p.evaluate("document.body.classList.contains('ink')"))
-    b2=p.locator('.cy-pn:nth-child(2) .cy-cta').bounding_box(); p.mouse.click(b2['x']+b2['width']/2,b2['y']+b2['height']/2); p.wait_for_timeout(500); check('panel reply opens the phone form',p.evaluate("window.__cy.ST[1].page")=='reply' and p.evaluate("document.activeElement.id")=='cy-fi')
+    held(p,0); b2=p.locator('.cy-pn:nth-child(1) .cy-cta').bounding_box(); p.mouse.click(b2['x']+b2['width']/2,b2['y']+b2['height']/2); p.wait_for_timeout(500); check('panel reply opens the phone form',p.evaluate("window.__cy.ST[0].page")=='reply' and p.evaluate("document.activeElement.id")=='cy-fi')
     p.evaluate("window.__gt.vacOpen('kladovshchik')"); p.wait_for_timeout(1100); check('vacancy page still opens',p.is_visible('#kladovshchik .v-t') and p.evaluate("location.hash")=='#kladovshchik' and not p.is_visible('#w-wall') and p.evaluate("document.activeElement.classList.contains('v-t')") and p.evaluate("document.querySelector('#kladovshchik .v-bg').naturalWidth")>500)
     p.keyboard.press('Escape'); p.wait_for_timeout(1000); check('escape returns to the wall',p.is_visible('#w-rows') and p.locator('.vac:visible').count()==0 and p.evaluate("location.hash")=='#rabota' and p.evaluate("document.activeElement.id")=='q'); p.fill('#q','')
-    p.focus('#w-list li:nth-child(5) button'); p.wait_for_timeout(100); check('keyboard focus lights a row',p.locator('.w-hit').count()==1 and 'ВВШ' in p.inner_text('.w-hit')); p.keyboard.press('Enter'); held(p,4); r=p.evaluate(REEL); check('keyboard opens profession in the reel',not r['v'] and r['hold']==4,r)
+    p.focus('#w-list li:nth-child(5) button'); p.wait_for_timeout(100); check('keyboard focus lights a row',p.locator('.w-hit').count()==1 and 'ВВШ' in p.inner_text('.w-hit')); p.keyboard.press('Enter'); held(p,0); r=p.evaluate(REEL); check('keyboard opens profession in the reel',not r['v'] and r['hold']==0 and p.evaluate('window.__cy.order()')[:3]==['vvsh','komplektovshchik','kladovshchik'],r)
     p.evaluate("document.querySelector('#rabota').scrollTop=0; window.__gt.vacOpen('vvsh')"); p.wait_for_timeout(1100); check('vacancy page by address',p.is_visible('#vvsh .v-t'))
     p.click('#vvsh .v-next'); p.wait_for_timeout(500); check('next profession',p.is_visible('#fasovshchik .v-t') and p.evaluate("location.hash")=='#fasovshchik' and abs(p.evaluate("document.querySelector('#rabota').scrollTop"))<2)
     p.click('#fasovshchik .v-back'); p.wait_for_timeout(1000); check('back to the wall',p.is_visible('#w-rows') and p.locator('.vac:visible').count()==0)
     p.click('#none-clear') if p.is_visible('#none') else None
-    p.fill('#q','комплект'); p.click('.w-hit'); held(p,0); r=p.evaluate(REEL); check('hit click opens the reel',not r['v'] and r['hold']==0,r)
+    p.fill('#q','комплект'); p.click('.w-hit'); held(p,0); r=p.evaluate(REEL); check('hit click opens the reel',not r['v'] and r['hold']==0 and p.evaluate('window.__cy.order()')[:3]==['komplektovshchik','kladovshchik','fasovshchik'],r)
     p.evaluate("document.querySelector('#rabota').scrollTop=0; window.__gt.vacOpen('komplektovshchik')"); p.wait_for_timeout(1100); K='#komplektovshchik'
     check('board has seven sites sorted by pay',p.locator(K+' .rw').count()==7 and p.evaluate(f"(()=>{{const a=[...document.querySelectorAll('{K} .rw .m')].map(e=>parseInt(e.firstChild.textContent.replace(/\\D/g,'')));return a.every((x,i)=>!i||a[i-1]>=x)}})()") and 'МАРКЕТПЛЕЙС' in p.inner_text(K+' .rw:first-child').upper())
     check('hero promises the range',('3 500' in p.inner_text(K+' .v-who p').replace('\xa0',' ')) and '7 объектов' in p.inner_text(K+' .v-who p'))

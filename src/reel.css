@@ -1,0 +1,76 @@
+
+/* «Работа»: лента профессий под стеной. Телефон из символов рассыпается при прокрутке и собирается на другой стороне
+   (приём по образцу Cipher, motionin.design). Классы с приставкой cy-, чтобы не пересекаться со стилями сайта.
+   Версии для телефона пока нет: на узком экране ленты нет, раздел — одна стена, как раньше */
+#cy{display:none;position:relative;margin-top:100vh;margin-top:100svh}
+@media (min-width:1000px) and (min-height:600px){
+  #rabota:not(.v){overflow-y:auto}
+  #cy{display:block}
+}
+#rabota.v #cy{display:none!important}
+#cy figure{margin:0}
+.cy-mono{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+
+/* сцена: липкий экран внутри длинной секции */
+.cy-stage{--bg:#f6f8fb;--fg:#0e141b;--acc:#ff5c0a;--on:#0e141b;--sh:#8a3a10;position:sticky;top:0;width:100%;height:100vh;height:100svh;overflow:hidden;color:var(--fg)}
+#cy-bgc{position:absolute;inset:0;background:var(--bg);pointer-events:none}
+.cy-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.06) 95%);mix-blend-mode:multiply}
+#cy-cv{position:absolute;inset:0;pointer-events:none}
+/* поле ввода отклика лежит над клетками телефона: текст рисует сетка, поле даёт только курсор и клавиатуру */
+#cy-fi{position:absolute;z-index:4;display:none;margin:0;padding:0;border:0;outline:0;background:transparent;color:transparent;caret-color:var(--fg);font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-weight:500}
+
+/* колонка текста профессии */
+.cy-pn{position:absolute;display:flex;flex-direction:column;justify-content:space-between;gap:clamp(1.5rem,3vh,3rem);min-height:0;opacity:0;pointer-events:none;will-change:opacity,transform}
+.cy-eb{font-size:10px;text-transform:uppercase;letter-spacing:.32em;opacity:.6;margin-bottom:1.25rem}
+.cy-tt{font-family:var(--disp);font-weight:640;font-variation-settings:"wdth" 50;text-transform:uppercase;font-size:clamp(2.6rem,6vw,4.6rem);line-height:.96;letter-spacing:.002em;margin-bottom:clamp(1.2rem,2vw,1.6rem)}
+.cy-bd{font-size:clamp(.95rem,1.02vw,1.05rem);line-height:1.6;opacity:.82;max-width:40rem}
+.cy-lb{font-size:10px;text-transform:uppercase;letter-spacing:.3em;opacity:.5;margin-bottom:.75rem}
+.cy-row{display:flex;align-items:stretch;gap:22px;margin-bottom:1.5rem}
+.cy-ph{position:relative;flex:none;width:clamp(220px,18vw,300px);aspect-ratio:5/3;overflow:hidden;border:5px solid var(--fg)}
+.cy-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cy-fx{display:grid;align-content:center;gap:12px}
+.cy-fx dt{font-size:10px;text-transform:uppercase;letter-spacing:.22em;opacity:.55}
+.cy-fx dd{font-size:15px;font-weight:600;line-height:1.3;margin-top:3px}
+.cy-cta{align-self:flex-start;display:inline-flex;align-items:center;gap:.6rem;padding:.95rem 1.7rem;border:2px solid var(--acc);background:var(--acc);color:var(--on);box-shadow:6px 6px 0 var(--sh);text-decoration:none;font:700 clamp(1rem,1.2vw,1.2rem)/1 var(--disp);font-variation-settings:"wdth" 62;text-transform:uppercase;letter-spacing:.02em;cursor:pointer;user-select:none;position:relative;z-index:2;transition:transform .18s cubic-bezier(.2,.9,.3,1.2),box-shadow .18s ease,background-color .18s ease,color .18s ease}
+.cy-cta span{display:inline-block;transition:transform .18s ease}
+.cy-cta:hover{background:var(--bg);color:var(--fg);border-color:var(--fg);transform:translate(-5px,-5px);box-shadow:14px 14px 0 var(--sh)}
+.cy-cta:hover span{transform:translateX(4px)}
+.cy-cta:active{transform:translate(5px,5px);box-shadow:1px 1px 0 var(--sh)}
+.cy-mt{margin-top:1.25rem;font-size:10px;text-transform:uppercase;letter-spacing:.3em;opacity:.42}
+
+/* служебные подписи по краям; верхняя ниже шапки сайта */
+.cy-hud{position:absolute;font-size:12px;text-transform:uppercase;letter-spacing:.25em;opacity:0;pointer-events:none}
+#cy-hc{top:clamp(66px,8.4vh,84px);left:24px}
+#cy-hc i{font-style:normal;opacity:.35;margin:0 .5em}
+#cy-hs{bottom:24px;left:24px;font-size:10px;letter-spacing:.3em}
+
+/* навигация по профессиям: капсула с дорожками у левого края. При наведении раскрывается в список */
+#cy-nav{position:absolute;left:14px;top:50%;z-index:6;width:40px;padding:8px 0;border-radius:16px;overflow:hidden;transform:translateY(-50%);opacity:0;
+  background:transparent;transition:width .42s cubic-bezier(.2,.8,.2,1),background-color .3s,box-shadow .3s,opacity .4s}
+#cy-nav.open{width:340px;background:color-mix(in srgb,var(--bg) 93%,var(--fg));box-shadow:0 0 0 1px color-mix(in srgb,var(--fg) 13%,transparent),0 18px 50px -18px rgba(0,0,0,.35)}
+#cy-nav ol{list-style:none;margin:0;padding:0}
+#cy-nav button{display:grid;grid-template-columns:40px 30px minmax(0,1fr) auto;align-items:center;width:340px;height:30px;margin:0;padding:0 16px 0 0;border:0;background:none;color:var(--fg);
+  font:500 11.5px/1 "JetBrains Mono",ui-monospace,Consolas,monospace;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#cy-nav button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+#cy-nav li{position:relative}
+#cy-nav .cy-hl{position:absolute;left:6px;right:6px;top:0;height:30px;border-radius:10px;pointer-events:none;opacity:0;
+  background:color-mix(in srgb,var(--acc) 13%,transparent);transition:transform .32s cubic-bezier(.2,.9,.3,1.15),opacity .2s}
+#cy-nav.open .cy-hl.on{opacity:1}
+/* дорожка заполняется, пока листаешь свою профессию. Пройденные заполнены цветом текста, текущая — оранжевым */
+#cy-nav .cy-d{justify-self:center;height:calc(2px + 1px * var(--cur,0));width:calc(20px + 8px * var(--hv,0));transition:width .18s,height .2s;border-radius:2px;
+  background:linear-gradient(90deg,var(--fc,var(--acc)) calc(var(--p,0) * 100%),color-mix(in srgb,var(--fg) 22%,transparent) 0)}
+#cy-nav button>*{position:relative}
+#cy-nav .cy-nn,#cy-nav .cy-nm,#cy-nav .cy-np{opacity:0;transform:translateX(-8px);transition:opacity .25s,transform .35s cubic-bezier(.2,.8,.2,1);white-space:nowrap}
+#cy-nav .cy-nm{transition:opacity .25s,transform .25s cubic-bezier(.2,.8,.2,1),color .2s}
+#cy-nav.open .cy-nn,#cy-nav.open .cy-nm,#cy-nav.open .cy-np{opacity:1;transform:none;transition-delay:calc(.04s + var(--k) * .03s)}
+#cy-nav.open.ready .cy-nn,#cy-nav.open.ready .cy-nm,#cy-nav.open.ready .cy-np{transition-delay:0s}
+#cy-nav .cy-np::after{content:" →";display:inline-block;width:0;overflow:hidden;vertical-align:bottom;transition:width .2s}
+#cy-nav .cy-nn{color:color-mix(in srgb,var(--fg) 45%,transparent)}
+#cy-nav .cy-nm{overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.04em;color:color-mix(in srgb,var(--fg) 62%,transparent)}
+#cy-nav .cy-np{color:color-mix(in srgb,var(--fg) 45%,transparent)}
+#cy-nav button[aria-current="true"] .cy-nm{color:var(--fg);font-weight:600}
+#cy-nav button[aria-current="true"] .cy-nn{color:var(--acc)}
+#cy-nav.open button:hover .cy-nm{color:var(--fg);transform:translateX(6px)}
+#cy-nav.open button:hover .cy-d{--fc:var(--acc);--p:1;height:3px}
+#cy-nav.open button:hover .cy-np{color:var(--acc);font-weight:600}
+#cy-nav.open button:hover .cy-np::after{width:1.4em}

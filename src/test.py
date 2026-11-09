@@ -4,6 +4,9 @@ from playwright.sync_api import sync_playwright
 U='http://127.0.0.1:4391/index.html'
 ARGS=['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--enable-webgl']
 ok=[];bad=[]
+def held(p,i):
+    try: p.wait_for_function('window.__cy.holdNow()==%d'%i,timeout=8000); return True
+    except Exception: return False
 def check(n,c,x=''): (ok if c else bad).append(n+(' '+str(x) if x not in ('',None) and not c else ''))
 CLIP="""()=>{const W=innerWidth,H=innerHeight,out=[];const vis=e=>{const s=getComputedStyle(e);return s.visibility!=='hidden'&&s.display!=='none'&&e.getClientRects().length>0};
  document.querySelectorAll(%s).forEach(e=>{if(!vis(e))return;const r=document.createRange();r.selectNodeContents(e);const b=r.getBoundingClientRect();if(b.width>0&&(b.right>W+1||b.left<-1))out.push((e.textContent||'').trim().slice(0,22)+':'+Math.round(b.left)+'-'+Math.round(b.right))});return {sw:document.documentElement.scrollWidth,W,out}}"""
@@ -108,13 +111,20 @@ with sync_playwright() as pw:
     p.click('.chip[data-f=sit]'); p.wait_for_timeout(80); check('two filters narrow down',p.evaluate(HIT)==['Стикеровщик, упаковщик'],p.evaluate(HIT))
     p.fill('#q','кладов'); p.wait_for_timeout(80); check('search and filter combine',p.locator('.w-hit').count()==0 and p.is_visible('#none')); p.click('#none-clear'); check('clear resets filters',p.get_attribute('.chip[data-f=noexp]','aria-pressed')=='false' and p.locator('.w-hit').count()==0)
     # от стены к отклику
-    p.fill('#q','кладов'); p.keyboard.press('Enter'); p.wait_for_timeout(1100); check('enter opens the profession',p.is_visible('#kladovshchik .v-t') and p.evaluate("location.hash")=='#kladovshchik' and not p.is_visible('#w-wall') and p.evaluate("document.activeElement.classList.contains('v-t')") and p.evaluate("document.querySelector('#kladovshchik .v-bg').naturalWidth")>500)
+    REEL="(()=>{const r=document.querySelector('#rabota');return {v:r.classList.contains('v'),hold:window.__cy.holdNow(),wall:document.querySelector('#w-rows').getBoundingClientRect().bottom,hash:location.hash}})()"
+    check('reel under the wall',p.is_visible('#cy-cv') and p.locator('#cy-nav button').count()==10 and p.locator('.cy-pn').count()==10)
+    p.fill('#q','кладов'); p.keyboard.press('Enter'); held(p,1); r=p.evaluate(REEL); check('enter opens the profession in the reel',not r['v'] and r['hold']==1 and r['wall']<=0 and r['hash']=='#rabota',r)
+    check('header ink over the reel',p.evaluate("document.body.classList.contains('ink')"))
+    b2=p.locator('.cy-pn:nth-child(2) .cy-cta').bounding_box(); p.mouse.click(b2['x']+b2['width']/2,b2['y']+b2['height']/2); p.wait_for_timeout(500); check('panel reply opens the phone form',p.evaluate("window.__cy.ST[1].page")=='reply' and p.evaluate("document.activeElement.id")=='cy-fi')
+    p.evaluate("window.__gt.vacOpen('kladovshchik')"); p.wait_for_timeout(1100); check('vacancy page still opens',p.is_visible('#kladovshchik .v-t') and p.evaluate("location.hash")=='#kladovshchik' and not p.is_visible('#w-wall') and p.evaluate("document.activeElement.classList.contains('v-t')") and p.evaluate("document.querySelector('#kladovshchik .v-bg').naturalWidth")>500)
     p.keyboard.press('Escape'); p.wait_for_timeout(1000); check('escape returns to the wall',p.is_visible('#w-rows') and p.locator('.vac:visible').count()==0 and p.evaluate("location.hash")=='#rabota' and p.evaluate("document.activeElement.id")=='q'); p.fill('#q','')
-    p.focus('#w-list li:nth-child(5) button'); p.wait_for_timeout(100); check('keyboard focus lights a row',p.locator('.w-hit').count()==1 and 'ВВШ' in p.inner_text('.w-hit')); p.keyboard.press('Enter'); p.wait_for_timeout(1100); check('keyboard opens profession',p.is_visible('#vvsh .v-t'))
+    p.focus('#w-list li:nth-child(5) button'); p.wait_for_timeout(100); check('keyboard focus lights a row',p.locator('.w-hit').count()==1 and 'ВВШ' in p.inner_text('.w-hit')); p.keyboard.press('Enter'); held(p,4); r=p.evaluate(REEL); check('keyboard opens profession in the reel',not r['v'] and r['hold']==4,r)
+    p.evaluate("document.querySelector('#rabota').scrollTop=0; window.__gt.vacOpen('vvsh')"); p.wait_for_timeout(1100); check('vacancy page by address',p.is_visible('#vvsh .v-t'))
     p.click('#vvsh .v-next'); p.wait_for_timeout(500); check('next profession',p.is_visible('#fasovshchik .v-t') and p.evaluate("location.hash")=='#fasovshchik' and abs(p.evaluate("document.querySelector('#rabota').scrollTop"))<2)
     p.click('#fasovshchik .v-back'); p.wait_for_timeout(1000); check('back to the wall',p.is_visible('#w-rows') and p.locator('.vac:visible').count()==0)
     p.click('#none-clear') if p.is_visible('#none') else None
-    p.fill('#q','комплект'); p.click('.w-hit'); p.wait_for_timeout(1100); K='#komplektovshchik'
+    p.fill('#q','комплект'); p.click('.w-hit'); held(p,0); r=p.evaluate(REEL); check('hit click opens the reel',not r['v'] and r['hold']==0,r)
+    p.evaluate("document.querySelector('#rabota').scrollTop=0; window.__gt.vacOpen('komplektovshchik')"); p.wait_for_timeout(1100); K='#komplektovshchik'
     check('board has seven sites sorted by pay',p.locator(K+' .rw').count()==7 and p.evaluate(f"(()=>{{const a=[...document.querySelectorAll('{K} .rw .m')].map(e=>parseInt(e.firstChild.textContent.replace(/\\D/g,'')));return a.every((x,i)=>!i||a[i-1]>=x)}})()") and 'МАРКЕТПЛЕЙС' in p.inner_text(K+' .rw:first-child').upper())
     check('hero promises the range',('3 500' in p.inner_text(K+' .v-who p').replace('\xa0',' ')) and '7 объектов' in p.inner_text(K+' .v-who p'))
     p.click(K+' .v-pick'); p.wait_for_timeout(1300); check('pick scrolls to the board',abs(p.evaluate(f"document.querySelector('{K} .v-board').getBoundingClientRect().top"))<3 and p.evaluate("document.activeElement.classList.contains('rw')"))
@@ -132,6 +142,9 @@ with sync_playwright() as pw:
     p.evaluate("window.__gt.vacOpen('brigadir',true)"); p.wait_for_timeout(100); check('placeholder pay stays marked','[СУММА]' in p.inner_text('#brigadir .rw:first-child').upper() and '[Сумма]' in p.inner_text('#brigadir .v-who p'))
     p.click('#nav a[data-go=rabota]'); p.wait_for_timeout(1000); p.fill('#q',''); p.click('#end-talk'); check('end opens talk',p.is_visible('#talk')); p.click('#talk-x')
     check('no err work',not p.E,p.E); c.close()
+    c,p=page(390,844,'#rabota'); check('phone has no reel',not p.is_visible('#cy-cv'))
+    p.fill('#q','сборщ'); p.click('.w-hit'); p.wait_for_timeout(1100); check('phone wall opens the vacancy page',p.is_visible('#sborshchik .v-t') and p.evaluate("location.hash")=='#sborshchik')
+    check('no err phone work',not p.E,p.E); c.close()
     # мир «Люди»
     c,p=page(1000,640,'#lyudi'); p.wait_for_timeout(300)
     check('white and ink',p.evaluate("document.body.classList.contains('ink')") and p.evaluate("getComputedStyle(document.querySelector('#lyudi')).backgroundColor")=='rgb(255, 255, 255)')

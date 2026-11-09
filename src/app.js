@@ -309,7 +309,7 @@ function dustRise(from, done) {
 function dustSwap(w, done) { veilRun(1, 0, 560, () => { show(w); requestAnimationFrame(() => veilRun(0, 1, 700, () => { veil.style.display = 'none'; done(); })); }); }
 
 /* ---------- Миры ---------- */
-const WC = { home: '#000', rabota: '#000', lyudi: '#fff', klienty: '#6f6f6f' };
+const WC = { home: '#000', rabota: '#f6f8fb', lyudi: '#fff', klienty: '#6f6f6f' };
 let busy = false;
 function show(w) {
   $$('.world').forEach(s => { s.hidden = s.id !== w; });
@@ -322,6 +322,8 @@ function show(w) {
   $$('#nav a').forEach(a => { if (a.dataset.go === w) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   try { history.replaceState(null, '', w === 'home' ? '#top' : '#' + w); } catch (e) {}
   if (w === 'rabota') enterWork(); if (w === 'lyudi') enterPeople(); if (w === 'klienty') enterAir();
+  /* «Работа» в палитре «Бумага»: цвет шапки зависит от того, что под ней (стена, фото вакансии, экран ленты) */
+  if (window.__reel) window.__reel.sync();
   if (air.snd && w !== 'klienty') air.snd.ng.gain.setTargetAtTime(0, air.snd.ctx.currentTime, .1);
   dirty = true;
 }
@@ -462,22 +464,30 @@ function vacOpen(id, now) {
   if (now || RM || wall.hidden) { wall.hidden = true; wall.classList.add('out'); j.classList.add('in'); }
   else { void j.offsetWidth; wall.classList.add('out'); requestAnimationFrame(() => j.classList.add('in')); wallT = setTimeout(() => { wall.hidden = true; }, 720); }
   $('.v-t', j).focus({ preventScroll: true });
+  if (window.__reel) window.__reel.sync();
 }
 function vacClose(now) {
   const j = vacCur; clearTimeout(wallT); vacCur = null; rab.classList.remove('v'); rab.scrollTop = 0; wall.hidden = false;
   try { history.replaceState(null, '', '#rabota'); } catch (e) {}
   void wall.offsetWidth; wall.classList.remove('out');
+  if (window.__reel) window.__reel.sync();
   const done = () => { jobs.hidden = true; if (j) { j.hidden = true; j.classList.remove('in'); } };
   if (now || RM) done(); else wallT = setTimeout(done, 720);
   $('#q').focus({ preventScroll: true });
 }
 let barT = 0;
 function barScroll() { document.body.classList.add('barhide'); clearTimeout(barT); barT = setTimeout(() => document.body.classList.remove('barhide'), 320); }
+/* профессия со стены открывается в ленте под стеной (на компьютере). На телефоне ленты пока нет,
+   там и из открытой вакансии («Следующая профессия») открывается страница вакансии */
+function openJob(id) {
+  if (!rab.classList.contains('v') && window.__reel && window.__reel.open(id)) return;
+  vacOpen(id);
+}
 function buildJobs() {
   if (jobsBuilt) return; jobsBuilt = true;
   jobs.innerHTML = VAC.map(jobHTML).join(''); buildWall();
   rab.addEventListener('click', e => {
-    const t = e.target.closest('[data-to]'); if (t) { vacOpen(t.dataset.to); return; }
+    const t = e.target.closest('[data-to]'); if (t) { openJob(t.dataset.to); return; }
     const f = e.target.closest('.chip'); if (f) { const k = f.dataset.f, on = !FILTER.has(k); if (on) FILTER.add(k); else FILTER.delete(k); f.setAttribute('aria-pressed', on); jobFilter(); return; }
     if (e.target.closest('.v-back')) { vacClose(); return; }
     const j = e.target.closest('.vac'); if (!j) return;
@@ -497,7 +507,7 @@ function buildJobs() {
   });
   rab.addEventListener('scroll', barScroll, { passive: true });
   $('#q').addEventListener('input', jobFilter);
-  $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { const h = $('.w-hit'); if (h) { e.preventDefault(); vacOpen(h.dataset.to); } } });
+  $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') { const h = $('.w-hit'); if (h) { e.preventDefault(); openJob(h.dataset.to); } } });
   $('#w-list').addEventListener('focusin', e => { const b = e.target.closest('[data-to]'); if (b) hitsShow(VAC.filter(V => V.id === b.dataset.to)); });
   $('#w-list').addEventListener('focusout', jobFilter);
   $('#none-clear').addEventListener('click', () => { $('#q').value = ''; FILTER.clear(); $$('.chip').forEach(c => c.setAttribute('aria-pressed', false)); jobFilter(); $('#q').focus(); });

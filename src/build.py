@@ -14,8 +14,10 @@ if not os.path.exists(tek):
     f = TTFont(os.path.join(AS, 'tektur.ttf')); f = instancer.instantiateVariableFont(f, {'wght': 500, 'wdth': 100}); f.flavor = 'woff2'; f.save(tek)
     print('tektur', os.path.getsize(tek) // 1024, 'KB')
 # примеры станций «Клиентов» (Сайт, Реклама, SMM, Бренд) идут перед app.js, потому что app.js их вызывает
-css = read('style.css') + ''.join(read(n + '.css') for n in ('sayt', 'reklama', 'smm', 'brend'))
+css = read('style.css') + ''.join(read(n + '.css') for n in ('sayt', 'reklama', 'smm', 'brend', 'reel'))
 js = '\n'.join(read(n + '.js') for n in ('sayt', 'reklama', 'smm', 'brend', 'sonar', 'app'))
+# лента профессий идёт отдельным скриптом после основного: у неё своё замыкание, с сайтом она связана через window.__reel
+reel = read('reel.js')
 # поле клавиш станции SMM: модуль на three.js (с jsdelivr, версия закреплена). Он идёт после основного скрипта и дополняет пример SMM
 keys = read('smm-keys.js')
 body = read('body.html')
@@ -29,13 +31,15 @@ body = body.replace('{{LOGO}}', logo).replace('{{MARK}}', mark)
 html = f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{{display:none!important}}</style></head><body><title>GLOBAL TRIUMPH</title>
 <meta name="description" content="Вакансии, подбор персонала и маркетинг. GLOBAL TRIUMPH сводит тех, кто ищет друг друга.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 {face}{css}</style>
 {body}
 <script>window.GT_IMG={imgs};</script>
 <script>
 {js}</script>
+<script>
+{reel}</script>
 <script type="importmap">{{"imports":{{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.min.js"}}}}</script>
 <script type="module">
 {keys}</script>

@@ -153,17 +153,39 @@ function drawHome(time) {
 }
 /* выбранное слово вырастает из мелкой сетки точек, как печатный растр */
 const dotsIn = i => { tabs.forEach(x => x.classList.remove('play')); if (RM) return; void tabs[i].offsetWidth; tabs[i].classList.add('play'); };
-/* кнопка берёт цвет раздела: новый цвет ложится мелкими плитками, как пазл, слева направо */
+/* кнопка «Перейти» белая, как раньше: главная держит один строгий характер на каждом шаге. Белое ложится мелкими плитками слева направо, когда кнопка появляется.
+   Снаружи — рамка HUD по образцу: линия со срезами, белые треугольники в левом верхнем и правом нижнем углах, светлые отрезки крест-накрест:
+   сверху у левого угла, снизу у правого. Рамку рисует SVG по размеру кнопки (на 7 пикселей шире с каждой стороны); при появлении линия прорисовывается.
+   Знак раздела — чёрный на белом, его квадрат отделён от кнопки прозрачным прорезом в 3 пикселя: белое тело кнопки — маска (--bm) */
 const tiles = document.createElement('span'); tiles.className = 'tiles'; tiles.setAttribute('aria-hidden', 'true'); hubGo.prepend(tiles);
-function paint(k) {
-  const c = HUB[k].c; clearTimeout(hubGo._t);
+const SVGN = 'http://www.w3.org/2000/svg', hf = document.createElementNS(SVGN, 'svg');
+hf.setAttribute('class', 'hf'); hf.setAttribute('aria-hidden', 'true'); hubGo.prepend(hf);
+function hubFrame() {
+  const W = hubGo.offsetWidth + 14, H = hubGo.offsetHeight + 14;
+  if (W <= 14 || H <= 14) return;
+  const t = 14, q = .75, L = Math.round(W * .3);
+  hf.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  hf.innerHTML = `<path class="o" d="M${t} ${q}H${W - q}V${H - t}L${W - t} ${H - q}H${q}V${t}Z"/>` +
+    `<path class="t t1" d="M0 0H${t}L0 ${t}Z"/><path class="t t2" d="M${W} ${H}H${W - t}L${W} ${H - t}Z"/>` +
+    `<path class="a a1" d="M${t + 6} ${q}H${t + 6 + L}"/><path class="a a2" d="M${W - t - 6} ${H - q}H${W - t - 6 - L}"/>`;
+  hf.style.setProperty('--p', (2 * (W + H) - (4 - 2 * Math.SQRT2) * t).toFixed(1));
+  /* белое тело: срезы в левом верхнем и правом нижнем углах, вокруг квадрата знака прорез g. Квадрат и прорез со срезами справа сверху и слева снизу */
+  const w = W - 14, h = H - 14, gs = hubGo.querySelector('.go-s'), x = gs.offsetLeft, y = gs.offsetTop, S = gs.offsetWidth, c = 6, g = 3, C = c + g * (2 - Math.SQRT2);
+  const sq = (x, y, s, k) => `M${x} ${y}H${x + s - k}L${x + s} ${y + k}V${y + s}H${x + k}L${x} ${y + s - k}Z`;
+  const m = `<svg xmlns="${SVGN}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path fill="#fff" fill-rule="evenodd" d="M7 0H${w}V${h - 7}L${w - 7} ${h}H0V7Z${sq(x - g, y - g, S + 2 * g, C)}${sq(x, y, S, c)}"/></svg>`;
+  hubGo.style.setProperty('--bm', `url("data:image/svg+xml,${encodeURIComponent(m)}")`);
+}
+function paint() {
+  const c = '#fff'; clearTimeout(hubGo._t); hubFrame();
   if (hubGo.classList.contains('off')) hubGo.style.setProperty('--c0', 'transparent');
   if (RM) { hubGo.style.setProperty('--c0', c); return; }
+  hf.classList.remove('draw'); hubGo.classList.remove('draw'); void hubGo.offsetWidth; hf.classList.add('draw'); hubGo.classList.add('draw');
   const r = hubGo.getBoundingClientRect(), cw = 12, ch = 13, nx = Math.ceil(r.width / cw), ny = Math.ceil(r.height / ch); let h = '';
   for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) h += `<i style="left:${x * cw}px;top:${y * ch}px;animation-delay:${Math.round(x * 22 + Math.random() * 70)}ms"></i>`;
   tiles.style.setProperty('--cn', c); tiles.innerHTML = h;
   hubGo._t = setTimeout(() => { hubGo.style.setProperty('--c0', c); tiles.innerHTML = ''; }, nx * 22 + 70 + 260);
 }
+if (window.ResizeObserver) new ResizeObserver(hubFrame).observe(hubGo);
 function hubSay(t) { hubS.style.opacity = 0; setTimeout(() => { hubS.textContent = t; hubS.style.opacity = ''; }, RM ? 0 : 180); }
 function pick(k) {
   k = clamp(k, 0, 2); clearTimeout(hub._off); if (S.k === k) return; S.k = k; S.lat = 30; S.vel = 0;
@@ -319,7 +341,7 @@ function show(w) {
   /* скрытая главная не даёт измерить строку компаний: длина выходит 0, и строка стоит. Поэтому меряем её каждый раз, когда главная открывается */
   if (w === 'home') cisLay();
   cv.style.display = gl && (w === 'home' || w === 'klienty') ? 'block' : 'none';
-  $$('#nav a').forEach(a => { if (a.dataset.go === w) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  $$('#nav a, #mn a').forEach(a => { if (a.dataset.go === w) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   try { history.replaceState(null, '', w === 'home' ? '#top' : '#' + w); } catch (e) {}
   if (w === 'rabota') enterWork(); if (w === 'lyudi') enterPeople(); if (w === 'klienty') enterAir();
   /* «Работа» в палитре «Бумага»: цвет шапки зависит от того, что под ней (стена, фото вакансии, экран ленты) */
@@ -618,12 +640,13 @@ function enterPeople() {
 }
 
 /* ---------- МИР 3: эфир ---------- */
-/* Номер станции — её место в ST, по нему подключены примеры. Порядок на шкале задаёт v: Сайт, Бренд, Реклама, SMM. */
+/* Номер станции — её место в ST, по нему подключены примеры. Порядок на шкале задаёт v: Бренд, SMM, Реклама, Сайт.
+   Перед «Брендом» ловится плохой сайт, «Сто одинаковых» (junkStep). «Сайт» в конце пока без примера: туда переедет сайт ZERNO по главам. */
 const ST = [
-  { wd: 100, v: 12, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?' },
+  { wd: 100, v: 88, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?' },
   { wd: 72, v: 63, name: 'Реклама', full: 'Контекстная и таргетированная реклама', go: 'Обсудить рекламу', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?' },
-  { wd: 120, v: 88, name: 'SMM', full: 'Ведение соцсетей', go: 'Обсудить SMM', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?' },
-  { wd: 100, v: 37, name: 'Бренд', full: 'Брендбук и логотип', go: 'Обсудить бренд', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен запомнить о вас с первого взгляда?' }
+  { wd: 120, v: 37, name: 'SMM', full: 'Ведение соцсетей', go: 'Обсудить SMM', col: [.208, .949, .608], line: 'Соцсети, к которым возвращаются.', ask: 'Зачем человеку подписаться на вас?' },
+  { wd: 100, v: 12, name: 'Бренд', full: 'Брендбук и логотип', go: 'Обсудить бренд', col: [.95, .95, .95], line: 'Человек увидел один раз и узнал во второй.', ask: 'Что человек должен запомнить о вас с первого взгляда?' }
 ];
 const NOISE = ['Лучшие цены', 'Индивидуальный подход', 'Команда профессионалов', 'Высокое качество', 'Динамично развиваемся', 'Только сегодня', 'Лидер рынка', 'Клиентоориентированность', 'Гарантия результата', 'Комплексные решения', 'Опыт и надёжность', 'Вы не пожалеете'];
 /* станции слева направо по шкале */
@@ -641,7 +664,17 @@ function buildAir() {
   const t = $('#tun'); t.addEventListener('input', () => { air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
   $('#klienty').addEventListener('wheel', e => {
     /* На станциях с примером колесо сначала ведёт пример, потом ручку */
-    const ex = air.cur === 0 ? window.GTSAYT : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
+    const ex = air.cur === 0 ? window.GTSITE : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
+    /* У «Бренда», пока идут «Сто одинаковых» и план, колесо листает саму сцену: щелчок — шаг 0,05 хода, сцена плавно доезжает до него.
+       Назад колесо так же листает сцену назад, пока пример «Бренда» стоит в начале. Пока колесо крутят, сцена сама не идёт.
+       После конца сцены колесо вперёд держится ещё секунду: волна сетки успевает встать */
+    if (air.cur === 3 && J.on) {
+      const dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1);
+      const fw = dy > 0 && (!J.clean || J.dot < 1), bk = dy < 0 && J.k > .002 && !(window.GTBRD && GTBRD.state.u > 0);
+      if (fw || bk) {
+        e.preventDefault(); dirty = true; J.idle = 0;
+        if (J.pop > 1.1 && !(fw && J.clean)) { const b = J.goal ?? J.k; J.goal = clamp(b + clamp(dy / 100, -3, 3) * .05, Math.max(0, J.k - .15), Math.min(JKMAX, J.k + .15)); }
+        return; } }
     if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
     /* ручка встаёт на каждой станции: быстрое колесо не проскакивает станцию, пока её пример не успел включиться.
        Ручка прыгает на отметку за 2,5 деления до неё: сигнал ловится за 2,1, и пример иначе забрал бы колесо, не дав ручке дойти до отметки */
@@ -697,7 +730,35 @@ function sndStart() {
       [1, 1.5, 2].forEach((m, k) => { const o = ctx.createOscillator(); o.type = k ? 'sine' : 'triangle'; o.frequency.value = f0 * m; o.connect(g); o.start(t + k * .04); o.stop(t + 1.7); });
       air.snd.chords++;
     };
-    air.snd = { ctx, ng, click, soft, chord, clicks: 0, softs: 0, chords: 0, tk: Math.floor(air.v), pv: air.v, z: -1, en: null, ek: -1 };
+    /* удар тяжёлого (пример «Реклама»: каналы падают в табличку). Низкий тон 170→46 Гц через перегруз даёт обертоны,
+       поэтому удар слышен и в динамиках ноутбука; под ним глухой шорох, как пыль, и короткий щелчок касания */
+    const shp = ctx.createWaveShaper(), cur = new Float32Array(512); for (let i = 0; i < 512; i++) cur[i] = Math.tanh((i / 256 - 1) * 3.4); shp.curve = cur;
+    const tg = ctx.createGain(); tg.gain.value = .5; shp.connect(tg).connect(out);
+    const db = ctx.createBuffer(1, Math.round(R * .5), R), dd = db.getChannelData(0); let bb = 0; for (let i = 0; i < dd.length; i++) { bb = bb * .9 + (Math.random() * 2 - 1) * .1; dd[i] = bb * 3 * Math.exp(-i / (R * .09)); }
+    const thud = (k = 1) => {
+      const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(46, t + .24);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9 * k, t + .004); g.gain.exponentialRampToValueAtTime(.001, t + .55); o.connect(g).connect(shp); o.start(t); o.stop(t + .6);
+      const s3 = ctx.createBufferSource(); s3.buffer = db; const f3 = ctx.createBiquadFilter(); f3.type = 'lowpass'; f3.frequency.value = 650; const g3 = ctx.createGain(); g3.gain.value = .55 * k; s3.connect(f3).connect(g3).connect(out); s3.start(t);
+      const s4 = ctx.createBufferSource(); s4.buffer = cb; const f4 = ctx.createBiquadFilter(); f4.type = 'bandpass'; f4.frequency.value = 1100; f4.Q.value = 1.2; const g4 = ctx.createGain(); g4.gain.value = .35 * k; s4.connect(f4).connect(g4).connect(out); s4.start(t);
+      air.snd.thuds++;
+    };
+    /* сонар (пример «Реклама»: метка бьёт в крышу кофейни, по городу идёт волна): чистый звон 880 Гц с тремя затухающими отзвуками */
+    const sonar = (k = 1) => {
+      const t = ctx.currentTime, ping = (at, f, v, d) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(v * k, at + .005); g.gain.exponentialRampToValueAtTime(.0006, at + d); o.connect(g).connect(out); o.start(at); o.stop(at + d + .05); };
+      ping(t, 880, .3, 1.6); ping(t, 1760, .06, .5); [.28, .56, .84].forEach((d, i) => ping(t + d, 880, .13 / (i + 1), 1));
+      air.snd.sonars++;
+    };
+    /* сонар-удар (пример «Реклама»: канал встаёт в табличку): плотный низ 120→50 Гц и глубокий звон с эхом, у каждого следующего канала звон чуть ниже */
+    const sonarHit = (i = 0) => {
+      const t = ctx.currentTime, f = 330 - (i | 0) * 30, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(50, t + .28);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.8, t + .004); g.gain.exponentialRampToValueAtTime(.0008, t + .4); o.connect(g).connect(out); o.start(t); o.stop(t + .45);
+      const ping = (at, fr, v, d) => { const p = ctx.createOscillator(), q = ctx.createGain(); p.type = 'sine'; p.frequency.value = fr; q.gain.setValueAtTime(0, at); q.gain.linearRampToValueAtTime(v, at + .005); q.gain.exponentialRampToValueAtTime(.0006, at + d); p.connect(q).connect(out); p.start(at); p.stop(at + d + .05); };
+      ping(t, f, .26, 1.4); ping(t, f * 2, .05, .4); ping(t + .24, f, .09, .8); ping(t + .48, f, .045, .8);
+      air.snd.sonarHits++;
+    };
+    air.snd = { ctx, ng, click, soft, chord, thud, sonar, sonarHit, clicks: 0, softs: 0, chords: 0, thuds: 0, sonars: 0, sonarHits: 0, tk: Math.floor(air.v), pv: air.v, z: -1, en: null, ek: -1 };
   } catch (e) { b.hidden = true; }
 }
 function scramble(el, text, q, seed) {
@@ -714,12 +775,14 @@ function updateAir(dt) {
   const s = ST[best], W = $('#klienty');
   const near = bd < 9;
   W.classList.toggle('tuned', q > .92);
+  if (window.GTSITE) GTSITE.step(dt, { near: best === 0 && bd < 9, tuned: air.cur === 0, alpha: q });
   if (window.GTREK) GTREK.step(dt, { near: best === 1 && bd < 9, tuned: air.cur === 1, alpha: q });
   if (window.GTSMM) GTSMM.step(dt, { near: best === 2 && bd < 9, tuned: air.cur === 2, alpha: q });
-  if (window.GTBRD) GTBRD.step(dt, { near: best === 3 && bd < 9, tuned: air.cur === 3, alpha: q });
-  /* На тёмном сайте из примера «Реклама» буквы сайта снова белые */
-  const js = junkStep(dt * (window.GTSAYT && GTSAYT.fast ? 3 : 1), best === 0 ? bd : 99, air.v - ST[0].v), dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark);
-  if (window.GTSAYT) GTSAYT.step(dt, { near: best === 0 && bd < 9, alpha: J.alpha, clean: J.clean, call: J.p.find(p => p.e.classList.contains('j-call')), v: air.v });
+  /* «Сто одинаковых» идёт по ручке у «Бренда»; пока сцена не кончилась, пример «Бренда» стоит в начале */
+  const js = junkStep(dt, best === 3 ? bd : 99, air.v - ST[3].v);
+  if (window.GTBRD) GTBRD.step(dt, { near: best === 3 && bd < 9, tuned: air.cur === 3 && J.clean, alpha: q, wait: J.on && !J.clean });
+  /* На тёмном сайте из примера «Реклама» буквы сайта снова белые. «Сайт» пока без примера, но тоже на чёрном */
+  const dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark);
   document.body.classList.toggle('ink', dark || js);
   document.body.classList.toggle('jk', js);
   $('#air').style.setProperty('--air', dark ? '#000' : '#fff');
@@ -738,8 +801,8 @@ function updateAir(dt) {
   if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
   /* Сетка-сонар под чёрной надписью станции: у «Сайта» после развала, у остальных, когда подключён пример. Она идёт после шагов примеров:
      по силе сигнала расходится в шум и собирается, в начале примера становится им, в конце встаёт из него. После развала «Сайта» встаёт за волной от телефона. */
-  if (window.GTSONAR) { const mod = near ? [window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][best] : null;
-    GTSONAR.frame({ q: near ? q : 0, ok: best === 0 ? W.classList.contains('clean') : !!mod, at: best === 0 ? junkCall : null, mod: mod && 'grid' in mod ? mod : null }); }
+  if (window.GTSONAR) { const mod = near ? [window.GTSITE, window.GTREK, window.GTSMM, window.GTBRD][best] : null;
+    GTSONAR.frame({ q: near ? q : 0, ok: best === 3 ? J.clean : true, at: best === 3 ? junkAt : null, mod: mod && 'grid' in mod ? mod : null }); }
   if (air.snd) {
     const A = air.snd, c = A.ctx.currentTime, tk = Math.floor(air.v); A.ng.gain.setTargetAtTime(world === 'klienty' ? (1 - q) * .045 : 0, c, .08); if (tk !== A.tk) { A.tk = tk; A.click(); }
     /* станция: ручка вошла в её отметку или проскочила её за один кадр */
@@ -747,12 +810,12 @@ function updateAir(dt) {
     const jump = ST.some(st => (A.pv - st.v) * (air.v - st.v) < 0 && Math.abs(A.pv - st.v) > .3 && Math.abs(air.v - st.v) > .3);
     if ((z >= 0 && z !== A.z) || jump) A.soft(); A.z = z; A.pv = air.v;
     /* пример пойманной станции: щелчок на каждом делении его хода — колесом, пальцем или когда он сам доматывает до следующей части */
-    const mod = air.cur >= 0 ? [window.GTSAYT, window.GTREK, window.GTSMM, window.GTBRD][air.cur] : null, ms = mod && mod.notch ? mod.state : null;
+    const mod = air.cur >= 0 ? [window.GTSITE, window.GTREK, window.GTSMM, window.GTBRD][air.cur] : null, ms = mod && mod.notch ? mod.state : null;
     /* деления стоят на целых: колесо ставит ход ровно на них, поэтому граница щелчка посередине между делениями */
     const en = ms && ms.on ? Math.round(ms.u * mod.notch) : null;
     if (en != null && A.en != null && A.ek === air.cur && en !== A.en) A.soft(.6); A.en = en; A.ek = air.cur;
   }
-  air.col = best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : best === 3 && window.GTBRD ? GTBRD.col : s.col;
+  air.col = best === 0 && window.GTSITE ? GTSITE.col : best === 1 && window.GTREK ? GTREK.col : best === 2 && window.GTSMM ? GTSMM.col : best === 3 && window.GTBRD ? GTBRD.col : s.col;
 }
 function drawAir(time) {
   if (!gl) return;
@@ -839,6 +902,9 @@ const JUNK_W = () => [
   ['j-tel', 880, 72, 240, 40, '8 (000) 000-00-00'], ['j-btn j-green', 1130, 72, 200, 42, 'Заказать звонок'], ['j-logo', 100, 66, 340, 54, '<b>ВАША КОФЕЙНЯ</b><span>Кофе с душой</span>'],
   ['j-head', 150, 210, 800, 170, 'Заезженный дизайн, как у всех!', { ghost: 1 }], ['j-hero', 90, 176, 1260, 276, '', { ghost: 1 }], ['j-bar', 0, 124, 1440, 48, '', { ghost: 1 }]
 ];
+window.GT_JUNK = JUNK_W;
+/* шаблон в телефоне: станция «Сайт» показывает, как он грузится рядом с сайтом ZERNO */
+window.GT_JUNK_N = () => JUNK_N();
 const JUNK_N = () => [
   ['fade', 0, 54, 390, 900, '', { ghost: 1 }],
   ['j-modal', 28, 130, 334, 232, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите второй капучино в подарок!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ КОФЕ</span>'],
@@ -899,11 +965,10 @@ function junkTv(dt, box) {
 /* Сайт встал целым — через четверть секунды выскакивает окно подписки с отскоком, подложка под ним темнеет.
    Подложка не падает вместе с обломками, а гаснет на месте (junkFall, junkDraw). */
 function junkPop() {
-  const k = RM ? 1 : sstep(.25, .6, J.pop), o = k - 1, b = 1 + 2.7 * o * o * o + 1.7 * o * o;
+  const k = RM ? 1 : sstep(.25, .6, J.pop), o = k - 1, b = 1 + 2.7 * o * o * o + 1.7 * o * o, x = 1 - sstep(0, .05, J.k);
   for (const p of J.p) {
-    if (p.body) continue;
-    if (p.e.classList.contains('j-modal')) { p.e.style.opacity = k; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px) scale(${.7 + .3 * b})`; }
-    else if (p.still) p.e.style.opacity = RM ? 1 : sstep(.2, .55, J.pop);
+    if (p.e.classList.contains('j-modal')) { p.e.style.opacity = k * x; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px) scale(${(.7 + .3 * b) * (.85 + .15 * x)})`; }
+    else if (p.still) p.e.style.opacity = (RM ? 1 : sstep(.2, .55, J.pop)) * x;
   }
 }
 function junkFloor() { return $('#air-foot').getBoundingClientRect().top - $('#klienty').getBoundingClientRect().top; }
@@ -918,10 +983,11 @@ function junkBuild() {
     e.style.transform = `translate(${hx - pw / 2}px,${hy - ph / 2}px)`; box.appendChild(e);
     return { e, hx, hy, pw, ph, ghost: !!o.ghost, still: cls === 'fade', thr: .03 + .78 * i / (list.length - 1), body: null, s: 1 };
   });
-  J.tx = []; const tw = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+  J.tx = []; const tw = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.jp') ? 1 : 2 });
   while (tw.nextNode()) if (tw.currentNode.nodeValue.trim()) J.tx.push({ n: tw.currentNode, t: tw.currentNode.nodeValue });
   PH.b = []; [[W / 2, F + 200, W + 800, 400], [-200, F / 2, 400, 2 * F + 800], [W + 200, F / 2, 400, 2 * F + 800], [W / 2, -200, W + 800, 400]].forEach(([x, y, w, h]) => PH.b.push(phBody(x, y, w, h, true)));
-  J.built = true; J.k = 0; J.hold = 0; J.pop = 0; J.clean = false; $('#klienty').classList.remove('clean', 'junk', 'junk2'); sheet.classList.remove('drop');
+  J.built = true; J.k = 0; J.hold = 0; J.pop = 0; J.clean = false; J.dot = 0; $('#klienty').classList.remove('clean', 'junk', 'junk2'); sheet.classList.remove('drop');
+  junkShot();
 }
 function junkFall(p, seed) {
   const s = p.ghost ? 1 : J.shrink, b = phBody(p.hx, p.hy, p.pw * s, p.ph * s); b.ghost = p.ghost; p.s = s; p.body = b;
@@ -935,37 +1001,269 @@ function junkBack(p) { if (p.spin) { p.spin = null; p.e.firstChild.style.transfo
 function junkDraw() { for (const p of J.p) { const b = p.body; if (!b || b.asleep && b.drawn || p.still) continue; p.e.style.transform = `translate(${b.x - p.pw / 2}px,${b.y - p.ph / 2}px) rotate(${b.a}rad) scale(${p.s})`; b.drawn = b.asleep; } }
 function junkSim(dt) { PH.acc = Math.min(.05, PH.acc + dt); while (PH.acc >= PH.tick) { phStep(PH.tick); PH.acc -= PH.tick; } for (let i = PH.b.length - 1; i >= 4; i--) { const b = PH.b[i]; if (b.ghost && b.y - Math.hypot(b.hw, b.hh) > J.floor + 900) { b.asleep = true; } } }
 function junkNow() { J.p.forEach((p, i) => { if (!p.body) junkFall(p, ((i * 37) % 100) / 100); }); for (let i = 0; i < 420; i++) phStep(PH.tick); junkDraw(); J.k = 1; }
-/* side: ручка правее «Сайта» (больше нуля) или левее. Развалившийся сайт не собирается, когда ручка уходит вправо к следующим станциям,
-   и при возвращении справа сразу лежит кучей. Собирается он только при повороте ручки назад, левее «Сайта». */
+/* ---------- Начало «Клиентов»: «Сто одинаковых» и «Одна точка — четыре» ----------
+   Плохой сайт ловится сквозь шум у первой станции, «Бренд». Окно подписки закрывается, камера отъезжает: сайт — одна плитка из сотни таких же.
+   Тот же макет, та же стоковая чашка, разные только названия. Плитки сереют, одна переворачивается красной, все сжимаются в точки.
+   Красная точка — идея. Она делится на четыре, точки встают в ряд, каждая над своей отметкой шкалы, сверху фраза «От идеи до империи.»
+   Из точек, как станции на радио, проявляются этапы: Бренд, SMM, Реклама, Сайт, под каждым результат. Потом слова по одному падают вниз
+   на свои подписи шкалы, по дороге уменьшаясь до них тем же шрифтом; подпись вспыхивает, от отметки по шкале идёт волна.
+   Когда легли все четыре, от стрелки ручки встаёт сетка «Бренда». Плитки — снимок самого плохого сайта (SVG с foreignObject), поэтому все сто точно как он.
+   Ход сцены J.k: 0 — сайт во весь экран, .45 — стена, .7 — красная плитка, .9 — красная точка, 1–1.1 — точки расходятся,
+   1.1–1.32 — проявляются этапы, 1.6–1.86 — слова падают на шкалу, 1.95 — конец (J.clean). Сцена идёт сама; колесо листает её шагами, и пока его крутят, сама она стоит. */
+const JW = { cv: null, c: null, cap: null, lv: null, ready: false, d: 1, W: 0, F: 0, H: 0, nm: null, s1: 1 / 10, drawn: false, ci: -1, key: 0, pt: null, plan: null, big: 0 };
+const JNAMES = ['ВАША КОФЕЙНЯ', 'АРОМА', 'COFFEE POINT', 'КОФЕ ТАЙМ', 'КОФЕЙНЯ №1', 'БОДРОЕ УТРО', 'COFFEE HOUSE', 'КОФЕМАНИЯ', 'ЭСПРЕССО БАР', 'CUP & GO', 'ЛАТТЕ', 'УЮТНАЯ ЧАШКА', 'COFFEE LIKE', 'КОФЕ С СОБОЙ', 'ДОБРЫЙ КОФЕ',
+  'BLACK CUP', 'КОФЕЙНЫЙ ДОМ', 'АРАБИКА', 'COFFEE TIME', 'КАПУЧИНО', 'ГОРЯЧИЙ КОФЕ', 'МОЙ КОФЕ', 'COFFEE BREAK', 'ВКУСНЫЙ КОФЕ', 'КОФЕ ХАУС', 'BEST COFFEE', 'КОФЕ НА УГЛУ', 'РОБУСТА', 'КОФЕ И ТОЧКА'];
+const JCAP = ['Сто кофеен. Один шаблон.', 'Запоминают одну.', 'Начинаем с бренда.'];
+/* этапы: номер станции в ST и результат этапа. Слово этапа — название станции */
+const JPLAN = [[3, 'Вас узнают.'], [2, 'К вам возвращаются.'], [1, 'Вас находят.'], [0, 'У вас заказывают.']];
+/* когда этап проявляется и когда его слово падает на шкалу; конец сцены и остановки колеса */
+const JB = j => 1.1 + j * .05, JF = j => 1.6 + j * .06, JFD = .08, JEND = 1.95, JKMAX = 2;
+/* снимок плохого сайта без окна подписки и без названия: название каждой плитки рисуется поверх. Четыре размера, у мелких есть серый вариант */
+function junkShot() {
+  JW.ready = false; const box = $('#junk'), W = innerWidth, F = J.floor, H = $('#klienty').clientHeight || innerHeight, d = Math.min(devicePixelRatio || 1, 2);
+  if (!JW.cv) {
+    JW.cv = document.createElement('canvas'); JW.cv.id = 'j-wall'; JW.cv.setAttribute('aria-hidden', 'true'); JW.c = JW.cv.getContext('2d');
+    JW.cap = document.createElement('p'); JW.cap.id = 'j-cap'; JW.cap.className = 'voice'; JW.cap.innerHTML = '<span></span>';
+  }
+  box.append(JW.cv, JW.cap);
+  Object.assign(JW, { d, W, F, H, big: 0 }); JW.cv.width = Math.round(W * d); JW.cv.height = Math.round(H * d); JW.cv.style.width = W + 'px'; JW.cv.style.height = H + 'px';
+  const lb = box.querySelector('.j-logo b'), br = box.getBoundingClientRect(), r = lb.getBoundingClientRect(), cs = getComputedStyle(lb);
+  JW.nm = { x: r.left - br.left, y: r.top - br.top + r.height / 2, fs: parseFloat(cs.fontSize), rgb: (cs.color.match(/\d+/g) || [107, 58, 26]).slice(0, 3).map(Number) };
+  let css = '';
+  const take = rs => { for (const q of rs) { if (q.selectorText) { if (/#junk|#j-sheet|\.jp\b|\.j-[a-z]|\.fade\b/.test(q.selectorText)) css += q.cssText + '\n'; } else if (q.cssRules && q.media && matchMedia(q.media.mediaText).matches) take(q.cssRules); } };
+  for (const sh of document.styleSheets) { try { take(sh.cssRules); } catch (e) {} }
+  const root = document.createElement('div'); root.id = 'junk';
+  root.setAttribute('style', `display:block;position:relative;inset:auto;width:${W}px;height:${F}px;overflow:hidden;--u:${box.style.getPropertyValue('--u')}`);
+  const st = document.createElement('style'); st.textContent = css; root.append(st);
+  const sh = document.createElement('div'); sh.id = 'j-sheet'; sh.style.height = F + 'px'; root.append(sh);
+  J.p.forEach(p => {
+    if (p.still || p.e.classList.contains('j-modal')) return;
+    const e = p.e.cloneNode(true); e.classList.remove('fell', 'back', 'held'); e.style.opacity = ''; e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`;
+    const b = e.classList.contains('j-logo') && e.querySelector('b'); if (b) b.style.visibility = 'hidden';
+    root.append(e);
+  });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${F}"><foreignObject x="0" y="0" width="${W}" height="${F}">${new XMLSerializer().serializeToString(root)}</foreignObject></svg>`;
+  const img = new Image(), key = JW.key = Math.random();
+  img.onload = () => {
+    if (key !== JW.key) return;
+    JW.lv = [1, .5, .25, .125].map(k => {
+      const w = Math.max(1, Math.round(W * d * k)), h = Math.max(1, Math.round(F * d * k)), a = document.createElement('canvas'); a.width = w; a.height = h; a.getContext('2d').drawImage(img, 0, 0, w, h);
+      let g = null; if (k < .6) { g = document.createElement('canvas'); g.width = w; g.height = h; const gc = g.getContext('2d'); gc.filter = 'grayscale(1) brightness(.42) contrast(1.15)'; gc.drawImage(a, 0, 0); }
+      return { a, g, w };
+    });
+    JW.ready = true; dirty = true;
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+/* одна плитка: снимок нужного размера, поверх серый вариант (g — насколько посерела) и название. ni — номер названия, 0 — «Ваша кофейня» */
+function jTile(c, x, y, w, h, g, ni) {
+  const px = w * JW.d; let L = JW.lv[0]; for (const l of JW.lv) if (l.w >= px) L = l;
+  const a0 = c.globalAlpha;
+  if (g < 1) c.drawImage(L.a, x, y, w, h);
+  if (g > 0) { c.globalAlpha = a0 * g; c.drawImage(L.g || JW.lv[1].g, x, y, w, h); c.globalAlpha = a0; }
+  const k = w / JW.W, fs = JW.nm.fs * k;
+  if (fs < 2.2) return;
+  const [r, gg, b] = JW.nm.rgb; c.font = `700 ${fs.toFixed(2)}px Tahoma,Arial,sans-serif`; c.textBaseline = 'middle';
+  c.fillStyle = `rgb(${Math.round(lerp(r, 16, g))},${Math.round(lerp(gg, 16, g))},${Math.round(lerp(b, 17, g))})`;
+  c.fillText(JNAMES[ni], x + JW.nm.x * k, y + JW.nm.y * k);
+}
+/* подписи сцены: про шаблон, про красную плитку, про начало с бренда */
+function junkCap(K) {
+  const p = JW.cap; if (!p) return;
+  const A = [sstep(.4, .46, K) * (1 - sstep(.6, .63, K)), sstep(.67, .72, K) * (1 - sstep(.96, 1.01, K)), sstep(1.88, 1.94, K) * (J.clean ? 1 - sstep(.8, 1.4, J.dot) : 1)];
+  let i = 0; A.forEach((a, k) => { if (a > A[i]) i = k; }); const a = A[i];
+  if (JW.ci !== i) { JW.ci = i; p.firstChild.textContent = JCAP[i]; }
+  p.style.opacity = a.toFixed(3); p.style.transform = `translateY(${((1 - a) * 14).toFixed(1)}px)`;
+}
+/* слой плана: фраза и четыре этапа (номер, слово, результат). Слова набраны тем же шрифтом, что подписи шкалы */
+function jPlanBuild() {
+  const p = document.createElement('div'); p.id = 'j-plan'; p.setAttribute('aria-hidden', 'true');
+  p.innerHTML = '<p class="jl-ph voice">От идеи до империи.</p>' + JPLAN.map(([i, t], j) => `<small class="jl-n">0${j + 1}</small><b class="jl-w">${ST[i].name}</b><i class="jl-r voice">${t}</i>`).join('');
+  $('#junk').append(p); JW.plan = p; JW.ph = p.querySelector('.jl-ph');
+  const n = p.querySelectorAll('.jl-n'), w = p.querySelectorAll('.jl-w'), r = p.querySelectorAll('.jl-r');
+  JW.items = JPLAN.map(([st, t], j) => ({ st, t, n: n[j], w: w[j], r: r[j], hit: false }));
+}
+/* размеры плана: где отметки станций на шкале и подписи над ними, какой кегль у слов, чтобы самое широкое влезло между отметками */
+function jPlanFit() {
+  const k = $('#klienty').getBoundingClientRect(), r = $('#scale').getBoundingClientRect();
+  JW.lab = {}; $$('#presets button').forEach(b => { const q = b.getBoundingClientRect(); JW.lab[b.dataset.i] = { x: q.left + q.width / 2 - k.left, y: q.top + q.height / 2 - k.top, fs: parseFloat(getComputedStyle(b).fontSize) }; });
+  JW.mk = ST.map(s => r.left - k.left + 15 + (r.width - 30) * s.v / 100); JW.sy = r.top + r.height / 2 - k.top;
+  JW.sc = { l: r.left - k.left, w: r.width, b: r.bottom - k.top, h: r.height };
+  const ws = JW.items.map(it => { it.w.textContent = ST[it.st].name; it.w.style.fontSize = '100px'; it.w.style.fontVariationSettings = '"wdth" 56'; return it.w.offsetWidth; });
+  const gap = Math.min(...JPLAN.slice(1).map(([s], j) => Math.abs(JW.mk[s] - JW.mk[JPLAN[j][0]])));
+  JW.big = Math.max(24, Math.min(100 * gap * .84 / Math.max(...ws), JW.F * .15));
+  JW.row = JW.F * .55; JW.px = {}; JW.py = {};
+  /* где стоит каждый этап до падения: на компьютере — над своей отметкой шкалы в один ряд; на телефоне отметки слишком близко,
+     поэтому этапы стоят столбиком посередине: номер, слово, фраза */
+  if (innerWidth <= 760) {
+    JW.big = Math.min(46, k.width * .12); const rh = JW.big + 62, y0 = JW.F * .5 - rh * 1.5;
+    JPLAN.forEach(([s], j) => { JW.px[s] = k.width / 2; JW.py[s] = y0 + j * rh; });
+    JW.no = JW.big * .45 + 14; JW.ro = JW.big * .45 + 20; JW.ph.style.top = (y0 - JW.no - 70) + 'px';
+  } else {
+    JPLAN.forEach(([s]) => { JW.px[s] = JW.mk[s]; JW.py[s] = JW.row; });
+    JW.no = JW.big * .45 + 26; JW.ro = JW.big * .45 + 30; JW.ph.style.top = (JW.row - JW.big * .45 - 120) + 'px';
+  }
+}
+/* «Одна точка — четыре»: фраза, проявление этапов, падение слов на подписи шкалы со вспышкой. Всё по ходу сцены, колесо назад проводит обратно */
+function junkPlan(K, fwd) {
+  const on = K > 1 && !J.clean && JW.ready;
+  if (!JW.plan) { if (!on) return; jPlanBuild(); }
+  if (on && !JW.big) jPlanFit();
+  JW.plan.style.visibility = on ? 'visible' : 'hidden';
+  /* подпись шкалы видна, когда её слово легло; в момент касания она вспыхивает (только при ходе вперёд) */
+  JW.items.forEach((it, j) => {
+    const b = $(`#presets button[data-i="${it.st}"]`), down = K >= JF(j) + JFD || J.clean || K < 1;
+    b.classList.toggle('landed', down);
+    if (down && !it.hit && fwd && K < JEND + .05 && K >= JF(j) + JFD) { it.hit = true; b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit'); if (air.snd) air.snd.sonarHit(j); }
+    if (!down) it.hit = false;
+  });
+  if (!on) return;
+  const pa = sstep(1.03, 1.1, K) * (1 - sstep(1.84, 1.9, K));
+  JW.ph.style.opacity = pa.toFixed(3); JW.ph.style.transform = `translateY(${((1 - pa) * 16).toFixed(1)}px)`;
+  JW.items.forEach((it, j) => {
+    const q = sstep(JB(j), JB(j) + .07, K), t = clamp((K - JF(j)) / JFD), e = t * t, L = JW.lab[it.st], x0 = JW.px[it.st], y0 = JW.py[it.st];
+    const a = sstep(JB(j), JB(j) + .012, K) * (t >= 1 ? 0 : 1);
+    it.w.style.opacity = a.toFixed(3);
+    if (a > 0) {
+      const fs = lerp(JW.big, L.fs, e), x = lerp(x0, L.x, t), y = lerp(y0, L.y, t * t);
+      it.w.style.fontSize = fs.toFixed(2) + 'px'; it.w.style.fontVariationSettings = `"wdth" ${lerp(56, 80, e).toFixed(1)}`;
+      it.w.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-50%)`;
+      scramble(it.w, ST[it.st].name, q, j + 1);
+    }
+    /* номер над словом и результат под ним уходят в начале падения */
+    const sa = q * (1 - sstep(0, .3, t)), hw = JW.big * .45;
+    it.n.style.opacity = it.r.style.opacity = sa.toFixed(3);
+    if (sa > 0) {
+      it.n.style.transform = `translate(${x0.toFixed(1)}px,${(y0 - JW.no).toFixed(1)}px) translate(-50%,-50%)`;
+      it.r.style.transform = `translate(${x0.toFixed(1)}px,${(y0 + JW.ro).toFixed(1)}px) translate(-50%,-50%)`;
+      scramble(it.r, it.t, q, j + 3);
+    }
+  });
+}
+function junkWall(K) {
+  const on = K > .05 && JW.ready;
+  $('#junk').classList.toggle('wall', on);
+  if (!on) { if (JW.drawn) { JW.c.setTransform(1, 0, 0, 1, 0, 0); JW.c.clearRect(0, 0, JW.cv.width, JW.cv.height); JW.drawn = false; } junkCap(0); JW.pt = null; return; }
+  JW.drawn = true; junkCap(K);
+  const c = JW.c, { d, W, F, H } = JW, cx = W / 2, cy = F / 2;
+  c.setTransform(d, 0, 0, d, 0, 0); c.clearRect(0, 0, W, H);
+  if (K < 1.05) {
+    c.save(); c.beginPath(); c.rect(0, 0, W, F); c.clip();
+    /* камера отъезжает: масштаб идёт по логарифму, поэтому отъезд ровный, как у настоящей камеры */
+    const s = Math.exp(Math.log(JW.s1) * sstep(.05, .45, K)), G = 64, px = (W + G) * s, py = (F + G) * s, tw = W * s, th = F * s;
+    /* фон стены — графит; он уходит, когда плитки стали точками, и под ним уже чёрная станция */
+    c.fillStyle = `rgba(11,11,14,${(1 - sstep(.8, .9, K)).toFixed(3)})`; c.fillRect(0, 0, W, F);
+    const NC = Math.ceil((cx + tw / 2) / px), NR = Math.ceil((cy + th / 2) / py), fl = sstep(.58, .68, K);
+    for (let j = -NR; j <= NR; j++) for (let i = -NC; i <= NC; i++) {
+      const me = !i && !j; if (me && fl > 0) continue;
+      /* серость и сжатие идут волной от середины */
+      const dn = Math.hypot(i, j) / 6, g = sstep(.38 + dn * .06, .5 + dn * .06, K), k = ease(sstep(.7 + dn * .05, .82 + dn * .05, K)), a = 1 - sstep(.84 + dn * .03, .9 + dn * .03, K);
+      if (a <= 0) continue;
+      const x = cx + i * px, y = cy + j * py, w = tw * (1 - k), h = th * (1 - k);
+      if (x + w / 2 < 0 || x - w / 2 > W || y + h / 2 < 0 || y - h / 2 > F) continue;
+      c.globalAlpha = a;
+      if (h < 3) { c.fillStyle = '#5c5c62'; c.beginPath(); c.arc(x, y, 1.5, 0, 7); c.fill(); continue; }
+      jTile(c, x - w / 2, y - h / 2, w, h, g, me ? 0 : 1 + ((i * 7 + j * 13) % 28 + 28) % 28);
+    }
+    c.globalAlpha = 1;
+    /* «Ваша кофейня» переворачивается: с обратной стороны она красная, потом сжимается в точку */
+    if (fl > 0 && K < .86) {
+      const ang = Math.PI * fl, sn = Math.sin(ang), lift = 1 + .1 * sn, k = ease(sstep(.7, .86, K)), R = 5.5;
+      const w = lerp(tw * lift, 2 * R, k), h = lerp(th * lift, 2 * R, k);
+      c.save(); c.translate(cx, cy);
+      c.shadowColor = k > .3 ? `rgba(223,31,18,${(.8 * k).toFixed(3)})` : 'rgba(0,0,0,.55)'; c.shadowBlur = k > .3 ? 26 * k : 40 * sn; c.shadowOffsetY = k > .3 ? 0 : 14 * sn;
+      c.scale(Math.abs(Math.cos(ang)), 1);
+      if (fl < .5) jTile(c, -w / 2, -h / 2, w, h, 1, 0);
+      else { c.fillStyle = '#df1f12'; c.beginPath(); c.roundRect(-w / 2, -h / 2, w, h, lerp(0, R, k)); c.fill(); }
+      c.restore();
+    }
+    c.restore();
+  }
+  /* красная точка-идея: висит посреди экрана, делится на четыре, они расходятся в ряд над отметками шкалы и гаснут, когда проявляется слово этапа */
+  if (K >= .86) {
+    const sp = JW.big ? ease(sstep(1, 1.1, K)) : 0;
+    c.save(); c.shadowColor = 'rgba(223,31,18,.85)'; c.shadowBlur = 22; c.fillStyle = '#df1f12';
+    JPLAN.forEach(([st], j) => {
+      if (j && !sp) return;
+      const r = 5.5 * (1 - sstep(JB(j) + .01, JB(j) + .05, K)); if (r <= .2) return;
+      c.beginPath(); c.arc(sp ? lerp(cx, JW.px[st], sp) : cx, sp ? lerp(cy, JW.py[st], sp) : cy, r, 0, 7); c.fill();
+    });
+    c.restore();
+  }
+  /* слово падает и тянет за собой тонкий след, как длинное деление шкалы */
+  if (JW.big) JPLAN.forEach(([st], j) => {
+    const t = clamp((K - JF(j)) / JFD), L = JW.lab[st]; if (t <= 0 || t >= 1) return;
+    const y0 = JW.py[st], y = lerp(y0, L.y, t * t), x = lerp(JW.px[st], L.x, t), g = c.createLinearGradient(0, y0, 0, y);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, `rgba(255,255,255,${(.4 * (1 - t * .5)).toFixed(3)})`);
+    c.strokeStyle = g; c.lineWidth = 1; c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y - JW.big * lerp(.4, .1, t)); c.stroke();
+  });
+  /* касание шкалы: от отметки в обе стороны бежит волна, деления под ней вспыхивают и вытягиваются */
+  if (JW.big) {
+    const S = JW.sc, waves = [];
+    JPLAN.forEach(([st], j) => { const t = (K - JF(j) - JFD) / .12; if (t > 0 && t < 1) waves.push([JW.mk[st], 1100 * ease(t), 1 - t * t]); });
+    if (waves.length) {
+      c.save(); c.shadowColor = 'rgba(255,92,10,.9)'; c.shadowBlur = 10;
+      for (let i = 0; i <= 100; i++) {
+        const x = S.l + S.w * i / 100; let w = 0;
+        for (const [x0, R, a] of waves) w = Math.max(w, a * Math.exp(-(((Math.abs(x - x0) - R) / 64) ** 2)));
+        if (w < .03) continue;
+        const big = i % 10 === 0, h = S.h * (big ? .5 : .26) * (1 + 1.9 * w);
+        c.fillStyle = `rgba(255,${Math.round(lerp(255, 160, w))},${Math.round(lerp(255, 90, w))},${w.toFixed(3)})`;
+        c.fillRect(x - (big ? 1 : .5), S.b - h, big ? 2.5 : 1.5, h);
+      }
+      c.restore();
+    }
+  }
+  JW.pt = JW.mk ? [JW.mk[3], JW.sy] : null;
+}
+/* side: ручка правее «Бренда» (больше нуля) или левее. Сцена не идёт назад, когда ручка уходит вправо к следующим станциям,
+   и при возвращении справа сразу стоит в конце, под ней сетка. Назад сцена идёт только при повороте ручки левее «Бренда». */
 function junkStep(dt, d, side = 0) {
   const box = $('#junk'), W = $('#klienty'), near = d < 9;
-  if (!near) { if (J.on) { J.on = false; box.style.display = 'none'; box.style.filter = ''; junkBands(box, 1); J.built = false; J.sig = J.cov = J.pop = 0; W.style.removeProperty('--jt'); PH.b = []; W.classList.remove('clean', 'junk', 'junk2'); $('#j-sheet').classList.remove('drop'); } return false; }
+  if (!near) { if (J.on) { J.on = false; box.style.display = 'none'; box.style.filter = ''; junkBands(box, 1); J.built = false; J.sig = J.cov = J.pop = 0; J.k = J.dot = 0; J.clean = false; J.goal = null; J.idle = 9; W.style.removeProperty('--jt'); W.classList.remove('clean', 'junk', 'junk2', 'jin', 'tour'); junkPlan(0, false); junkWall(0); } return false; }
+  let inst = false;
   if (!J.on) {
     J.on = true; box.style.display = 'block'; if (!J.built) junkBuild();
-    if (RM || (J.done && side > 0)) { junkNow(); J.clean = true; $('#j-sheet').classList.add('drop'); W.classList.add('clean'); }
+    if (RM || (J.done && side > 0)) { J.k = JKMAX; J.dot = 9; J.pop = 9; inst = true; }
   }
   /* Сначала сайт ловится: ручка в 9–5 от станции, полосы картинки пробиваются сквозь шум к 5,8, буквы и полосы встают на место к 5.
-     Потом сайт стоит целым и выскакивает окно подписки, и только через секунду после этого ручка ближе 4,4 валит его.
-     Пока сайт валится, он пойман целиком. */
+     Потом сайт стоит целым и выскакивает окно подписки, и только через секунду после этого ручка ближе 4,4 запускает сцену.
+     Сцена идёт сама; колесо вперёд быстро доводит её до следующей остановки (J.goal) */
   const got = RM || J.k > .02;
   J.sig = got ? 1 : sstep(9, 5, d); J.cov = got ? 1 : sstep(9, 5.8, d); J.alpha = sstep(9, 7.2, d);
   junkTv(dt, box);
   J.pop = J.sig >= 1 ? J.pop + dt : Math.max(0, J.pop - 3 * dt);
-  junkPop();
-  let want = J.pop > 1.1 ? sstep(4.4, 1.6, d) : 0;
+  let want = J.pop > 1.1 ? sstep(4.4, 1.6, d) * JKMAX : 0;
   if (side > 0) want = Math.max(want, J.k);
-  if (!RM) J.k += clamp(want - J.k, -2 * dt, .56 * dt); else J.k = want > 0 || d < 8 ? 1 : J.k;
-  J.p.forEach((p, i) => { if (!p.body && J.k > p.thr) junkFall(p, ((i * 37) % 100) / 100); else if (p.body && J.k < p.thr - .02 && !RM) junkBack(p); });
-  if (!RM) { junkSim(dt); junkDraw(); }
-  for (const p of J.p) if (p.spin && !RM) { p.spin.v = lerp(p.spin.v, 2.2, clamp(dt * .6)); p.spin.a += p.spin.v * dt; p.e.firstChild.style.transform = `rotate(${p.spin.a}rad)`; }
-  if (J.k > .84) J.done = true; else if (J.k < .02) J.done = false;
-  const clean = J.k > .84; if (clean !== J.clean) { J.clean = clean; $('#j-sheet').classList.toggle('drop', clean); W.classList.toggle('clean', clean); }
-  /* надпись станции гаснет, пока полосы сайта закрывают шум (--jt), шапка мира темнеет, когда сайт закрыл экран наполовину */
+  const pk = J.k;
+  J.idle = (J.idle ?? 9) + dt;
+  if (J.goal != null) J.goal = Math.min(J.goal, want);
+  if (RM) J.k = want > 0 || d < 8 ? JKMAX : J.k;
+  else if (J.goal != null) { J.k += (J.goal - J.k) * clamp(dt * 4.5); if (Math.abs(J.goal - J.k) < .002) { J.k = J.goal; J.goal = null; } }
+  else if (J.k > want) J.k = Math.max(want, J.k - 2 * dt);
+  else if (J.idle > 2.5) J.k = Math.min(want, J.k + (J.k > 1 ? .16 : .14) * dt);
+  junkPop();
+  if (J.k >= JEND) J.done = true; else if (J.k < .02) J.done = false;
+  J.clean = J.k >= JEND; J.dot = J.clean ? J.dot + dt : 0;
+  /* звук только при ходе вперёд: плитка перевернулась — щелчок, красная точка — сонар, этап проявился — аккорд его станции, слово легло на шкалу — сонар-удар (в junkPlan) */
+  const fwd = !inst && J.k > pk;
+  if (air.snd && fwd) {
+    const x = v => pk < v && J.k >= v;
+    if (x(.63)) air.snd.soft(1); if (x(.86)) air.snd.sonar(.8); if (x(1)) air.snd.soft(.7);
+    JPLAN.forEach(([st], j) => { if (x(JB(j) + .02)) air.snd.chord(st); });
+  }
+  junkPlan(J.k, fwd);
+  junkWall(J.k);
+  /* надпись станции: прячется, пока идёт сцена, и проявляется вместе с волной сетки от стрелки */
   const seen = J.alpha * J.cov;
-  W.classList.toggle('junk', J.alpha > .02 && !clean); W.classList.toggle('junk2', seen > .75 && !clean);
-  W.style.setProperty('--jt', (1 - sstep(.2, .7, seen)).toFixed(3));
-  return seen > .55 && !clean;
+  W.classList.toggle('junk', J.alpha > .02 && !J.clean); W.classList.toggle('junk2', seen > .75 && !J.clean); W.classList.toggle('jin', J.clean && J.dot < 1.4);
+  W.classList.toggle('tour', J.k >= 1 && !J.clean);
+  W.style.setProperty('--jt', (J.clean ? sstep(.2, 1.2, J.dot) : 1 - sstep(.2, .7, seen)).toFixed(3));
+  /* светлая шапка, пока на экране светлый сайт; на стене плиток уже тёмная */
+  return seen > .55 && J.k < .2;
 }
+/* откуда идёт волна сетки «Бренда»: стрелка ручки на отметке «Бренд», в координатах #klienty */
+function junkAt() { return JW.pt || [innerWidth / 2, innerHeight / 2]; }
 /* где сейчас телефон в куче, в координатах #klienty: от него идёт волна сетки после развала */
 function junkCall() {
   const p = J.p.find(q => q.e.classList.contains('j-call')); if (!p) return null;
@@ -983,7 +1281,7 @@ function junkPointer() {
   box.addEventListener('pointermove', e => { if (drag) { tx = e.clientX; ty = e.clientY; } });
   const end = () => { if (!drag) return; drag.drag = false; drag.p.e.classList.remove('held'); drag = null; };
   box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
-  addEventListener('resize', () => { if (!J.on) return; const was = J.clean; J.built = false; junkBuild(); if (was || RM) { junkNow(); J.clean = true; $('#j-sheet').classList.add('drop'); $('#klienty').classList.add('clean'); } });
+  addEventListener('resize', () => { JW.big = 0; if (!J.on) return; const { k, pop, clean, dot } = J; J.built = false; junkBuild(); Object.assign(J, { k, pop, clean, dot }); });
 }
 junkPointer();
 
@@ -995,7 +1293,20 @@ function openTalk(topic) {
   $('#t-what').focus();
 }
 $('#contact-open').addEventListener('click', () => openTalk(''));
+/* меню справа: чип раскрывается в панель; пункт закрывает меню и ведёт в раздел, «Напишите нам» открывает разговор.
+   Закрывают крестик, щелчок мимо и Escape */
+(() => {
+  const mn = $('#mn'), chip = $('#mn-chip'); if (!mn) return;
+  const fit = () => mn.style.setProperty('--cw', chip.offsetWidth + 'px'); fit(); addEventListener('resize', fit); if (document.fonts) document.fonts.ready.then(fit);
+  const set = on => { mn.dataset.open = on; chip.setAttribute('aria-expanded', on); if (on) setTimeout(() => mn.querySelector('.mn-list a').focus({ preventScroll: true }), 180); };
+  chip.addEventListener('click', () => set(true));
+  mn.querySelector('.mn-x').addEventListener('click', () => { set(false); chip.focus({ preventScroll: true }); });
+  mn.addEventListener('click', e => { if (e.target.closest('.mn-list a')) set(false); if (e.target.closest('[data-talk]')) { set(false); openTalk(''); } });
+  document.addEventListener('pointerdown', e => { if (mn.dataset.open === 'true' && !mn.contains(e.target)) set(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && mn.dataset.open === 'true') { set(false); chip.focus({ preventScroll: true }); } });
+})();
 if (window.GTSAYT) GTSAYT.onTalk = () => openTalk(ST[0].full);
+if (window.GTSITE) GTSITE.onTalk = () => openTalk(ST[0].full);
 if (window.GTREK) GTREK.onTalk = () => openTalk(ST[1].full);
 if (window.GTSMM) GTSMM.onTalk = () => openTalk(ST[2].full);
 if (window.GTBRD) GTBRD.onTalk = () => openTalk(ST[3].full);
@@ -1024,6 +1335,6 @@ if (dv) { S.deep = { id: dv.id, n: dm[2] ? dm[2] - 1 : null }; show('rabota'); }
 else if (h0 === 'obyavlenie') { show('lyudi'); myReveal(); }
 else if (['rabota', 'lyudi', 'klienty'].includes(h0)) show(h0);
 else show('home');
-window.__gt = { objSet, hi() { window.__fixed = 1; scale = 1.5; resize(); }, LP, vacOpen, vacClose, go, show, S, air, pick, earth: () => earthReady };
+window.__gt = { objSet, hi() { window.__fixed = 1; scale = 1.5; resize(); }, LP, vacOpen, vacClose, go, show, S, air, pick, earth: () => earthReady, J, JW };
 requestAnimationFrame(frame);
 })();

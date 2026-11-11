@@ -1,0 +1,241 @@
+
+/* «Сайт»: пример на последней станции мира «Клиенты». Всё лежит внутри #x5, чтобы стили примера и сайта не мешали друг другу */
+#x5{position:absolute;inset:0;z-index:0;pointer-events:none;visibility:hidden;font-family:var(--text);line-height:normal;color:#fff;--red:#df1f12;--ink2:#ffffffb8;--line:#ffffff33}
+#x5.on{visibility:visible}
+#x5 h3,#x5 p{margin:0;padding:0}
+#x5-bg{position:absolute;inset:0;background:#0b0b0e;opacity:0;visibility:hidden}
+#x5-scene{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:clamp(24px,3.4vw,60px);align-items:center;padding:0 var(--gutr) 0 var(--gut);pointer-events:auto;touch-action:none;opacity:0;visibility:hidden}
+/* подпись главы, как у других станций */
+.x5-cap small{display:block;font:500 12px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;margin-bottom:clamp(10px,1.6vh,16px);color:#35f29b}
+.x5-cap h3{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:clamp(40px,5.4vw,96px);line-height:.86;font-variation-settings:"wdth" 60}
+.x5-cap p{font-family:var(--voice);font-style:italic;font-weight:500;font-size:clamp(22px,2.2vw,34px);line-height:1.1;margin-top:.45em;max-width:12em;color:var(--ink2);min-height:2.2em}
+#x5-stage{position:relative;height:100%;min-height:0;display:flex;align-items:center;justify-content:center;will-change:transform}
+
+/* Окно браузера. В начале его рамка — пунктир, который собрала сетка-сонар (чёрточка 4, промежуток 4), потом окно проявляется */
+#x5-win{position:relative;z-index:2;flex:none;--dash:0;--win:0}
+#x5-win .x5-dash{position:absolute;inset:0;opacity:var(--dash);--dh:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 8px);--dv:repeating-linear-gradient(180deg,var(--line) 0 4px,transparent 4px 8px);background:var(--dh) left top/100% 1px no-repeat,var(--dh) left bottom/100% 1px no-repeat,var(--dv) left top/1px 100% no-repeat,var(--dv) right top/1px 100% no-repeat}
+#x5-win::after{content:'';position:absolute;inset:0;z-index:6;border:1px solid #ffffff2e;border-radius:var(--wr,10px);opacity:var(--win);pointer-events:none}
+#x5-win .x5-bar,#x5-view{opacity:var(--win)}
+.x5-bar{position:relative;height:30px;display:flex;align-items:center;gap:6px;padding:0 12px;background:#1a1a1f;border-radius:var(--wr,10px) var(--wr,10px) 0 0}
+/* полоса загрузки под строкой адреса */
+.x5-bar .x5-pg{position:absolute;left:0;bottom:0;height:2px;width:calc(var(--pg,0)*100%);background:#fff;opacity:var(--pga,0);transition:opacity .2s}
+.x5-bar>i{flex:none;width:9px;height:9px;border-radius:50%;background:#ffffff26}
+.x5-url{margin-left:14px;flex:0 1 300px;height:18px;border-radius:9px;background:#0e0e12;display:flex;align-items:center;padding:0 10px;font:500 11px/1 "JetBrains Mono",monospace;color:var(--ink2);white-space:nowrap;overflow:hidden}
+.x5-url b{font-weight:500}
+.x5-ld{margin-left:10px;padding:4px 8px;background:var(--red);font:500 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;opacity:0;visibility:hidden}
+#x5-view{position:relative;overflow:hidden;border-radius:0 0 var(--wr,10px) var(--wr,10px);background:#0e0e11}
+
+/* 01–02: шаблон «Ваша кофейня» — те же куски, что в начале «Клиентов» (app.js GT_JUNK). В 02 куски сереют (--wf), лист темнеет */
+#x5-old{position:absolute;inset:0;z-index:0;font-family:Tahoma,Arial,sans-serif;color:#223;--wf:0}
+/* в схеме у кусков нет своих рамок и теней: остаётся только серый блок */
+#x5-old.wfx .jp{border-color:#26262c!important;box-shadow:none!important;background:#26262c!important;color:transparent!important;transition:border-color .3s,box-shadow .3s}
+#x5-old .x5-sheet{position:absolute;inset:0;background:color-mix(in srgb,#f3f5f9 calc((1 - var(--wf))*100%),#111114)}
+#x5-old .jp{transform-origin:0 0}
+/* в схеме углы как у частей сайта: шапка скруглена, остальное прямое */
+#x5-old.wfx .jp{border-radius:0!important}
+#x5-old.wfx .j-bar{border-radius:calc(var(--u)*8)!important}
+#x5-old .jp::after{content:'';position:absolute;inset:0;z-index:5;background:#26262c;box-shadow:inset 0 0 0 1px #ffffff1f;opacity:var(--wf);pointer-events:none}
+#x5-old .j-btn,#x5-tp .j-btn{display:inline-flex;align-items:center;justify-content:center;border-radius:calc(var(--u)*6);font-weight:700;color:#fff;background:linear-gradient(#ffa42b,#ee6a00);box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(0,0,0,.35)}
+#x5-old .j-green,#x5-tp .j-green{background:linear-gradient(#3fce5a,#14912d)}
+#x5-old .j-red,#x5-tp .j-red{background:linear-gradient(#ee3b34,#b90f0f);padding:calc(var(--u)*9) calc(var(--u)*14);width:100%}
+#x5-old .j-mini,#x5-tp .j-mini{padding:calc(var(--u)*6) calc(var(--u)*14);margin-left:calc(var(--u)*12);flex:none}
+/* 01: красные пометки — рамка и подпись над ней */
+#x5-marks{position:absolute;inset:0;pointer-events:none}
+#x5-marks{z-index:2}
+#x5-marks .x5-mk{position:absolute;outline:2px solid rgba(223,31,18,var(--ol,1));opacity:0;visibility:hidden}
+#x5-marks .x5-mk b{position:absolute;left:-2px;bottom:calc(100% + 2px);padding:5px 8px;background:var(--red);color:#fff;font:500 11px/1 "JetBrains Mono",monospace;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+/* 02: новые серые блоки схемы и подписи частей */
+#x5-wire{position:absolute;inset:0;pointer-events:none}
+#x5-wire .x5-w{position:absolute;background:#26262c;box-shadow:inset 0 0 0 1px #ffffff1f;opacity:0}
+#x5-wire .x5-lab{position:absolute;font:500 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6;opacity:0;transform:translateY(-130%);white-space:nowrap}
+
+/* 03: сайт ZERNO — тот, что стоял в «Рекламе», по референсу DeLorean. Размеры в единицах сайта (--u = ширина окна / 1440):
+   значения те же, что были у сайта на весь экран шириной 1440 */
+#x5 .x5-back{display:none}
+#x5.mob .x5-back{display:block}
+#x5 button{pointer-events:auto;color:inherit;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font:inherit}
+#x5-site{position:absolute;inset:0;font-family:Tektur,Montserrat,sans-serif;font-weight:500;color:#fff;--cx:calc(var(--u)*63.5);visibility:hidden}
+#x5-site .x5-sbg{position:absolute;inset:0;background:#19181d}
+#x5-gl{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+#x5.nogl #x5-gl{display:none}
+/* шапка со стеклом, как у референса: тонкая рамка, размытие, полупрозрачный тёмный фон */
+#x5-hd{position:absolute;left:var(--cx);right:var(--cx);top:calc(var(--u)*24);display:flex;justify-content:space-between;align-items:center;padding:calc(var(--u)*15*var(--hk,1)) calc(var(--u)*25*var(--hk,1));border:1px solid #5c5c5c;border-radius:calc(var(--u)*8);background:rgba(39,40,45,.2);-webkit-backdrop-filter:blur(calc(var(--u)*16));backdrop-filter:blur(calc(var(--u)*16));z-index:3}
+#x5-hd .lg{display:flex;align-items:center;gap:calc(var(--u)*14.4*var(--hk,1))}
+#x5-hd .lg svg{flex:none;display:block;height:calc(var(--u)*41.8*var(--hk,1));width:auto;color:var(--red)}
+#x5-hd b{display:block;font-size:calc(var(--u)*30.2*var(--hk,1));font-weight:500;letter-spacing:.5em;line-height:1}
+#x5-hd small{display:block;font-size:calc(var(--u)*11.5*var(--hk,1));letter-spacing:.26em;margin-top:.7em;opacity:.85;text-transform:uppercase}
+#x5-hd nav{display:grid;justify-items:end;gap:calc(var(--u)*10);font-family:var(--text);text-transform:uppercase}
+#x5-hd nav .t,#x5-hd nav .m,#x5-hd nav .bx{display:flex;align-items:center}
+#x5-hd nav .t{gap:calc(var(--u)*22);font-size:calc(var(--u)*11);font-weight:500;letter-spacing:.05em}
+#x5-hd nav .m{gap:calc(var(--u)*22);font-size:calc(var(--u)*12);font-weight:600;letter-spacing:.02em}
+#x5-hd nav .m>button{padding:calc(var(--u)*3) 0}
+#x5-hd nav .on{box-shadow:inset 0 calc(var(--u)*-2) var(--red)}
+#x5-hd nav .bx{gap:0}
+#x5-hd nav .k,#x5-hd nav .in{padding:calc(var(--u)*2) calc(var(--u)*6)}
+#x5-hd nav .k{background:#000}
+#x5-hd nav .in{background:var(--red);color:#000}
+.x5-word{position:absolute;cursor:crosshair}
+.x5-word canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* свечение букв, как у ALPHA и 05 у референса */
+#x5-w1 canvas{filter:drop-shadow(0 0 calc(var(--u)*16) rgba(223,31,18,.55))}
+#x5-w2 canvas{filter:drop-shadow(0 0 calc(var(--u)*16) rgba(255,90,26,.5))}
+/* метки референса: чёрточка с квадратом, квадрат с хвостом, оранжевые точки */
+#x5-deco{position:absolute;inset:0;pointer-events:none}
+#x5-deco i{position:absolute;display:block}
+#x5-deco .m1{width:calc(var(--u)*20);height:calc(var(--u)*7)}
+#x5-deco .m1::before{content:'';position:absolute;left:0;top:50%;width:calc(var(--u)*12);height:1px;background:#ffffffcc}
+#x5-deco .m1::after,#x5-deco .m2::before{content:'';position:absolute;width:calc(var(--u)*6);height:calc(var(--u)*6);border:1px solid #ffffffcc}
+#x5-deco .m1::after{right:0;top:0}
+#x5-deco .m2{width:calc(var(--u)*8);height:calc(var(--u)*20)}
+#x5-deco .m2::before{left:0;top:0}
+#x5-deco .m2::after{content:'';position:absolute;left:50%;top:calc(var(--u)*10);width:1px;height:calc(var(--u)*10);background:#ffffff99}
+#x5-deco .d1,#x5-deco .d2,#x5-deco .d3{width:calc(var(--u)*3);height:calc(var(--u)*3);background:#ff5a1a}
+#x5-deco .d2{background:#ffb03a}
+#x5-meta{position:absolute;left:var(--cx);font-size:calc(var(--u)*15.8);line-height:1.55;color:var(--red);letter-spacing:.06em}
+#x5-meta b{display:block;font-size:calc(var(--u)*23);font-weight:500;letter-spacing:.03em;margin-bottom:.55em}
+#x5-meta span{display:flex;align-items:center;gap:calc(var(--u)*9);font-size:calc(var(--u)*13);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+#x5-meta span i{width:calc(var(--u)*12);height:calc(var(--u)*3);background:linear-gradient(90deg,var(--red) 0 40%,transparent 40% 60%,var(--red) 60%)}
+/* красная кнопка с чёрным квадратом стрелки, как «MAKE COLLECTION OFFER» у референса */
+#x5 .x5-cta{position:absolute;right:var(--cx);width:calc(var(--u)*288);min-height:calc(var(--u)*78);display:flex;align-items:center;justify-content:space-between;gap:1.6em;padding:1em 1em 1em 1.7em;background:var(--red);color:#08080a;font:500 calc(var(--u)*14.4)/1.15 Tektur,Montserrat,sans-serif;text-transform:uppercase;letter-spacing:.04em;text-align:left;transition:background .2s}
+#x5 .x5-cta i{width:2.5em;height:2.5em;flex:none;background:#0a0a0c;color:#fff;display:grid;place-items:center;font-style:normal;transition:transform .2s}
+#x5 .x5-cta:hover{background:#ff6a1a}
+#x5 .x5-cta:hover i{transform:translateX(3px)}
+#x5-rule{position:absolute;height:calc(var(--u)*3);background:var(--red)}
+/* низ первого экрана, как у референса: вкладки слева, справа «Фильтр» — две строки с флажками и сортировкой и поле поиска */
+#x5-fil{position:absolute;left:var(--cx);right:var(--cx);bottom:calc(var(--u)*16);display:flex;justify-content:space-between;align-items:flex-end;font-size:calc(var(--u)*12);border-bottom:1px solid #ffffff2b;text-transform:uppercase;letter-spacing:.02em}
+#x5-fil .tb{display:flex;border-top:1px solid #ffffff2b}
+#x5-fil .tb span{width:calc(var(--u)*150);height:calc(var(--u)*29);display:grid;place-items:center;color:#c4c4cc}
+#x5-fil .tb span:first-child{background:var(--red);color:#120605}
+#x5-fil .fb{width:calc(var(--u)*657);display:flex;flex-direction:column}
+#x5-fil .fb small{display:flex;align-items:center;gap:calc(var(--u)*11);margin:0 0 calc(var(--u)*8) calc(var(--u)*-23);font-size:inherit;color:var(--red)}
+#x5-fil .fb small svg{width:calc(var(--u)*12);height:calc(var(--u)*12);flex:none}
+#x5-ff{display:grid;grid-template-columns:1fr 1fr;column-gap:calc(var(--u)*20)}
+#x5-ff span{display:flex;justify-content:space-between;align-items:center;height:calc(var(--u)*29);border-top:1px solid #ffffff2b;color:#e8e8ee}
+#x5-ff i{width:calc(var(--u)*12);height:calc(var(--u)*12);border:1px solid #ffffff59}
+#x5-ff em{width:calc(var(--u)*22);height:calc(var(--u)*13);background:linear-gradient(#ffffff80,#ffffff80) 0 0/100% 2px no-repeat,linear-gradient(#ffffff80,#ffffff80) 100% 50%/70% 2px no-repeat,linear-gradient(#ffffff80,#ffffff80) 100% 100%/40% 2px no-repeat}
+#x5-fs{display:flex;justify-content:space-between;align-items:center;height:calc(var(--u)*29);margin-top:calc(var(--u)*2);padding:0 calc(var(--u)*4) 0 calc(var(--u)*7);background:#000;border:1px solid #ffffff1f;color:#ffffff59;font-size:calc(var(--u)*11)}
+#x5-fs b{width:calc(var(--u)*26);height:calc(var(--u)*20);display:grid;place-items:center;background:#3a3a40;color:#fff;font-weight:500}
+/* 04: первый экран уезжает вверх, меню выезжает снизу. Меню, как было в «Рекламе» */
+#x5-hero{position:absolute;inset:0;will-change:transform}
+#x5-lots{position:absolute;left:0;right:0;top:calc(var(--u)*117);bottom:0;visibility:hidden;will-change:transform;display:grid;grid-template-columns:minmax(0,1fr) calc(var(--u)*470);grid-template-rows:minmax(0,1fr);gap:calc(var(--u)*57.6);align-items:center;padding:calc(var(--u)*27) var(--cx)}
+#x5-lots h2{margin:0 0 calc(var(--u)*24);font-weight:500;font-size:calc(var(--u)*37.4);line-height:1.08;text-transform:uppercase}
+/* меню словами, как вывеска: серые слова в один набор, цена маленькой цифрой у слова, выбранное слово красное */
+#x5-wall{display:flex;flex-wrap:wrap;gap:.04em .42em;font-size:calc(var(--u)*39.6);max-width:24em}
+#x5-wall button{display:inline-flex;align-items:flex-start;gap:.14em;color:#5d5c64;transition:color .2s,text-shadow .2s}
+#x5-wall button:hover{color:#fff}
+#x5-wall b{font-weight:500;font-size:1em;line-height:1.08;text-transform:uppercase;white-space:nowrap}
+#x5-wall em{font:normal 400 .3em/1 "JetBrains Mono",monospace;margin-top:.3em;color:#ff5a45}
+#x5-wall button.hov{color:#fff}
+#x5-wall button.on{color:var(--red);text-shadow:0 0 calc(var(--u)*14) #df1f1280}
+#x5-pick{position:relative;display:flex;flex-direction:column;gap:calc(var(--u)*14.4);max-height:100%;min-height:0}
+#x5-pick>small{font-size:calc(var(--u)*13);color:#ff5a45;letter-spacing:.08em}
+#x5-w3{position:relative;width:100%;height:calc(var(--u)*45);flex:none}
+#x5-pic{position:relative;width:100%;flex:0 1 calc(var(--u)*342);min-height:calc(var(--u)*100)}
+#x5-pic canvas{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 calc(var(--u)*26) calc(var(--u)*30) rgba(0,0,0,.7))}
+#x5-price{font-size:calc(var(--u)*27.4)}
+#x5-price em{display:block;font-style:normal;font-size:calc(var(--u)*12);color:#b6b6bf;margin-top:.35em;font-family:var(--text)}
+#x5 #x5-take{position:relative;z-index:3;right:auto;width:100%;flex:none}
+/* кнопка «Заказать» после касания: оплата, потом полоса пути курьера. Красное (x5-tf) — доля --f, под ним тёмная дорога */
+#x5 #x5-take{overflow:hidden;isolation:isolate;background:#2a0d0a;--f:1;transition:none}
+#x5 #x5-take .x5-tf{position:absolute;left:0;top:0;bottom:0;width:calc(var(--f)*100%);background:var(--red);z-index:-1;text-decoration:none}
+#x5 #x5-take:hover .x5-tf{background:#ff6a1a}
+#x5 #x5-take .x5-tm{margin-left:auto;margin-right:.4em;font:500 1.15em/1 "JetBrains Mono",monospace;color:#fff;letter-spacing:.04em}
+#x5 #x5-take[data-s="3"]{color:#fff}
+#x5 #x5-take i{position:relative}
+#x5 #x5-take:not([data-s="0"]) i{color:transparent}
+#x5 #x5-take[data-s="1"] i::after{content:'';position:absolute;left:50%;top:50%;box-sizing:border-box;width:calc(var(--u)*16);height:calc(var(--u)*16);margin:calc(var(--u)*-8) 0 0 calc(var(--u)*-8);border-radius:50%;border:2px solid #ffffff38;border-top-color:#fff;animation:x5spin .8s linear infinite}
+#x5 #x5-take[data-s="2"] i::after{content:'';position:absolute;left:50%;top:50%;width:calc(var(--u)*7);height:calc(var(--u)*13);margin:calc(var(--u)*-8.5) 0 0 calc(var(--u)*-3.5);border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+#x5 #x5-take[data-s="3"] i::after{content:'';position:absolute;left:50%;top:50%;width:calc(var(--u)*9);height:calc(var(--u)*9);margin:calc(var(--u)*-4.5) 0 0 calc(var(--u)*-4.5);border-radius:50%;background:var(--red);box-shadow:0 0 0 calc(var(--u)*4) #df1f1240;animation:x5pulse 1.4s ease-in-out infinite}
+@keyframes x5spin{to{transform:rotate(1turn)}}
+@keyframes x5pulse{50%{box-shadow:0 0 0 calc(var(--u)*8) #df1f1200}}
+#x5-price em b{color:#ff5a45;font-weight:500}
+/* «12» — минуты до двери, из квадратов, как «20» на первом экране */
+#x5-w4 canvas{filter:drop-shadow(0 0 calc(var(--u)*16) rgba(255,90,26,.5))}
+#x5-pick>#x5-min{position:absolute;left:0;right:0;margin:0;text-align:center;font:500 calc(var(--u)*14)/1 Tektur,Montserrat,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#ffffffb8;opacity:0}
+/* касания: курсор и кольцо касания */
+#x5-taps{position:absolute;inset:0;z-index:6;pointer-events:none}
+#x5-cur{position:absolute;left:0;top:0;width:calc(var(--u)*22);opacity:0;transform-origin:0 0;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+#x5-cur svg{display:block;width:100%;height:auto}
+#x5-taps .x5-ring{position:absolute;left:calc(var(--u)*-22);top:calc(var(--u)*-22);width:calc(var(--u)*44);height:calc(var(--u)*44);border-radius:50%;border:2px solid #fff;opacity:0}
+#x5-site .x5-tg{position:absolute;right:var(--cx);margin:0;font:500 calc(var(--u)*11) var(--text);opacity:.5}
+
+/* 05: пунктир окна компьютера рядом с телефоном */
+#x5-ghost{position:absolute;opacity:0;visibility:hidden;pointer-events:none;border-radius:10px;--dh:repeating-linear-gradient(90deg,#ffffff38 0 4px,transparent 4px 8px);--dv:repeating-linear-gradient(180deg,#ffffff38 0 4px,transparent 4px 8px);background:var(--dh) left top/100% 1px no-repeat,var(--dh) left bottom/100% 1px no-repeat,var(--dv) left top/1px 100% no-repeat,var(--dv) right top/1px 100% no-repeat}
+/* 06: телефон с шаблоном — тот же шаблон «Ваша кофейня» в версии для телефона (app.js GT_JUNK_N) */
+#x5-tp{position:absolute;opacity:0;visibility:hidden;border-radius:26px;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff2e;--wr:26px;z-index:1}
+#x5-tp .x5-bar{justify-content:center}
+#x5-tp .x5-url{margin:0}
+#x5-tp .x5-bar .x5-pg{background:#ff5a45}
+#x5-tp .x5-tv{position:relative;overflow:hidden;font-family:Tahoma,Arial,sans-serif;color:#223}
+#x5-tp .x5-sheet{position:absolute;inset:0;background:#f3f5f9}
+#x5-tp .jp{transform-origin:0 0;opacity:0}
+#x5-tp .j-head{font-size:calc(var(--u)*27)}
+#x5-tp .j-logo{white-space:nowrap}
+#x5-tp .j-logo b{font-size:calc(var(--u)*20)}
+#x5-tp .x5-spin{position:absolute;left:50%;top:44%;width:28px;height:28px;margin:-14px;border-radius:50%;border:3px solid #cfd4de;border-top-color:#4d6fd6;animation:x5spin .9s linear infinite;opacity:0;z-index:200}
+/* время загрузки и оценка скорости рядом с каждым телефоном: у ZERNO белые, у шаблона красные */
+.x5-st{position:absolute;display:flex;flex-direction:column;gap:10px;opacity:0;visibility:hidden;color:#fff;z-index:2}
+#x5-s1{align-items:flex-end;text-align:right}
+.x5-st small{font:500 11px/1.2 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#ffffff8c}
+.x5-st .x5-sv{font:500 clamp(30px,2.6vw,50px)/1 Tektur,Montserrat,sans-serif;margin-bottom:10px}
+.x5-st.x5-bad .x5-sv{color:#ff5a45}
+.x5-ring{position:relative;width:76px;height:76px}
+.x5-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+.x5-ring circle{fill:none;stroke-width:4}
+.x5-ring .tr{stroke:#ffffff1c}
+.x5-ring .vl{stroke:#fff;stroke-dasharray:0 176}
+.x5-bad .x5-ring .vl{stroke:#ff5a45}
+.x5-ring>b{position:absolute;inset:0;display:grid;place-items:center;font:500 24px/1 Tektur,Montserrat,sans-serif}
+.x5-bad .x5-ring>b{color:#ff5a45}
+/* 07: точки каналов, подписи каналов, счётчик заказов */
+#x5-fx{position:absolute;left:0;top:0;pointer-events:none;z-index:4}
+.x5-src{position:absolute;display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right;opacity:0;visibility:hidden;z-index:3}
+.x5-src b{font:500 12px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#fff;padding:7px 10px;border:1px solid #ffffff3d}
+.x5-src span{font:400 12px/1.2 var(--text);color:#ffffff80;white-space:nowrap}
+#x5-cnt{position:absolute;opacity:0;visibility:hidden;color:#fff;z-index:3}
+#x5-cnt>b{display:block;font:500 clamp(60px,6.4vw,120px)/.9 Tektur,Montserrat,sans-serif}
+#x5-cnt>small{display:block;margin-top:10px;font:500 11px/1.2 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#ffffff8c}
+#x5-cnt ul{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:7px;min-width:190px}
+#x5-cnt li{display:flex;justify-content:space-between;gap:24px;padding-top:7px;border-top:1px solid #ffffff1f;font:500 11px/1 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:#ffffff99}
+#x5-cnt li em{font-style:normal;color:#fff}
+/* ---------- телефон ---------- */
+@media (max-width:760px){
+  #x5-scene{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);align-items:start;gap:10px;padding:8px 12px 0}
+  .x5-cap small{margin-bottom:6px}
+  .x5-cap h3{font-size:clamp(34px,11vw,46px)}
+  .x5-cap p{font-size:clamp(16px,4.8vw,20px);min-height:2.3em;max-width:none}
+  #x5-stage{height:100%}
+  #x5.mob #x5-win .x5-bar>i:not(.x5-pg){display:none}
+  #x5.mob #x5-win .x5-url{margin:0;flex:0 1 50%}
+  #x5.mob .x5-ld{position:absolute;right:8px;top:50%;margin:-8px 0 0;padding:3px 6px;font-size:9px}
+  /* меню в телефоне, как было у старого сайта: слова сверху, ниже выбранный напиток; цена и кнопка в одну строку */
+  #x5.mob #x5-lots{top:calc(var(--u)*82);display:block;overflow:hidden;padding:0}
+  #x5.mob #x5-lots>div:first-child,#x5.mob #x5-pick{position:absolute;left:calc(var(--u)*12);right:calc(var(--u)*12);top:calc(var(--u)*10);bottom:calc(var(--u)*12)}
+  #x5.mob #x5-lots h2{font-size:calc(var(--u)*22);margin-bottom:calc(var(--u)*10)}
+  #x5.mob #x5-wall{font-size:calc(var(--u)*25)}
+  #x5.mob #x5-pick{display:grid;max-height:none;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:calc(var(--u)*12);row-gap:calc(var(--u)*6)}
+  #x5.mob #x5-pick>small{grid-column:2;grid-row:1;align-self:center}
+  #x5.mob .x5-back{grid-column:1;grid-row:1;justify-self:start;font:500 calc(var(--u)*13)/1 Tektur,Montserrat,sans-serif;color:#fff;letter-spacing:.04em}
+  #x5.mob #x5-w3,#x5.mob #x5-pic{grid-column:1/-1}
+  #x5.mob #x5-w3{height:calc(var(--u)*34)}
+  #x5.mob #x5-pic{height:auto;min-height:0}
+  #x5.mob #x5-price{font-size:calc(var(--u)*19);align-self:center}
+  #x5.mob #x5-price em{font-size:calc(var(--u)*11);line-height:1.3}
+  #x5.mob #x5-take{width:auto;align-self:center;gap:.9em;padding:.7em .7em .7em 1.1em;min-height:0}
+  /* 06: цифры загрузки под каждым телефоном в одну строку */
+  #x5.mob .x5-st{flex-direction:row;align-items:center;gap:8px}
+  #x5.mob #x5-s1{align-items:center}
+  #x5.mob .x5-st small{display:none}
+  #x5.mob .x5-st .x5-sv{font-size:22px;margin:0;white-space:nowrap}
+  #x5.mob .x5-ring{width:44px;height:44px}
+  #x5.mob .x5-ring>b{font-size:15px}
+  /* 07: ярлыки каналов сверху, счётчик справа от телефона */
+  #x5.mob .x5-src b{font-size:9px;padding:5px 6px;letter-spacing:.08em}
+  #x5.mob .x5-src span{display:none}
+  #x5.mob #x5-cnt>b{font-size:46px}
+  #x5.mob #x5-cnt ul{min-width:0;gap:5px;margin-top:12px}
+  #x5.mob #x5-cnt li{font-size:9px;gap:10px;padding-top:5px}
+  #x5.mob #x5-cnt>small{font-size:9px}
+}
+#x5-scene .tag{position:absolute;right:var(--gutr);bottom:10px;font:500 11px var(--text);opacity:0;margin:0}
+@media (prefers-reduced-motion:reduce){#x5 *{transition:none!important;animation:none!important}}

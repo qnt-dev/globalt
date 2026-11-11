@@ -1,4 +1,6 @@
-import base64, json, os
+import base64, json, os, sys
+# имя файла можно передать: python src/build.py klienty-draft.html собирает черновик, index.html не трогается
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'index.html'
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); AS = os.path.join(ROOT, 'assets')
@@ -14,8 +16,8 @@ if not os.path.exists(tek):
     f = TTFont(os.path.join(AS, 'tektur.ttf')); f = instancer.instantiateVariableFont(f, {'wght': 500, 'wdth': 100}); f.flavor = 'woff2'; f.save(tek)
     print('tektur', os.path.getsize(tek) // 1024, 'KB')
 # примеры станций «Клиентов» (Сайт, Реклама, SMM, Бренд) идут перед app.js, потому что app.js их вызывает
-css = read('style.css') + ''.join(read(n + '.css') for n in ('sayt', 'reklama', 'smm', 'brend', 'reel'))
-js = '\n'.join(read(n + '.js') for n in ('sayt', 'reklama', 'smm', 'brend', 'sonar', 'app'))
+css = read('style.css') + ''.join(read(n + '.css') for n in ('sayt', 'reklama', 'smm', 'brend', 'site', 'reel'))
+js = '\n'.join(read(n + '.js') for n in ('sayt', 'reklama', 'smm', 'brend', 'site', 'sonar', 'app'))
 # лента профессий идёт отдельным скриптом после основного: у неё своё замыкание, с сайтом она связана через window.__reel
 reel = read('reel.js')
 # поле клавиш станции SMM: модуль на three.js (с jsdelivr, версия закреплена). Он идёт после основного скрипта и дополняет пример SMM
@@ -44,5 +46,5 @@ html = f'''<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name
 <script type="module">
 {keys}</script>
 </body></html>'''
-open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf8').write(html)
-print('index', os.path.getsize(os.path.join(ROOT, 'index.html')) // 1024, 'KB')
+open(os.path.join(ROOT, OUT), 'w', encoding='utf8').write(html)
+print(OUT, os.path.getsize(os.path.join(ROOT, OUT)) // 1024, 'KB')

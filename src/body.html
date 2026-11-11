@@ -5,6 +5,20 @@
     <span class="nq">Ищете <a href="#rabota" data-go="rabota"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>работу</a>, <a href="#lyudi" data-go="lyudi"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>людей</a> или <a href="#klienty" data-go="klienty"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>клиентов</a>?</span>
     <button type="button" id="contact-open">Напишите нам</button>
   </nav>
+  <!-- меню справа: макет по мотивам Swiss Menu (framer.com/marketplace/components/swiss-menu), перерисован под сайт -->
+  <div id="mn" data-open="false">
+    <button type="button" id="mn-chip" aria-expanded="false" aria-controls="mn-panel"><i aria-hidden="true"></i><span>Меню</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
+    <div id="mn-panel" role="dialog" aria-label="Меню">
+      <ol class="mn-list">
+        <li><a href="#top" data-go="home"><i>00</i><b>Главная</b><small>к началу сайта</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li>
+        <li><a href="#rabota" data-go="rabota"><i>01</i><b>Работа</b><small>вакансии вахтой</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li>
+        <li><a href="#lyudi" data-go="lyudi"><i>02</i><b>Люди</b><small>подбор персонала</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li>
+        <li><a href="#klienty" data-go="klienty"><i>03</i><b>Клиенты</b><small>сайт, бренд, реклама, SMM</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li>
+        <li><button type="button" data-talk><i>04</i><b>Напишите нам</b><small>обсудить задачу</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button></li>
+      </ol>
+      <button type="button" class="mn-x"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7L7 17M15 17H7V9"/></svg><span>Закрыть</span></button>
+    </div>
+  </div>
   <a id="logo" href="#top" aria-label="GLOBAL TRIUMPH: к началу"><img class="lg-f" src="{{LOGO}}" alt="GLOBAL TRIUMPH" width="132" height="76"><img class="lg-m" src="{{MARK}}" alt=""></a>
 </div>
 

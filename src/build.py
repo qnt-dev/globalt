@@ -15,9 +15,9 @@ tek = os.path.join(AS, 'tektur-500.woff2')
 if not os.path.exists(tek):
     f = TTFont(os.path.join(AS, 'tektur.ttf')); f = instancer.instantiateVariableFont(f, {'wght': 500, 'wdth': 100}); f.flavor = 'woff2'; f.save(tek)
     print('tektur', os.path.getsize(tek) // 1024, 'KB')
-# примеры станций «Клиентов» (Бренд, SMM, Реклама, Сайт) идут перед app.js, потому что app.js их вызывает
-css = read('style.css') + ''.join(read(n + '.css') for n in ('reklama', 'smm', 'brend', 'site', 'reel'))
-js = '\n'.join(read(n + '.js') for n in ('reklama', 'smm', 'brend', 'site', 'sonar', 'app'))
+# примеры станций «Клиентов» (Бренд, SMM, Реклама, Сайт) и финал мира (final) идут перед app.js, потому что app.js их вызывает
+css = read('style.css') + ''.join(read(n + '.css') for n in ('reklama', 'smm', 'brend', 'site', 'final', 'reel'))
+js = '\n'.join(read(n + '.js') for n in ('reklama', 'smm', 'brend', 'site', 'final', 'sonar', 'app'))
 # лента профессий идёт отдельным скриптом после основного: у неё своё замыкание, с сайтом она связана через window.__reel
 reel = read('reel.js')
 # поле клавиш станции SMM: модуль на three.js (с jsdelivr, версия закреплена). Он идёт после основного скрипта и дополняет пример SMM

@@ -437,7 +437,8 @@ body.ink #dial::before{background:rgba(255,255,255,calc(.64*var(--g,1)));border-
 #sonar.mv{z-index:3;transition:none}
 #klienty[data-st="0"] #st-ask{display:block;max-width:25em;font-size:clamp(17px,1.5vw,23px);line-height:1.35;font-weight:500}
 #klienty[data-st="0"] #st-hint{display:flex;align-items:center;gap:12px;margin-top:clamp(8px,2vh,22px);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ffffffa6}
-#klienty.exd #st-hint{display:none}
+/* после «Сайта» подсказка остаётся: дальше колесо и щелчок ведут в финал мира (final.js) */
+#klienty.exd:not([data-st="0"]) #st-hint{display:none}
 /* После примера вместо подсказки одна кнопка: разговор про эту услугу. До конца примера кнопок нет. */
 #st-go{display:none;align-self:flex-start;margin-top:clamp(8px,2vh,22px)}
 #klienty.exd[data-st] #st-go{display:inline-flex;animation:stgo .5s cubic-bezier(.2,.9,.2,1) both}

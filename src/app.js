@@ -641,6 +641,7 @@ function enterPeople() {
 
 /* ---------- МИР 3: эфир ---------- */
 /* Номер станции — её место в ST, по нему подключены примеры: 0 Сайт (site.js), 1 Реклама (reklama.js), 2 SMM (smm.js), 3 Бренд (brend.js).
+   После конца «Сайта» идёт финал мира «Каждый день» (final.js): он не станция, на шкале его нет.
    Порядок на шкале задаёт v: Бренд, SMM, Реклама, Сайт. Перед «Брендом» ловится плохой сайт, «Сто одинаковых» (junkStep). */
 const ST = [
   { wd: 100, v: 88, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?' },
@@ -675,7 +676,11 @@ function buildAir() {
         e.preventDefault(); dirty = true; J.idle = 0;
         if (J.pop > 1.1 && !(fw && J.clean)) { const b = J.goal ?? J.k; J.goal = clamp(b + clamp(dy / 100, -3, 3) * .05, Math.max(0, J.k - .15), Math.min(JKMAX, J.k + .15)); }
         return; } }
-    if (ex && ex.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1))) { e.preventDefault(); dirty = true; return; }
+    /* после конца «Сайта» колесо ведёт финал «Каждый день» (final.js); пока финал идёт, он забирает колесо раньше «Сайта» */
+    const wdy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1), fin = air.cur === 0 && window.GTFIN;
+    if (fin && GTFIN.on && GTFIN.wheel(wdy)) { e.preventDefault(); dirty = true; return; }
+    if (ex && ex.wheel(wdy)) { e.preventDefault(); dirty = true; return; }
+    if (fin && GTFIN.wheel(wdy)) { e.preventDefault(); dirty = true; return; }
     /* ручка встаёт на каждой станции: быстрое колесо не проскакивает станцию, пока её пример не успел включиться.
        Ручка прыгает на отметку за 2,5 деления до неё: сигнал ловится за 2,1, и пример иначе забрал бы колесо, не дав ручке дойти до отметки */
     e.preventDefault(); dirty = true; const now = performance.now(); if (now < (air.lock || 0)) return;
@@ -776,13 +781,14 @@ function updateAir(dt) {
   const near = bd < 9;
   W.classList.toggle('tuned', q > .92);
   if (window.GTSITE) GTSITE.step(dt, { near: best === 0 && bd < 9, tuned: air.cur === 0, alpha: q });
+  if (window.GTFIN) GTFIN.step(dt, { near: best === 0 && bd < 9 });
   if (window.GTREK) GTREK.step(dt, { near: best === 1 && bd < 9, tuned: air.cur === 1, alpha: q });
   if (window.GTSMM) GTSMM.step(dt, { near: best === 2 && bd < 9, tuned: air.cur === 2, alpha: q });
   /* «Сто одинаковых» идёт по ручке у «Бренда»; пока сцена не кончилась, пример «Бренда» стоит в начале */
   const js = junkStep(dt, best === 3 ? bd : 99, air.v - ST[3].v);
   if (window.GTBRD) GTBRD.step(dt, { near: best === 3 && bd < 9, tuned: air.cur === 3 && J.clean, alpha: q, wait: J.on && !J.clean });
-  /* На тёмных примерах буквы шапки снова белые. «Сайт» идёт на чёрном */
-  const dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark);
+  /* На тёмных примерах буквы шапки снова белые. «Сайт» идёт на чёрном, финал после него — на бумаге (на ночном фоне буквы снова белые) */
+  const dark = (q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark)) || !!(window.GTFIN && GTFIN.ink);
   document.body.classList.toggle('ink', dark || js);
   document.body.classList.toggle('jk', js);
   $('#air').style.setProperty('--air', dark ? '#000' : '#fff');
@@ -1221,6 +1227,7 @@ if (window.GTSITE) GTSITE.onTalk = () => openTalk(ST[0].full);
 if (window.GTREK) GTREK.onTalk = () => openTalk(ST[1].full);
 if (window.GTSMM) GTSMM.onTalk = () => openTalk(ST[2].full);
 if (window.GTBRD) GTBRD.onTalk = () => openTalk(ST[3].full);
+if (window.GTFIN) GTFIN.onTalk = () => openTalk('Бренд, соцсети, реклама и сайт');
 $('#talk-x').addEventListener('click', () => talk.close());
 $('#talk-f').addEventListener('submit', e => {
   e.preventDefault(); const c = !$('#t-contact').value.trim(); $('#t-contact-e').hidden = !c; if (c) { $('#t-contact').focus(); return; }

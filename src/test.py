@@ -325,9 +325,45 @@ with sync_playwright() as pw:
         else: p.click('#x5-wall button:nth-child(4)'); p.wait_for_timeout(700); p.click('#x5-take')
         check(f'site order plays {w}',until(p,"document.querySelector('#x5-price em').textContent.includes('Оплачено')",8000),p.text_content('#x5-price em'))
         check(f'site order no err {w}',not p.E,p.E); c.close()
+    # финал «Каждый день» (final.js): после конца «Сайта» колесо ведёт дальше в финал, ручка стоит на «Сайте»; подписи по порядку;
+    # в конце «Coffee time» и кнопка разговора; напиток в кольце нажимается; колесо назад возвращает в «Сайт»
+    FS="window.GTFIN.state"
+    FCAP="(()=>{let best='',bo=.5;document.querySelectorAll('.x6-cap').forEach(e=>{const s=getComputedStyle(e),o=+s.opacity;if(s.visibility!='hidden'&&o>bo){bo=o;best=e.querySelector('h3').textContent}});return best})()"
+    FCH=['До — ровная линия. После — пульс.','Утром, когда не выспались.','В дождь.','В минус двадцать.','Когда всё получается.','Вечером после работы.','В три часа ночи.','Кофе за 20 минут или быстрее.','Нажмите на напиток.']
+    for w,h in [(390,844),(1440,900)]:
+        c,p=page(w,h,'#klienty'); p.click('#presets button[data-i="0"]'); until(p,"window.__gt.air.cur==0",15000); p.wait_for_timeout(1500); p.mouse.move(w/2,h*.45)
+        for _ in range(140):
+            if p.evaluate("GTSITE.state.u")>=1: break
+            p.mouse.wheel(0,100); p.wait_for_timeout(50)
+        p.wait_for_timeout(1800); v0=float(p.evaluate('__gt.air.v'))
+        check(f'final: site end card keeps the hint {w}',p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-hint') and not p.evaluate(FS)['vis'])
+        seen=[]
+        for _ in range(90):
+            if p.evaluate(FS)['u']>=1: break
+            p.mouse.wheel(0,100); p.wait_for_timeout(110); t=p.evaluate(FCAP)
+            if t and (not seen or seen[-1]!=t): seen.append(t)
+        check(f'final: wheel walks all captions in order {w}',[x for x in seen if x in FCH]==FCH,seen)
+        check(f'final: knob stays on the site {w}',abs(float(p.evaluate('__gt.air.v'))-v0)<.5 and p.evaluate('__gt.air.cur')==0)
+        p.wait_for_timeout(1500)
+        check(f'final: coffee time, button, dark header {w}',p.is_visible('#x6-go') and p.evaluate("document.body.classList.contains('ink')"))
+        p.click('#x6-go'); check(f'final: button opens talk {w}',p.is_visible('#talk') and 'сайт' in p.input_value('#t-what').lower(),p.input_value('#t-what')); p.click('#talk-x')
+        p.evaluate('GTFIN.jump(79)'); p.wait_for_timeout(1200); p.click('.x6-d[data-i="2"]'); p.wait_for_timeout(500)
+        check(f'final: drink pick changes the caption {w}',p.evaluate(FCAP)=='Флэт уайт.' and p.evaluate(FS)['sel']==2,p.evaluate(FCAP))
+        p.mouse.move(w/2,h*.45)
+        for _ in range(160):
+            if not p.evaluate(FS)['on']: break
+            p.mouse.wheel(0,-100); p.wait_for_timeout(50)
+        p.wait_for_timeout(1500)
+        check(f'final: wheel back returns to the site card {w}',not p.evaluate(FS)['vis'] and p.evaluate("document.querySelector('#klienty').classList.contains('exd')") and p.is_visible('#st-name'))
+        for _ in range(3): p.mouse.wheel(0,-100); p.wait_for_timeout(80)
+        p.wait_for_timeout(800); check(f'final: then the site example goes back {w}',p.evaluate("GTSITE.state")['u']<1,p.evaluate("GTSITE.state"))
+        check(f'final no err {w}',not p.E,p.E); c.close()
+    c,p=page(1000,640,'#klienty',rm='reduce'); p.click('#presets button[data-i="0"]'); until(p,"window.__gt.air.cur==0",15000); p.wait_for_timeout(500)
+    p.evaluate('GTFIN.jump(100)'); p.wait_for_timeout(1500); check('reduced: final end at once',p.is_visible('#x6-go')); check('no err rm final',not p.E,p.E); c.close()
     # сетка есть на всех четырёх надписях станций; порядок шкалы
     c,p=page(1000,640,'#klienty'); DO="[...document.querySelectorAll('#presets button')].map(b=>b.textContent+b.style.left).join()"; check('dial order: brand, smm, ads, site',p.evaluate(DO)=='Бренд12%,SMM37%,Реклама63%,Сайт88%',p.evaluate(DO))
-    p.click('#presets button[data-i="3"]'); skip_open(p); on=[p.evaluate(SON)]
+    # у «Бренда» сетка встаёт за волной от ручки: через 1,5 с после пропуска начала она иногда ещё не встала (так было и до финала), поэтому ждём до 5 с
+    p.click('#presets button[data-i="3"]'); skip_open(p); on=[until(p,SON,5000)]
     for i in (2,1,0): p.click(f'#presets button[data-i="{i}"]'); p.wait_for_timeout(1800); on.append(p.evaluate(SON))
     check('sonar on all four cards',all(on),on); check('sonar no err',not p.E,p.E); c.close()
     c,p=page(1000,640,'#klienty',rm='reduce'); p.click('#presets button[data-i="2"]'); p.wait_for_timeout(400); check('reduced: sonar is a still grid',p.evaluate(SON) and p.evaluate(SONPX)>200,p.evaluate(SONPX)); c.close()

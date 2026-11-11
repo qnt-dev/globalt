@@ -51,7 +51,7 @@ R.innerHTML = `
   <div id="x2-sr"><span class="lb">Поиск</span>
     <div id="x2-fld"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg><span id="x2-q"></span><i class="cr"></i></div>
     <div class="x2-body">
-      <ol id="x2-res"><li class="ad" id="x2-ad"><div class="u"><b>Реклама</b><span>zerno.kg</span></div><div class="t">ZERNO — кофе за 20 минут</div><div class="d">Свежая обжарка. Привезём горячим по Бишкеку. Заказать →</div></li>${NZROW.repeat(5)}</ol>
+      <ol id="x2-res"><li class="ad" id="x2-ad"><div class="u"><b>Реклама</b><span>zerno.kg</span></div><div class="t">ZERNO — кофе за 20 минут или быстрее</div><div class="d">Свежая обжарка. Привезём горячим по Бишкеку. Заказать →</div></li>${NZROW.repeat(5)}</ol>
       <div id="x2-bump" role="img" aria-label="Места в выдаче за полгода: ZERNO поднимается с 27-го места на первое"><canvas></canvas></div>
     </div>
   </div>
@@ -94,7 +94,7 @@ R.innerHTML = `
       <div class="x2-site">
         <div class="x2-shd"><i class="x2-mk">${MARK}</i><b>ZERNO</b><span>Меню</span><span>Доставка</span></div>
         <div class="x2-shero"><b>ZERNO</b><b class="o">20</b></div>
-        <p class="x2-ssub">Кофе за 20 минут</p>
+        <p class="x2-ssub">Кофе за 20 минут<br>или быстрее</p>
         <span class="x2-by">Заказать<i>›</i></span>
       </div>
       <div class="x2-cntr"><span>Заказы сегодня</span><b id="x2-cnt">31</b></div>
@@ -709,7 +709,7 @@ const FILL = {
     x.fillStyle = '#1d1d24'; x.fillRect(0, 0, w, h);
     const u = h / 10; x.textBaseline = 'middle';
     x.fillStyle = RED; x.fillRect(u * .4, u * .7, u * 3.2, u * 1.3); x.fillStyle = '#120605'; x.font = `600 ${u * .8}px "JetBrains Mono",monospace`; x.fillText('Реклама', u * .65, u * 1.37);
-    x.fillStyle = RED; x.font = `700 ${u * 1.9}px Montserrat,sans-serif`; x.fillText('ZERNO — кофе за 20 минут', u * .4, u * 3.4);
+    x.fillStyle = RED; x.font = `700 ${u * 1.9}px Montserrat,sans-serif`; x.fillText('ZERNO — кофе за 20 минут или быстрее', u * .4, u * 3.4);
     x.fillRect(u * .4, u * 4.5, w * .78, u * .3);
     x.fillStyle = 'rgba(255,255,255,.42)'; x.font = `500 ${u * 1.05}px Montserrat,sans-serif`; x.fillText('Свежая обжарка. Привезём горячим по Бишкеку. Заказать →', u * .4, u * 5.6);
     x.fillStyle = 'rgba(255,255,255,.2)'; for (let i = 0; i < 3; i++) { x.fillRect(u * .4, u * (7 + i * 1.1), w * (.4 + (i * 37 % 40) / 100), u * .55); }

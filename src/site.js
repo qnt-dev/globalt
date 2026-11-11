@@ -26,7 +26,7 @@ const STOPS = [0, 2.5, 6.4, 10.2, 13.4, 20.2, 24.4, 29, 34.5, TOTAL].map(n => n 
 const CAPS = [
   [0, '01 · Было', 'Было', 'Шаблон, который не продаёт.'],
   [6.5, '02 · Структура', 'Структура', 'Сначала решаем, что человек должен сделать: выбрать и заказать.'],
-  [10.3, '03 · Дизайн', 'Дизайн', 'Обещание бренда — первым экраном: кофе за 20 минут.'],
+  [10.3, '03 · Дизайн', 'Дизайн', 'Обещание бренда — первым экраном: кофе за 20 минут или быстрее.'],
   [13.5, '04 · Заказ', 'Заказ', 'Выбрать и заказать — в два касания.'],
   [20.3, '05 · Телефон', 'Телефон', 'Больше половины заказов — с телефона.'],
   [24.5, '06 · Скорость', 'Скорость', 'ZERNO открывается за 0,9 секунды. Шаблон — за 6,2.'],
@@ -89,9 +89,9 @@ R.innerHTML = `
           <i class="x5-sbg" aria-hidden="true"></i>
           <canvas id="x5-gl" aria-hidden="true"></canvas>
           <div id="x5-hero">
-          <div class="x5-word" id="x5-w1" aria-label="ZERNO"><canvas></canvas></div><div class="x5-word" id="x5-w2" aria-label="20 минут"><canvas></canvas></div>
+          <div class="x5-word" id="x5-w1" aria-label="ZERNO"><canvas></canvas></div><div class="x5-word" id="x5-w2" aria-label="20 минут или быстрее"><canvas></canvas></div>
           <div id="x5-deco" aria-hidden="true"><i class="m1"></i><i class="m2"></i><i class="d1"></i><i class="d2"></i><i class="d3"></i></div>
-          <div id="x5-meta"><b>Кофе за 20 минут</b><span><i></i>Бишкек, с 8:00 до 22:00</span></div>
+          <div id="x5-meta"><b>Кофе за 20 минут или&nbsp;быстрее</b><span><i></i>Бишкек, с 8:00 до 22:00</span></div>
           <div id="x5-rule"></div>
           <button class="x5-cta" type="button" id="x5-see">Выбрать<br>напиток<i>›</i></button>
           <div id="x5-fil" aria-hidden="true"><div class="tb"><span data-w="t1">Кофе</span><span data-w="t2">Выпечка</span></div>
@@ -101,7 +101,7 @@ R.innerHTML = `
           </div>
           <div id="x5-lots">
             <div><h2>Выберите напиток</h2><div id="x5-wall" role="group" aria-label="Меню">${MENU.map(([t, p]) => `<button type="button"><b>${t}</b><em>${p} с</em></button>`).join('')}</div></div>
-            <div id="x5-pick"><button class="x5-back" type="button">‹ Меню</button><small>Кофейня · Бишкек</small><div class="x5-word" id="x5-w3" aria-hidden="true"><canvas></canvas></div><div id="x5-pic" aria-hidden="true"><canvas></canvas></div><div id="x5-price"><span>${MENU[2][0]}, ${MENU[2][1]} с</span><em>Привезём за 20 минут. Пример, такой кофейни нет.</em></div><button class="x5-cta" type="button" id="x5-take" data-s="0"><s class="x5-tf" aria-hidden="true"></s><span class="x5-tl">Заказать</span><b class="x5-tm" aria-hidden="true"></b><i aria-hidden="true">›</i></button>
+            <div id="x5-pick"><button class="x5-back" type="button">‹ Меню</button><small>Кофейня · Бишкек</small><div class="x5-word" id="x5-w3" aria-hidden="true"><canvas></canvas></div><div id="x5-pic" aria-hidden="true"><canvas></canvas></div><div id="x5-price"><span>${MENU[2][0]}, ${MENU[2][1]} с</span><em>Привезём за 20 минут или быстрее. Пример, такой кофейни нет.</em></div><button class="x5-cta" type="button" id="x5-take" data-s="0"><s class="x5-tf" aria-hidden="true"></s><span class="x5-tl">Заказать</span><b class="x5-tm" aria-hidden="true"></b><i aria-hidden="true">›</i></button>
               <div class="x5-word" id="x5-w4" aria-hidden="true"><canvas></canvas></div><small id="x5-min" aria-hidden="true">минут до двери</small></div>
           </div>
           <div id="x5-taps" aria-hidden="true"><i class="x5-ring"></i><i class="x5-ring"></i><div id="x5-cur"><svg viewBox="-1 -1 16 22" aria-hidden="true"><path d="M0 0V17L4.5 12.6L7.4 19.6L10.4 18.3L7.6 11.4H13.6Z" fill="#fff" stroke="#000" stroke-width="1.1" stroke-linejoin="round"/></svg></div></div>
@@ -509,7 +509,8 @@ function hero() {
      подпись над кнопкой, кнопка во всю ширину внизу. Шапка в телефоне на четверть меньше (--hk) */
   const hdu = hd.offsetHeight / U, mh = meta.offsetHeight / U, mw = parseFloat(meta.style.maxWidth) / U;
   meta.style.maxWidth = 366 * U + 'px'; const mhp = meta.offsetHeight / U; meta.style.maxWidth = mw * U + 'px';
-  const hph = hdu * .74, phb = 12 + hph, PHh = G.VU - phb, ph = Math.min(366 / wOf(1), (PHh - 200) / 2.253), [pa, pb] = place(12, phb + PHh * .05, ph);
+  /* слово с цифрами кончается над подписью с зазором 14: подпись в телефоне в две строки и растёт вверх от кнопки (mhp) */
+  const hph = hdu * .74, phb = 12 + hph, PHh = G.VU - phb, ph = Math.min(366 / wOf(1), (PHh * .95 - 118 - mhp) / 2.253), [pa, pb] = place(12, phb + PHh * .05, ph);
   G.D = { w1: a, w2: b, meta: [L, bot - mh, mw], see: [W - L - ctaW, yc, ctaW], hd: [L, 24, 1313] };
   G.P = { w1: pa, w2: pb, meta: [12, G.VU - 104 - mhp, 366], see: [12, G.VU - 16 - 78, 366, 78], hd: [12, 12, 366] };
   /* метки референса у слова: слева на уровне верха букв чёрточка с квадратом, справа у края квадрат с хвостом, под левой меткой три точки */
@@ -663,7 +664,7 @@ function order(n) {
   const st = n < T2 + .05 ? 0 : n < OK ? 1 : n < RT ? 2 : 3;
   if (X.st !== st) {
     X.st = st; TK.dataset.s = st; TK.querySelector('.x5-tl').textContent = ['Заказать', 'Оплачиваем', 'Оплачено', 'Курьер в пути'][st];
-    $('#x5-price em').innerHTML = ['Привезём за 20 минут. Пример, такой кофейни нет.', 'Оплачиваем картой •• 4421…', 'Оплачено картой •• 4421 <b>✓</b>', 'Оплачено картой •• 4421 <b>✓</b>'][st];
+    $('#x5-price em').innerHTML = ['Привезём за 20 минут или быстрее. Пример, такой кофейни нет.', 'Оплачиваем картой •• 4421…', 'Оплачено картой •• 4421 <b>✓</b>', 'Оплачено картой •• 4421 <b>✓</b>'][st];
   }
   TK.style.setProperty('--f', (lerp(1, .04, ease(ss(RT, RT + .6, n))) + .07 * ss(RT + .6, 20.2, n)).toFixed(4));
   const left = 720 - Math.round(18 * Math.max(0, n - RT - .4)), tm = TK.querySelector('.x5-tm');
@@ -840,7 +841,8 @@ $$('#x5-hd nav button,#x5-see').forEach(b => b.addEventListener('click', () => {
 /* на телефоне пример листается пальцем вверх и вниз */
 let ty = null;
 kl.addEventListener('pointerdown', e => { if (X.on && e.pointerType === 'touch' && !e.target.closest('button,a,input,#dial,#air-foot')) ty = e.clientY; });
-addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.clientY; ty = e.clientY; wheel(d * 2.4); }, { passive: true });
+/* пока идёт финал «Каждый день» (final.js), палец ведёт его, а не пример */
+addEventListener('pointermove', e => { if (ty == null) return; const d = ty - e.clientY; ty = e.clientY; if (window.GTFIN && GTFIN.on) return; wheel(d * 2.4); }, { passive: true });
 ['pointerup', 'pointercancel'].forEach(t => addEventListener(t, () => { ty = null; }, { passive: true }));
 addEventListener('resize', () => { if (X.on) layout(); });
 /* холст букв не просит шрифт сам, поэтому шрифт грузится заранее, и буквы пересобираются */

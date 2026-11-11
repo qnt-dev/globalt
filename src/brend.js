@@ -342,7 +342,7 @@ function drawIdea(c, n) {
   let left = k * L.reduce((p, q) => p + q[0].length, 0);
   L.forEach(([t, col], i) => { c.fillStyle = col; const part = clamp(left / t.length); typed(c, t, 40, 250 + i * 118, part); left -= t.length; });
   /* три слова характера */
-  const W3 = [['01', 'быстрый', '20 минут до двери'], ['02', 'тёплый', 'привезём горячим'], ['03', 'точный', 'минута в минуту']];
+  const W3 = [['01', 'быстрый', '20 минут или быстрее'], ['02', 'тёплый', 'привезём горячим'], ['03', 'точный', 'минута в минуту']];
   W3.forEach(([nm, w, d], i) => {
     const q = ss(1.8 + i * .35, 2.3 + i * .35, g) * a; if (q <= .004) return;
     const x = 40 + i * 320, y = 690 + (1 - q) * 20;

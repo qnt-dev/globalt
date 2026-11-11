@@ -307,7 +307,8 @@ SM.step = (dt, c) => {
   if (c.tuned && K.k === 0 && SM.state.u <= 0 && !K.auto) { K.idle += dt; if (K.idle > 6) { K.auto = true; K.idle = 0; } } else if (!c.tuned) K.idle = 0;
   if (K.auto) { K.k = Math.min(1, K.k + dt * .7); if (K.k >= 1) { K.auto = false; SM.next(); } }
   K.kc = K.auto ? K.k : lerp(K.kc, K.k, clamp(dt * 6)); if (Math.abs(K.kc - K.k) < 1e-4) K.kc = K.k;
-  const n = SM.state.u * 28;
+  /* ход примера в щелчках колеса: длина берётся у самого примера (SM.notch), начало до «Плана» совпадает с прежним */
+  const n = SM.state.u * (SM.notch || 28);
   /* ход передачи идёт с той же скоростью, что и свой ход примера в начале (3,5 в секунду), поэтому рамки и клетки примера идут вместе */
   K.hc = Math.abs(n - K.hc) < 1e-3 ? n : lerp(K.hc, n, clamp(dt * 3.2));
   /* тёмный фон примера встаёт под полем раньше, чем гаснет пол: эфирный шум «Клиентов» не проступает */

@@ -132,7 +132,7 @@
 #x2-fv{position:relative;height:100%;min-height:0}
 #x2-fcv{position:absolute;inset:0;width:100%;height:100%;display:block}
 #x2-nodes{list-style:none;position:absolute;inset:0}
-/* слова-окна: огромные узкие буквы, внутри каждой — кадр своей главы (--img рисует reklama.js) */
+/* слова-окна: огромные узкие буквы, внутри каждой — кадр своей главы (рисует reklama.js на холсте под буквами) */
 #x2-nodes{transform-origin:0 50%}
 /* в итоге город из «Рядом» уходит в глубину за словами каналов */
 #x2.fdeep #x2-mcv{filter:blur(1.5px) saturate(.6)}

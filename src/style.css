@@ -457,6 +457,11 @@ body.jk #logo{opacity:0;visibility:hidden;transition:filter .3s,opacity .3s,visi
 #air{pointer-events:none}
 #air button,#air input{pointer-events:auto}
 /* пока плохой сайт пробивается сквозь шум, надпись станции гаснет вместе с шумом (--jt из app.js) */
+/* Пока идёт пример станции, надпись станции спрятана. После примера она встаёт по центру: проявляется и чуть поднимается, когда сетка уже встала */
+#klienty.ex #air-top,#klienty.ex #air-main{opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}
+#klienty.exd #air-main{justify-content:center;padding-top:0;animation:stback 1.1s cubic-bezier(.35,.1,.25,1) both}
+@keyframes stback{from{opacity:0;transform:translateY(14px)}}
+@media (prefers-reduced-motion:reduce){#klienty.exd #air-main{animation:none}#klienty.ex #air-top,#klienty.ex #air-main{transition:none}}
 #klienty.junk #air-top,#klienty.junk #air-main{opacity:var(--jt,0)}
 #klienty.junk2 #air-top,#klienty.junk2 #air-main{visibility:hidden}
 /* после «Ста одинаковых» надпись «Бренда» проявляется вместе с волной сетки от красной точки */
@@ -489,14 +494,7 @@ body.jk #logo{opacity:0;visibility:hidden;transition:filter .3s,opacity .3s,visi
 #junk.wall>:not(#j-wall):not(#j-cap){visibility:hidden}
 #j-cap{position:absolute;left:var(--gut);top:max(70px,9vh);z-index:301;margin:0;font-size:clamp(25px,3.1vw,48px);max-width:19em;line-height:1.16;opacity:0;pointer-events:none;color:#fff}
 #j-cap span{background:#000;padding:.02em .28em .08em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
-#j-sheet.drop{transform:translateY(230%) rotate(2.5deg);visibility:hidden;transition:transform .85s cubic-bezier(.55,0,.9,.45),visibility 0s .85s}
 .jp{position:absolute;left:0;top:0;transform-origin:50% 50%;overflow:hidden;user-select:none;-webkit-user-select:none;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;font-size:calc(var(--u)*15)}
-.jp.back{transition:transform .35s cubic-bezier(.2,.9,.2,1)}
-.jp.fell{filter:grayscale(1) brightness(.5);transition:filter .8s .1s;cursor:grab;touch-action:none}
-@media (hover:hover){.jp.fell:hover{filter:none;transition:filter .15s}}
-/* круг с телефоном и под мышью остаётся серым */
-@media (hover:hover){.jp.fell.j-call:hover{filter:grayscale(1) brightness(.5)}}
-.jp.held{filter:none;cursor:grabbing;transition:filter .15s}
 .jp b{font-weight:700}
 .fade{background:rgba(10,20,50,.55);transition:opacity .3s;pointer-events:none}
 .j-bar{background:linear-gradient(#2b7fd6,#0f4f9e)}

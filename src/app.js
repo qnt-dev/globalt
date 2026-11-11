@@ -640,8 +640,8 @@ function enterPeople() {
 }
 
 /* ---------- МИР 3: эфир ---------- */
-/* Номер станции — её место в ST, по нему подключены примеры. Порядок на шкале задаёт v: Бренд, SMM, Реклама, Сайт.
-   Перед «Брендом» ловится плохой сайт, «Сто одинаковых» (junkStep). «Сайт» в конце пока без примера: туда переедет сайт ZERNO по главам. */
+/* Номер станции — её место в ST, по нему подключены примеры: 0 Сайт (site.js), 1 Реклама (reklama.js), 2 SMM (smm.js), 3 Бренд (brend.js).
+   Порядок на шкале задаёт v: Бренд, SMM, Реклама, Сайт. Перед «Брендом» ловится плохой сайт, «Сто одинаковых» (junkStep). */
 const ST = [
   { wd: 100, v: 88, name: 'Сайт', full: 'Разработка сайта', go: 'Обсудить сайт', col: [0, 0, 0], line: 'Это лицо компании.', ask: 'Что вы хотите, чтобы человек видел, когда открывает ваш сайт?' },
   { wd: 72, v: 63, name: 'Реклама', full: 'Контекстная и таргетированная реклама', go: 'Обсудить рекламу', col: [.91, 1, .102], line: 'Её видят те, кто ищет, и те, кто ещё не искал.', ask: 'Кого реклама должна привести к вам?' },
@@ -781,7 +781,7 @@ function updateAir(dt) {
   /* «Сто одинаковых» идёт по ручке у «Бренда»; пока сцена не кончилась, пример «Бренда» стоит в начале */
   const js = junkStep(dt, best === 3 ? bd : 99, air.v - ST[3].v);
   if (window.GTBRD) GTBRD.step(dt, { near: best === 3 && bd < 9, tuned: air.cur === 3 && J.clean, alpha: q, wait: J.on && !J.clean });
-  /* На тёмном сайте из примера «Реклама» буквы сайта снова белые. «Сайт» пока без примера, но тоже на чёрном */
+  /* На тёмных примерах буквы шапки снова белые. «Сайт» идёт на чёрном */
   const dark = q > .55 && best !== 0 && !(window.GTREK && GTREK.dark) && !(window.GTSMM && GTSMM.dark) && !(window.GTBRD && GTBRD.dark);
   document.body.classList.toggle('ink', dark || js);
   document.body.classList.toggle('jk', js);
@@ -799,8 +799,8 @@ function updateAir(dt) {
     $$('#presets button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.i === best));
   }
   if (q <= .92 && air.cur !== -1) { air.cur = -1; delete W.dataset.st; $$('#presets button').forEach(b => b.setAttribute('aria-pressed', false)); $('#st-name').removeAttribute('aria-label'); }
-  /* Сетка-сонар под чёрной надписью станции: у «Сайта» после развала, у остальных, когда подключён пример. Она идёт после шагов примеров:
-     по силе сигнала расходится в шум и собирается, в начале примера становится им, в конце встаёт из него. После развала «Сайта» встаёт за волной от телефона. */
+  /* Сетка-сонар под чёрной надписью станции. Она идёт после шагов примеров: по силе сигнала расходится в шум и собирается,
+     в начале примера становится им, в конце встаёт из него. У «Бренда» после «Ста одинаковых» встаёт за волной от стрелки ручки (junkAt). */
   if (window.GTSONAR) { const mod = near ? [window.GTSITE, window.GTREK, window.GTSMM, window.GTBRD][best] : null;
     GTSONAR.frame({ q: near ? q : 0, ok: best === 3 ? J.clean : true, at: best === 3 ? junkAt : null, mod: mod && 'grid' in mod ? mod : null }); }
   if (air.snd) {
@@ -825,66 +825,9 @@ function drawAir(time) {
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 
-/* ---------- «Сайт»: плохой сайт разваливается от поворота ручки ---------- */
-/* Физика прямоугольников: столкновения по разделяющей оси, импульсы, сон */
-const PH = { b: [], g: 2600, tick: 1 / 60, acc: 0 };
-function phBody(x, y, w, h, fixed) { const m = fixed ? 0 : w * h / 900, I = fixed ? 0 : m * (w * w + h * h) / 12; return { x, y, a: 0, vx: 0, vy: 0, va: 0, hw: w / 2, hh: h / 2, im: fixed ? 0 : 1 / m, iI: fixed ? 0 : 1 / I, fixed: !!fixed, ghost: false, still: 0, asleep: !!fixed }; }
-function phAxes(b) { const c = Math.cos(b.a), s = Math.sin(b.a); return [[c, s], [-s, c]]; }
-function phHits(A, B) {
-  const ax = phAxes(A), bx = phAxes(B), dx = B.x - A.x, dy = B.y - A.y; let best = 1e9, nx = 0, ny = 0, ref = 0;
-  const tests = [[ax[0], A.hw, 0], [ax[1], A.hh, 1], [bx[0], B.hw, 2], [bx[1], B.hh, 3]];
-  for (const [n, , k] of tests) {
-    const ra = A.hw * Math.abs(n[0] * ax[0][0] + n[1] * ax[0][1]) + A.hh * Math.abs(n[0] * ax[1][0] + n[1] * ax[1][1]), rb = B.hw * Math.abs(n[0] * bx[0][0] + n[1] * bx[0][1]) + B.hh * Math.abs(n[0] * bx[1][0] + n[1] * bx[1][1]);
-    const d = n[0] * dx + n[1] * dy, o = ra + rb - Math.abs(d); if (o <= 0) return null;
-    if (o < best - (k > 1 ? .5 : 0)) { best = o; const sg = d < 0 ? -1 : 1; nx = n[0] * sg; ny = n[1] * sg; ref = k; }
-  }
-  // опорная грань на одном теле, ребро-жертва на другом: обрезаем ребро гранью
-  const R = ref < 2 ? A : B, I = ref < 2 ? B : A, fn = ref < 2 ? [nx, ny] : [-nx, -ny], ix = ref < 2 ? bx : ax, rx = ref < 2 ? ax : bx;
-  const dots = [ix[0][0] * fn[0] + ix[0][1] * fn[1], ix[1][0] * fn[0] + ix[1][1] * fn[1]], useX = Math.abs(dots[0]) > Math.abs(dots[1]);
-  const eN = useX ? ix[0] : ix[1], eT = useX ? ix[1] : ix[0], eH = useX ? I.hw : I.hh, tH = useX ? I.hh : I.hw, sign = (useX ? dots[0] : dots[1]) > 0 ? -1 : 1;
-  const cx = I.x + eN[0] * eH * sign, cy = I.y + eN[1] * eH * sign, p = [[cx - eT[0] * tH, cy - eT[1] * tH], [cx + eT[0] * tH, cy + eT[1] * tH]];
-  const rIsX = ref % 2 === 0, sT = rIsX ? rx[1] : rx[0], sH = rIsX ? R.hh : R.hw, fH = rIsX ? R.hw : R.hh, out = [];
-  const pr = q => (q[0] - R.x) * sT[0] + (q[1] - R.y) * sT[1], a = pr(p[0]), b = pr(p[1]);
-  [[p[0], a], [p[1], b]].forEach(([q, t], i) => {
-    let c = q; const o = i ? a : b;
-    if (t > sH) { if (o >= sH) return; const k = (sH - o) / (t - o), r = i ? p[0] : p[1]; c = [r[0] + (q[0] - r[0]) * k, r[1] + (q[1] - r[1]) * k]; }
-    else if (t < -sH) { if (o <= -sH) return; const k = (-sH - o) / (t - o), r = i ? p[0] : p[1]; c = [r[0] + (q[0] - r[0]) * k, r[1] + (q[1] - r[1]) * k]; }
-    const dep = fH - ((c[0] - R.x) * fn[0] + (c[1] - R.y) * fn[1]); if (dep >= 0) out.push({ x: c[0], y: c[1], d: dep });
-  });
-  return out.length ? { nx, ny, pts: out } : null;
-}
-function phStep(h) {
-  const B = PH.b;
-  for (const b of B) { if (b.asleep) continue; b.vy += PH.g * h; b.vx *= .999; b.va *= .995; }
-  const C = [];
-  for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) {
-    const a = B[i], c = B[j]; if (a.ghost || c.ghost || (a.asleep && c.asleep)) continue;
-    const ra = Math.hypot(a.hw, a.hh), rc = Math.hypot(c.hw, c.hh); if (!a.fixed && !c.fixed && (Math.abs(a.x - c.x) > ra + rc || Math.abs(a.y - c.y) > ra + rc)) continue;
-    const m = phHits(a, c); if (!m) continue;
-    const fast = q => !q.asleep && !q.fixed && Math.hypot(q.vx, q.vy) > 60;
-    if (fast(a)) { c.asleep = c.fixed; c.still = 0; } if (fast(c)) { a.asleep = a.fixed; a.still = 0; }
-    for (const p of m.pts) {
-      const rax = p.x - a.x, ray = p.y - a.y, rcx = p.x - c.x, rcy = p.y - c.y, rn1 = rax * m.ny - ray * m.nx, rn2 = rcx * m.ny - rcy * m.nx;
-      const tx = -m.ny, ty = m.nx, rt1 = rax * ty - ray * tx, rt2 = rcx * ty - rcy * tx;
-      C.push({ a, c, nx: m.nx, ny: m.ny, tx, ty, rax, ray, rcx, rcy, mn: 1 / (a.im + c.im + a.iI * rn1 * rn1 + c.iI * rn2 * rn2), mt: 1 / (a.im + c.im + a.iI * rt1 * rt1 + c.iI * rt2 * rt2), bias: .22 / h * Math.max(0, p.d - .6), jn: 0, jt: 0 });
-    }
-  }
-  for (let it = 0; it < 10; it++) for (const k of C) {
-    const { a, c } = k, dvx = c.vx - c.va * k.rcy - a.vx + a.va * k.ray, dvy = c.vy + c.va * k.rcx - a.vy - a.va * k.rax;
-    const vn = dvx * k.nx + dvy * k.ny; let dj = k.mn * (-vn + k.bias), nj = Math.max(k.jn + dj, 0); dj = nj - k.jn; k.jn = nj;
-    let ix = dj * k.nx, iy = dj * k.ny;
-    const vt = dvx * k.tx + dvy * k.ty, lim = .55 * k.jn; let tj = k.mt * -vt, tn = clamp(k.jt + tj, -lim, lim); tj = tn - k.jt; k.jt = tn;
-    ix += tj * k.tx; iy += tj * k.ty;
-    a.vx -= ix * a.im; a.vy -= iy * a.im; a.va -= a.iI * (k.rax * iy - k.ray * ix); c.vx += ix * c.im; c.vy += iy * c.im; c.va += c.iI * (k.rcx * iy - k.rcy * ix);
-  }
-  for (const b of B) {
-    if (b.asleep) { b.vx = b.vy = b.va = 0; continue; }
-    b.x += b.vx * h; b.y += b.vy * h; b.a += b.va * h;
-    if (!b.ghost && !b.drag && Math.hypot(b.vx, b.vy) < 14 && Math.abs(b.va) < .25) { if (++b.still > 45) { b.asleep = true; b.vx = b.vy = b.va = 0; } } else b.still = 0;
-  }
-}
-/* Плохой сайт. Всё выдумано нарочно: это пародия на шаблон, компании нет. Порядок в списке это порядок падения */
-/* Плохой сайт — шаблон кофейни «как у всех»: та же кофейня, что дальше в примерах, только до ZERNO. Фото чашки стоковое. */
+/* ---------- Начало «Клиентов»: плохой сайт ловится сквозь шум перед «Брендом» ---------- */
+/* Плохой сайт — шаблон кофейни «как у всех»: та же кофейня, что дальше в примерах, только до ZERNO. Всё выдумано нарочно, компании нет. Фото чашки стоковое.
+   Тот же шаблон станция «Сайт» показывает в окне браузера (GT_JUNK) и в телефоне (GT_JUNK_N). */
 const JUNK_W = () => [
   ['fade', 0, 58, 1440, 800, '', { ghost: 1 }],
   ['j-modal', 470, 150, 500, 250, '<i class="j-x">×</i><b>Подпишитесь на рассылку!</b><p>И получите второй капучино в подарок. Только для новых гостей!</p><span class="j-in">Ваш e-mail</span><span class="j-btn j-red">ПОЛУЧИТЬ КОФЕ</span>'],
@@ -918,7 +861,7 @@ const JUNK_N = () => [
 ];
 /* sig: как поймался плохой сайт (1 — стоит целым), cov: сколько его полос пробилось сквозь шум, pop: сколько секунд он стоит целым,
    tx: его тексты, tvt: такт помех, roll: на сколько уползли полосы */
-const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, drag: null, done: false, sig: 0, cov: 0, pop: 0, tx: [], tvt: 0, roll: 0 };
+const J = { built: false, on: false, k: 0, hold: 0, p: [], floor: 0, clean: false, alpha: 0, done: false, sig: 0, cov: 0, pop: 0, tx: [], tvt: 0, roll: 0 };
 /* Полосы сигнала: картинка сайта пробивается сквозь шум полосами разной высоты. У каждой полосы свой порог r: она видна, когда сигнал выше порога.
    Пока сигнал слабый, полосы мигают и ползут по экрану, как кадр у телевизора без синхронизации. */
 const BANDS = (() => { const b = [], f = v => v - Math.floor(v); let y = 0, i = 0; while (y < 2400) { const h = Math.round(6 + 58 * f(Math.sin(i * 12.9898) * 43758.5453) ** 2); b.push({ y, h, r: f(Math.sin(i * 78.233 + 4.1) * 12345.6789) }); y += h; i++; } return { b, H: y }; })();
@@ -963,7 +906,7 @@ function junkTv(dt, box) {
   box.style.filter = 'url(#j-tv)';
 }
 /* Сайт встал целым — через четверть секунды выскакивает окно подписки с отскоком, подложка под ним темнеет.
-   Подложка не падает вместе с обломками, а гаснет на месте (junkFall, junkDraw). */
+   Когда камера начинает отъезжать, окно и подложка гаснут на месте. */
 function junkPop() {
   const k = RM ? 1 : sstep(.25, .6, J.pop), o = k - 1, b = 1 + 2.7 * o * o * o + 1.7 * o * o, x = 1 - sstep(0, .05, J.k);
   for (const p of J.p) {
@@ -976,31 +919,18 @@ function junkBuild() {
   const box = $('#junk'), W = innerWidth, wide = W > 760, F = junkFloor(), list = wide ? JUNK_W() : JUNK_N(), u = wide ? Math.min(W / 1440, F / 770) : Math.min(W / 390, F / 650), ox = wide ? (W - 1440 * u) / 2 : (W - 390 * u) / 2;
   box.style.setProperty('--u', u + 'px'); box.querySelectorAll('.jp').forEach(e => e.remove());
   const sheet = $('#j-sheet'); sheet.style.height = F + 'px';
-  J.floor = F; J.shrink = wide ? .54 : .46;
+  J.floor = F;
   J.p = list.map(([cls, x, y, w, h, html, o = {}], i) => {
     const e = document.createElement('div'); e.className = 'jp ' + cls; e.innerHTML = html; e.style.zIndex = 100 - i;
     const full = cls === 'fade' || cls === 'j-bar', pw = full ? W : w * u, ph = cls === 'fade' ? F : h * u, hx = full ? W / 2 : ox + x * u + pw / 2, hy = cls === 'fade' ? F / 2 : y * u + ph / 2; e.style.width = pw + 'px'; e.style.height = ph + 'px';
     e.style.transform = `translate(${hx - pw / 2}px,${hy - ph / 2}px)`; box.appendChild(e);
-    return { e, hx, hy, pw, ph, ghost: !!o.ghost, still: cls === 'fade', thr: .03 + .78 * i / (list.length - 1), body: null, s: 1 };
+    return { e, hx, hy, pw, ph, ghost: !!o.ghost, still: cls === 'fade' };
   });
   J.tx = []; const tw = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.jp') ? 1 : 2 });
   while (tw.nextNode()) if (tw.currentNode.nodeValue.trim()) J.tx.push({ n: tw.currentNode, t: tw.currentNode.nodeValue });
-  PH.b = []; [[W / 2, F + 200, W + 800, 400], [-200, F / 2, 400, 2 * F + 800], [W + 200, F / 2, 400, 2 * F + 800], [W / 2, -200, W + 800, 400]].forEach(([x, y, w, h]) => PH.b.push(phBody(x, y, w, h, true)));
-  J.built = true; J.k = 0; J.hold = 0; J.pop = 0; J.clean = false; J.dot = 0; $('#klienty').classList.remove('clean', 'junk', 'junk2'); sheet.classList.remove('drop');
+  J.built = true; J.k = 0; J.hold = 0; J.pop = 0; J.clean = false; J.dot = 0; $('#klienty').classList.remove('clean', 'junk', 'junk2');
   junkShot();
 }
-function junkFall(p, seed) {
-  const s = p.ghost ? 1 : J.shrink, b = phBody(p.hx, p.hy, p.pw * s, p.ph * s); b.ghost = p.ghost; p.s = s; p.body = b;
-  b.vx = (seed - .5) * 260; b.vy = -60 - seed * 120; b.va = (seed - .5) * 3.2; PH.b.push(b); b.p = p;
-  if (p.e.classList.contains('fade')) p.e.style.opacity = 0; else if (!p.ghost) p.e.classList.add('fell');
-  p.e.classList.remove('back');
-  /* обломки задевают круг с телефоном: он раскручивается и потом крутится ровно, не останавливаясь */
-  if (p.e.classList.contains('j-call') && !p.spin) p.spin = { a: 0, v: 9 };
-}
-function junkBack(p) { if (p.spin) { p.spin = null; p.e.firstChild.style.transform = ''; } PH.b.splice(PH.b.indexOf(p.body), 1); p.body = null; p.s = 1; p.e.classList.remove('fell'); p.e.classList.add('back'); if (p.e.classList.contains('fade')) p.e.style.opacity = ''; p.e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`; }
-function junkDraw() { for (const p of J.p) { const b = p.body; if (!b || b.asleep && b.drawn || p.still) continue; p.e.style.transform = `translate(${b.x - p.pw / 2}px,${b.y - p.ph / 2}px) rotate(${b.a}rad) scale(${p.s})`; b.drawn = b.asleep; } }
-function junkSim(dt) { PH.acc = Math.min(.05, PH.acc + dt); while (PH.acc >= PH.tick) { phStep(PH.tick); PH.acc -= PH.tick; } for (let i = PH.b.length - 1; i >= 4; i--) { const b = PH.b[i]; if (b.ghost && b.y - Math.hypot(b.hw, b.hh) > J.floor + 900) { b.asleep = true; } } }
-function junkNow() { J.p.forEach((p, i) => { if (!p.body) junkFall(p, ((i * 37) % 100) / 100); }); for (let i = 0; i < 420; i++) phStep(PH.tick); junkDraw(); J.k = 1; }
 /* ---------- Начало «Клиентов»: «Сто одинаковых» и «Одна точка — четыре» ----------
    Плохой сайт ловится сквозь шум у первой станции, «Бренд». Окно подписки закрывается, камера отъезжает: сайт — одна плитка из сотни таких же.
    Тот же макет, та же стоковая чашка, разные только названия. Плитки сереют, одна переворачивается красной, все сжимаются в точки.
@@ -1038,7 +968,7 @@ function junkShot() {
   const sh = document.createElement('div'); sh.id = 'j-sheet'; sh.style.height = F + 'px'; root.append(sh);
   J.p.forEach(p => {
     if (p.still || p.e.classList.contains('j-modal')) return;
-    const e = p.e.cloneNode(true); e.classList.remove('fell', 'back', 'held'); e.style.opacity = ''; e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`;
+    const e = p.e.cloneNode(true); e.style.opacity = ''; e.style.transform = `translate(${p.hx - p.pw / 2}px,${p.hy - p.ph / 2}px)`;
     const b = e.classList.contains('j-logo') && e.querySelector('b'); if (b) b.style.visibility = 'hidden';
     root.append(e);
   });
@@ -1264,26 +1194,8 @@ function junkStep(dt, d, side = 0) {
 }
 /* откуда идёт волна сетки «Бренда»: стрелка ручки на отметке «Бренд», в координатах #klienty */
 function junkAt() { return JW.pt || [innerWidth / 2, innerHeight / 2]; }
-/* где сейчас телефон в куче, в координатах #klienty: от него идёт волна сетки после развала */
-function junkCall() {
-  const p = J.p.find(q => q.e.classList.contains('j-call')); if (!p) return null;
-  const r = p.e.getBoundingClientRect(), k = $('#klienty').getBoundingClientRect();
-  return [r.left + r.width / 2 - k.left, r.top + r.height / 2 - k.top];
-}
-/* обломки можно хватать и бросать */
-function junkPointer() {
-  const box = $('#junk'); let drag = null, tx = 0, ty = 0, raf = 0;
-  const pull = () => { if (!drag) return; const b = drag, dx = tx - (b.x + Math.cos(b.a) * b.lx - Math.sin(b.a) * b.ly), dy = ty - (b.y + Math.sin(b.a) * b.lx + Math.cos(b.a) * b.ly); b.vx = clamp(dx * 14, -1800, 1800); b.vy = clamp(dy * 14, -1800, 1800); b.va *= .86; b.asleep = false; b.still = 0; raf = requestAnimationFrame(pull); };
-  box.addEventListener('pointerdown', e => {
-    const el = e.target.closest('.fell'); if (!el) return; const p = J.p.find(q => q.e === el); if (!p || !p.body) return;
-    e.preventDefault(); const b = p.body, rx = e.clientX - b.x, ry = e.clientY - b.y, c = Math.cos(-b.a), s = Math.sin(-b.a); b.lx = c * rx - s * ry; b.ly = s * rx + c * ry; b.drag = true; drag = b; tx = e.clientX; ty = e.clientY; el.classList.add('held'); el.setPointerCapture(e.pointerId); cancelAnimationFrame(raf); pull();
-  });
-  box.addEventListener('pointermove', e => { if (drag) { tx = e.clientX; ty = e.clientY; } });
-  const end = () => { if (!drag) return; drag.drag = false; drag.p.e.classList.remove('held'); drag = null; };
-  box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
-  addEventListener('resize', () => { JW.big = 0; if (!J.on) return; const { k, pop, clean, dot } = J; J.built = false; junkBuild(); Object.assign(J, { k, pop, clean, dot }); });
-}
-junkPointer();
+/* при смене размера окна сцена пересобирается и встаёт на то же место */
+addEventListener('resize', () => { JW.big = 0; if (!J.on) return; const { k, pop, clean, dot } = J; J.built = false; junkBuild(); Object.assign(J, { k, pop, clean, dot }); });
 
 /* ---------- Разговор ---------- */
 const talk = $('#talk');
@@ -1305,7 +1217,6 @@ $('#contact-open').addEventListener('click', () => openTalk(''));
   document.addEventListener('pointerdown', e => { if (mn.dataset.open === 'true' && !mn.contains(e.target)) set(false); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && mn.dataset.open === 'true') { set(false); chip.focus({ preventScroll: true }); } });
 })();
-if (window.GTSAYT) GTSAYT.onTalk = () => openTalk(ST[0].full);
 if (window.GTSITE) GTSITE.onTalk = () => openTalk(ST[0].full);
 if (window.GTREK) GTREK.onTalk = () => openTalk(ST[1].full);
 if (window.GTSMM) GTSMM.onTalk = () => openTalk(ST[2].full);

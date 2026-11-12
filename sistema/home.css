@@ -1,0 +1,92 @@
+/* СКОПИРОВАНО из src/style.css скриптом tools/extract.py */
+/* ГЛАВНАЯ: Земля и три раздела на ней */
+#home{cursor:grab;touch-action:none}
+#home.drag{cursor:grabbing}
+#hub{cursor:default}
+/* слой Земли внутри главной лежит под всем остальным */
+#home>#gl{z-index:-1}
+/* ряд разделов лежит на Земле целиком: буквы — окна в неё. У #hub нет своего слоя, поэтому буквы смешиваются с Землёй */
+#hub{position:absolute;left:0;right:0;top:62%;display:flex;flex-direction:column;align-items:center;gap:18px;touch-action:auto}
+#hub .hub-t{display:flex;align-items:baseline;gap:clamp(22px,3vw,52px)}
+#hub .hub-t button{position:relative;display:block;background:none;border:0;padding:4px 2px;cursor:pointer;font:800 clamp(36px,4vw,64px)/.9 var(--disp);text-transform:uppercase;--wd:56}
+/* место слова задаёт его обычная ширина: невидимая копия. Видимое слово меняет ширину поверх неё, поэтому соседи не сдвигаются */
+#hub .hub-t .w0{display:block;visibility:hidden;white-space:nowrap;font-variation-settings:"wdth" 56}
+#hub .hub-t .w1,#hub .hub-t .w2{position:absolute;top:4px;white-space:nowrap;font-variation-settings:"wdth" var(--wd);transition:font-variation-settings .6s cubic-bezier(.2,.9,.2,1),color .5s}
+/* Работа растёт влево, Клиенты вправо, Люди в обе стороны: туда, где есть место */
+#hub .hub-t button:nth-child(1) .w1,#hub .hub-t button:nth-child(1) .w2{right:2px}
+#hub .hub-t button:nth-child(2) .w1,#hub .hub-t button:nth-child(2) .w2{left:50%;transform:translateX(-50%)}
+#hub .hub-t button:nth-child(3) .w1,#hub .hub-t button:nth-child(3) .w2{left:2px}
+#hub .hub-t:has(.on) button:not(.on){--wd:50}
+#hub .hub-t button.on{--wd:96}
+/* Люди растут в обе стороны: чуть меньше, чтобы соседям остался воздух */
+#hub .hub-t button:nth-child(2).on{--wd:82}
+/* окно: буквы осветляют Землю под собой. Выбранное слово — в 4,4 раза, как окно знака в C1: в нём та же Земля в полную яркость. Остальные — вдвое */
+#hub .hub-t .w1{color:#7a7a7a;mix-blend-mode:color-dodge}
+#hub .hub-t button.on .w1{color:#c4c4c4}
+/* лёгкий свет воздуха в буквах: слово читается и над тёмным морем */
+#hub .hub-t .w2{color:#6aa6ff2e;mix-blend-mode:screen;pointer-events:none}
+#hub .hub-t button.on .w2{color:#94c2ff5c}
+#hub .hub-s{margin:0;min-height:1.4em;font:500 clamp(14px,1.1vw,17px) var(--text);color:#d0d0d0;transition:opacity .18s}
+/* кнопка «Перейти» компактнее: слово того же размера, поля меньше */
+#hub .hub-go{min-height:44px;padding:4px 22px;text-decoration:none;transition:opacity .3s,visibility .3s,filter .2s}
+#hub .hub-go.off{opacity:0;visibility:hidden}
+/* вместо стрелки знак фирменной графики раздела: Работа — летящие звёзды, Люди — «глаз», Клиенты — орбита с двумя звёздами.
+   Знак чёрный, как текст, высотой с заглавные буквы; кнопка показывает знак того раздела, куда ведёт */
+#hub .hub-go{gap:10px}
+#hub .hub-go .go-s{display:inline-flex;height:1.05em}
+#hub .hub-go .go-s svg{display:none;height:100%;width:auto;max-width:2.4em}
+#hub .hub-go[data-go=rabota] svg[data-s=rabota],#hub .hub-go[data-go=lyudi] svg[data-s=lyudi],#hub .hub-go[data-go=klienty] svg[data-s=klienty]{display:block}
+@property --dr{syntax:"<length>";inherits:true;initial-value:6px}
+/* точки: буквы вырастают из сетки точек */
+#hub .hub-t button.play{animation:fx-dots .95s cubic-bezier(.55,0,.45,1) both}
+#hub .hub-t button.play .w1,#hub .hub-t button.play .w2{-webkit-mask:radial-gradient(circle,#000 var(--dr),#0000 calc(var(--dr) + .7px)) 0 0/7px 7px;mask:radial-gradient(circle,#000 var(--dr),#0000 calc(var(--dr) + .7px)) 0 0/7px 7px}
+@keyframes fx-dots{from{--dr:0px}to{--dr:5.2px}}
+/* кнопка: всегда белая, цвет ложится плитками слева направо, когда кнопка появляется */
+/* «Перейти»: белая кнопка в рамке HUD (образец пользователя). Тело белое, углы срезаны там же, где у рамки треугольники;
+   рамка снаружи кнопки рисуется SVG (app.js hubFrame). Знак раздела чёрный на белом, его квадрат отделён прозрачным прорезом:
+   тело кнопки и плитки появления — маска --bm из app.js; пока её нет, тело срезано по углам */
+#hub .hub-go{position:relative;isolation:isolate;min-height:48px;padding:4px 7px 4px 24px;gap:16px;background:none;color:#000}
+#hub .hub-go:hover{background:none}
+#hub .hub-go::before{content:'';position:absolute;inset:0;z-index:-2;background:var(--c0,#fff);clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);transition:filter .2s}
+#hub .hub-go::before,#hub .hub-go .tiles{-webkit-mask:var(--bm,none) 0 0/100% 100% no-repeat;mask:var(--bm,none) 0 0/100% 100% no-repeat}
+#hub .hub-go:hover::before{filter:brightness(.9)}
+#hub .hub-go .tiles{clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
+#hub .hub-go .hf{position:absolute;left:-7px;top:-7px;width:calc(100% + 14px);height:calc(100% + 14px);overflow:visible;pointer-events:none}
+#hub .hub-go .hf .o{fill:none;stroke:#ffffffb8;stroke-width:1.2}
+#hub .hub-go .hf .t{fill:#fff}
+#hub .hub-go .hf .a{fill:none;stroke:#fff;stroke-width:2.2;transition:transform .35s cubic-bezier(.2,.9,.2,1)}
+#hub .hub-go:hover .hf .a1{transform:translateX(14px)}
+#hub .hub-go:hover .hf .a2{transform:translateX(-14px)}
+#hub .hub-go .go-s{width:34px;height:34px;flex:none;display:grid;place-items:center;color:#000}
+#hub .hub-go .go-s svg{height:19px;max-width:27px;transition:transform .25s}
+#hub .hub-go:hover .go-s svg{transform:scale(1.1)}
+/* появление: линия рамки прорисовывается, треугольники вырастают из углов, отрезки и квадрат знака проступают */
+#hub .hub-go .hf.draw .o{stroke-dasharray:var(--p);animation:hf-draw .55s cubic-bezier(.3,.7,.3,1) both}
+#hub .hub-go .hf.draw .t{transform-box:fill-box;animation:hf-pop .22s .42s cubic-bezier(.3,1.4,.5,1) both}
+#hub .hub-go .hf .t1{transform-origin:0 0}
+#hub .hub-go .hf .t2{transform-origin:100% 100%}
+#hub .hub-go .hf.draw .a{animation:hf-in .4s .3s both}
+#hub .hub-go.draw .go-s svg{animation:hf-in .3s .35s both}
+@keyframes hf-draw{from{stroke-dashoffset:var(--p)}to{stroke-dashoffset:0}}
+@keyframes hf-pop{from{transform:scale(0)}}
+@keyframes hf-in{from{opacity:0}}
+#hub .hub-go .tiles{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+#hub .hub-go .tiles i{position:absolute;width:13px;height:14px;background:var(--cn);animation:bt-tile .24s cubic-bezier(.3,.7,.3,1) both}
+@keyframes bt-tile{from{transform:scale(.2) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+/* бегущая строка компаний вдоль нижнего края Земли */
+#cis{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transition:opacity .3s}
+#cis text{font:600 13px var(--text);letter-spacing:.22em;text-transform:uppercase}
+/* завеса из квадратиков: раздел собирается из них и рассыпается в них */
+/* стоя: Земля во всю ширину, её середина на 42 % высоты (как earthY в app.js), слова столбиком на ней, подпись и кнопка под Землёй */
+@media (orientation:portrait){
+  #hub{top:0;bottom:0;justify-content:flex-end;gap:14px;padding-bottom:max(7vh,28px);pointer-events:none}
+  #hub>*{pointer-events:auto}
+  #hub .hub-t{position:absolute;left:0;right:0;top:calc(50% - 17vw);transform:translateY(-50%);flex-direction:column;align-items:center;gap:6px}
+  #hub .hub-t button{font-size:clamp(30px,11.2vw,64px)}
+  #hub .hub-t button .w1,#hub .hub-t button .w2{left:50%!important;right:auto!important;transform:translateX(-50%)}
+  #hub .hub-t button:nth-child(2).on{--wd:96}
+}
+/* без WebGL Земли нет, поэтому буквы не окна, а белые */
+body.nogl #home{background:#050505}
+body.nogl #hub .hub-t .w1{mix-blend-mode:normal;color:#8a8a8a}body.nogl #hub .hub-t button.on .w1{color:#fff}body.nogl #cis{display:none}
+

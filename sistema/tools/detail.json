@@ -1,0 +1,30 @@
+{
+ "rabota": {
+  "win": [
+   20,
+   140,
+   22,
+   81
+  ],
+  "night": "img/detail-rabota-night.webp"
+ },
+ "lyudi": {
+  "win": [
+   -15,
+   115,
+   28,
+   82
+  ],
+  "day": "img/detail-lyudi-day.webp",
+  "night": "img/detail-lyudi-night.webp"
+ },
+ "klienty": {
+  "win": [
+   53,
+   158,
+   -5,
+   50
+  ],
+  "day": "img/detail-klienty-day.webp"
+ }
+}

@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 # снимки проверок (src/look.py, src/motion.py) пишутся сюда и пересобираются
 review/
+# новые страницы: оригиналы карт NASA (из них tools/detail.py режет куски в sistema/img) и снимки проверок
+sistema/nasa/
+sistema/tools/*/

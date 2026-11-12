@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Земля для разделов</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script>
+/* Тот же шейдер Земли, что на главной (src/app.js, FS_HOME), с тремя добавками для снимков разделов:
+   LD — откуда светит солнце (ночь, рассвет, день), DIM — насколько приглушён диск, без шума плёнки.
+   render(o) рисует кадр и отдаёт PNG. Скрипт снимков: tools/earth_shots.py */
+const FS = `#version 300 es
+precision highp float;
+out vec4 o;
+uniform vec2 R;uniform float T;
+uniform sampler2D DAY,NIGHT,CLOUD;uniform vec3 GV,LD,NLC;uniform float Z,CY,DIM,CX,DBG,CLA;
+const vec3 ATM=vec3(.36,.62,1.);
+vec3 C,L;mat3 WV;float CR;
+mat3 vw(float lo,float la,float rl){float cy=cos(lo),sy=sin(lo),cx=cos(la),sx=sin(la),cz=cos(rl),sz=sin(rl);
+  return mat3(cy,0.,-sy,0.,1.,0.,sy,0.,cy)*mat3(1.,0.,0.,0.,cx,-sx,0.,sx,cx)*mat3(cz,-sz,0.,sz,cz,0.,0.,0.,1.);}
+vec3 earth(vec2 p,float px,out float cov){
+  vec2 q=(p-C.xy)/C.z;float r=length(q),aa=px/C.z;
+  vec2 sd=normalize(L.xy+1e-4);float lit=dot(q/max(r,1e-4),sd),side=smoothstep(-.6,.8,lit)*.85+.15;
+  float h=max(r-1.,0.)*C.z;
+  vec3 c=ATM*(exp(-h/.006)*.75+exp(-h/.028)*.24+exp(-h/.11)*.05)*side;
+  cov=smoothstep(1.+aa,1.-aa,r);
+  float z=sqrt(max(1.-r*r,0.));vec3 n=vec3(q,z);vec3 g=WV*n;
+  float lat=asin(clamp(g.y,-1.,1.)),lon=atan(g.x,g.z);vec2 uv=vec2(lon/6.2831853+.5,.5-lat/3.1415927),uw=vec2(fract(uv.x+.5),uv.y);
+  vec2 gx=dFdx(uv),gy=dFdy(uv),wx=dFdx(uw),wy=dFdy(uw);if(abs(wx.x)+abs(wy.x)<abs(gx.x)+abs(gy.x)){gx=wx;gy=wy;}
+  /* у полюсов шаг по долготе огромный, и карта размывается кругами: шаг по долготе считаем по настоящей длине на шаре */
+  float kc=max(cos(lat),.04);gx.x*=kc;gy.x*=kc;
+  if(cov>0.){
+    vec3 day=pow(textureGrad(DAY,uv,gx,gy).rgb,vec3(2.2));
+    vec2 cu=uv+vec2(CR,0.);float cl=smoothstep(.2,.8,textureGrad(CLOUD,cu,gx,gy).r);
+    /* у полюсов карта облаков вытянута полосами: в снимках разделов облака там гаснут */
+    float pf=(1.-smoothstep(1.1,1.35,abs(lat)))*CLA;cl*=pf;
+    float csh=smoothstep(.2,.8,textureGrad(CLOUD,cu+vec2(.002,-.0015),gx,gy).r)*pf;
+    float ndl=dot(n,L),lam=smoothstep(-.12,.5,ndl)*max(ndl+.12,0.)/1.12;
+    float oc=smoothstep(.0,.05,day.b-max(day.r,day.g)*.9);
+    vec3 surf=mix(day*(1.-.4*csh*(1.-cl)),vec3(.95),cl*.9);
+    vec3 e=surf*lam*1.2+surf*.01;
+    vec3 hv=normalize(L+vec3(0,0,1));e+=vec3(1.,.95,.85)*pow(max(dot(n,hv),0.),60.)*oc*(1.-cl)*.5*step(0.,ndl);
+    float nl=textureGrad(NIGHT,uv,gx,gy).r;e+=NLC*pow(nl,1.4)*1.1*smoothstep(.08,-.2,ndl)*(1.-cl*.8);
+    float dl=(1.-r)*C.z;float hz=exp(-dl/.035)*.85+exp(-dl/.16)*.25;
+    e=mix(e,ATM*(.35+.9*smoothstep(-.3,.5,ndl)),clamp(hz,0.,1.)*smoothstep(-.4,.3,ndl+.2));
+    if(DBG>.5&&DBG<1.5)e=day;
+    if(DBG>1.5&&DBG<2.5)e=vec3(cl);
+    if(DBG>2.5)e=vec3(abs(lat)/1.5708);
+    c=mix(c,e,cov);
+  }
+  return c;
+}
+void main(){
+  float mn=min(R.x,R.y);vec2 p=(gl_FragCoord.xy-.5*R)/mn;float px=1.3/mn;
+  C=vec3(CX,CY,.5*Z);L=normalize(LD);WV=vw(radians(GV.x),radians(GV.y),GV.z);CR=-T*.0006;
+  float cov;vec3 e=pow(max(earth(p,px,cov),0.),vec3(1./2.2));
+  vec3 c=e*mix(.55,DIM,cov)+.004;
+  o=vec4(c,1.);
+}`;
+const cv = document.getElementById('c'), gl = cv.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+const sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+const pr = gl.createProgram();
+gl.attachShader(pr, sh(gl.VERTEX_SHADER, '#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'));
+gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.bindAttribLocation(pr, 0, 'a'); gl.linkProgram(pr); gl.useProgram(pr);
+const U = n => gl.getUniformLocation(pr, n);
+const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+let ready = 0;
+['day', 'night', 'clouds'].forEach((n, i) => {
+  const t = gl.createTexture(), im = new Image();
+  im.onload = () => {
+    gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, t); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB8, gl.RGB, gl.UNSIGNED_BYTE, im);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.generateMipmap(gl.TEXTURE_2D);
+    ready++;
+  };
+  im.src = '../../assets/earth/' + n + '.webp';
+});
+gl.uniform1i(U('DAY'), 0); gl.uniform1i(U('NIGHT'), 1); gl.uniform1i(U('CLOUD'), 2);
+window.render = o => {
+  cv.width = o.w; cv.height = o.h; cv.style.width = o.w + 'px'; gl.viewport(0, 0, o.w, o.h);
+  gl.uniform2f(U('R'), o.w, o.h); gl.uniform1f(U('T'), o.t || 0); gl.uniform3f(U('GV'), ...o.gv); gl.uniform3f(U('LD'), ...o.ld); gl.uniform3f(U('NLC'), ...(o.nlc || [1, .78, .5]));
+  gl.uniform1f(U('Z'), o.z); gl.uniform1f(U('CY'), o.cy); gl.uniform1f(U('CX'), o.cx || 0); gl.uniform1f(U('DBG'), o.dbg || 0); gl.uniform1f(U('CLA'), o.cla == null ? 1 : o.cla); gl.uniform1f(U('DIM'), o.dim == null ? .36 : o.dim);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  return cv.toDataURL('image/png');
+};
+window.isReady = () => ready === 3;
+</script>

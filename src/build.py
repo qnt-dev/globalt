@@ -1,6 +1,8 @@
 import base64, json, os, sys
-# собирает index.html; другое имя файла можно передать для пробной сборки: python src/build.py proba.html
-OUT = sys.argv[1] if len(sys.argv) > 1 else 'index.html'
+# собирает zerno.html — прежний сайт целиком. Он нужен только странице «Кейс ZERNO» (kejs-zerno.html): она показывает в рамке его мир «Клиенты»
+# (станции Бренд, SMM, Реклама, Сайт и финал). Сам сайт теперь — страницы системы в корне, их собирает sistema/tools/pages.py.
+# Другое имя файла можно передать для пробной сборки: python src/build.py proba.html
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'zerno.html'
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); AS = os.path.join(ROOT, 'assets')

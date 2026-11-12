@@ -1,7 +1,8 @@
 import io, re, sys; sys.stdout.reconfigure(encoding="utf-8")
 from PIL import Image, ImageStat
 from playwright.sync_api import sync_playwright
-U='http://127.0.0.1:4391/index.html'
+# проверяет прежний сайт (zerno.html): из него страница «Кейс ZERNO» показывает мир «Клиенты». Новые страницы проверяют sistema/tools/*.py
+U='http://127.0.0.1:4391/zerno.html'
 ARGS=['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--enable-webgl']
 ok=[];bad=[]
 def held(p,i):

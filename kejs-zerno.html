@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Кейс ZERNO — GLOBAL TRIUMPH</title>
+<meta name="description" content="Кофейня ZERNO с нуля: бренд, SMM, реклама и сайт.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="assets/mark-white.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="sistema/base.css?v=29">
+<link rel="stylesheet" href="sistema/sys.css?v=29">
+</head>
+<body data-w="klienty" class="kejs">
+<div id="bar">
+  <nav id="nav" aria-label="Что вы ищете"><span class="nq"><a href="klienty.html"><svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>← Клиенты</a> · Кейс ZERNO</span></nav>
+  <div id="mn" data-open="false">
+    <button type="button" id="mn-chip" aria-expanded="false" aria-controls="mn-panel"><i aria-hidden="true"></i><span>Меню</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
+    <div id="mn-panel" role="dialog" aria-label="Меню"><ol class="mn-list"><li><a href="index.html"><i>00</i><b>Главная</b><small>к началу сайта</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li><li><a href="rabota.html"><i>01</i><b>Работа</b><small>вакансии вахтой</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li><li><a href="lyudi.html"><i>02</i><b>Люди</b><small>подбор персонала</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li><li><a href="klienty.html" aria-current="page"><i>03</i><b>Клиенты</b><small>сайт, бренд, реклама, SMM</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a></li><li><button type="button" data-talk><i>04</i><b>Напишите нам</b><small>обсудить задачу</small><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button></li></ol>
+      <button type="button" class="mn-x"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7L7 17M15 17H7V9"/></svg><span>Закрыть</span></button></div>
+  </div>
+  <a id="logo" href="index.html" aria-label="GLOBAL TRIUMPH: на главную"><img class="lg-f" src="assets/logo-white.svg" alt="GLOBAL TRIUMPH" width="132" height="76"><img class="lg-m" src="assets/mark-white.svg" alt=""></a>
+</div>
+<main><h1 class="vh">Кейс: кофейня ZERNO</h1><iframe id="world" title="Кейс ZERNO: бренд, SMM, реклама, сайт" src="zerno.html#klienty" allow="autoplay"></iframe></main>
+<script>
+/* мир «Клиенты» с сайта как он есть. Своя шапка сайта в нём спрятана: сверху шапка системы. #brend, #smm, #reklama, #sayt — сразу на станцию */
+(() => {
+  const f = document.getElementById('world'), ST = { sayt: 0, final: 0, reklama: 1, smm: 2, brend: 3 };
+  f.addEventListener('load', () => {
+    const d = f.contentDocument; if (!d) return;
+    const s = d.createElement('style'); s.textContent = '#bar{display:none!important}'; d.head.appendChild(s);
+    const k = location.hash.slice(1); if (k in ST) setTimeout(() => { const b = d.querySelector('#presets button[data-i="' + ST[k] + '"]'); if (b) b.click(); }, 900);
+    /* из кейса нет дороги в прежний сайт: «Ищете людей?», «Ищете работу?» ведут на новые страницы, «Обсудить…» — к разговору на «Клиентах» */
+    const NEW = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'klienty.html' }, TALK = 'klienty.html#k-svyaz';
+    d.addEventListener('click', e => {
+      const g = e.target.closest('[data-go]'), t = e.target.closest('#st-go, #x6-go, [data-talk], #contact-open'); if (!g && !t) return;
+      e.preventDefault(); e.stopPropagation(); location.href = g ? (NEW[g.dataset.go] || 'index.html') : TALK;
+    }, true);
+    const w = f.contentWindow; ['GTSITE', 'GTREK', 'GTSMM', 'GTBRD', 'GTFIN'].forEach(n => { if (w[n]) w[n].onTalk = () => { location.href = TALK; }; });
+    f.focus();
+  });
+})();
+</script>
+<dialog id="talk" aria-label="О чём поговорим"><div class="in"><button type="button" id="talk-x">Закрыть ✕</button><h2 class="dsp">О чём поговорим?</h2>
+<a href="rabota.html#r-svyaz">Ищу работу<small>01 →</small></a><a href="lyudi.html#l-svyaz">Нужны люди<small>02 →</small></a><a href="klienty.html#k-svyaz">Нужны клиенты<small>03 →</small></a></div></dialog>
+<canvas id="veil" aria-hidden="true"></canvas>
+<script src="sistema/sec.js?v=29"></script>
+<script src="sistema/earth-view.js?v=29"></script>
+<script src="sistema/sys.js?v=29"></script>
+</body>
+</html>

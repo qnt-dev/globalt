@@ -720,7 +720,9 @@ body.jk #logo{opacity:0;visibility:hidden;transition:filter .3s,opacity .3s,visi
 .po.ad .nm small{display:block;font-size:10.5px;color:var(--potx)}
 .x2-md{position:relative;overflow:hidden;background:#19181d;container-type:inline-size}
 #x2-pgl{position:absolute;inset:0;width:100%;height:100%;display:block}
-.x2-md .word{cursor:default}
+/* слова ZERNO и «20» стоят поверх лент на местах, которые им ставит post() в reklama.js; холст слова тянется на всю рамку, иначе при dpr 2 он вдвое больше */
+.x2-md .word{position:absolute;cursor:default}
+.x2-md .word canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .x2-md span{position:absolute;left:8%;bottom:9%;font-size:max(9px,3.7cqw);color:#ff5a45;letter-spacing:.06em}
 /* в конце ленты гаснет всё, кроме картинки поста */
 #x2-feed .po.nz,#x2-post .ph,#x2-post .by,#x2-post .tx,#x2-tags,#x2-ln{opacity:var(--rest,1)}

@@ -273,6 +273,11 @@ with sync_playwright() as pw:
          (2,'GTSMM','#x3-h',"'#x3-cap h3,#x3-cap p'",['День 1','План','Неделя','Сторис','Reels','Месяц','Отметки','3 месяца','Отчёт','Образ'],'подписаться','SMM','соцсет',37,'smm'),
          (1,'GTREK','x2',"'.x2-cap small,.x2-cap h3,.x2-cap p'",['Ищет','Находит','Листает','Рядом','Приходит'],'привести','рекламу','реклам',63,'ads'),
          (0,'GTSITE','#x5-h',"'#x5-cap small,#x5-cap h3,#x5-cap p'",['Было','Структура','Дизайн','Заказ','Телефон','Скорость','Заявки'],'видел','сайт','сайт',88,'site')]
+    # картинка поста «Рекламы»: слова стоят поверх лент на своих местах, «20» правым краем под ZERNO, холст слова во всю рамку (иначе при dpr 2 он вдвое больше)
+    WORD=("(()=>{const m=document.querySelector('#x2-md').getBoundingClientRect(),a=document.querySelector('#x2-p1'),b=document.querySelector('#x2-p2'),"
+          "ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect(),cv=a.querySelector('canvas').getBoundingClientRect();"
+          "return{pos:getComputedStyle(a).position,inside:ra.left>=m.left-1&&ra.right<=m.right+1&&ra.top>=m.top-1&&ra.bottom<=m.bottom+1,"
+          "right:Math.abs(ra.right-rb.right)/m.width,below:rb.top>ra.bottom-1,cv:Math.abs(cv.width-ra.width)<1.5&&Math.abs(cv.height-ra.height)<1.5}})()")
     for i,mod,hs,capsel,chapters,ask,word,topic,v,nm in STN:
         MS=f"window.{mod}.state"
         for w,h in [(390,844),(1024,768),(1440,900),(1920,1080)]:
@@ -289,6 +294,8 @@ with sync_playwright() as pw:
                 if t and (not seen or seen[-1]!=t):
                     seen.append(t); p.wait_for_timeout(600); r=p.evaluate(CLIP%capsel)
                     if r['out'] or r['sw']>r['W']: clip.append((t,r))
+                    if nm=='ads' and t=='Листает':
+                        wd=p.evaluate(WORD); check(f'ads post: ZERNO 20 over the ribbons, 20 right under the word, inside the picture {w}',wd['pos']=='absolute' and wd['inside'] and wd['right']<.03 and wd['below'] and wd['cv'],wd)
             check(f'{nm} wheel walks all chapters in order {w}',[x for x in seen if x in chapters]==chapters,seen)
             check(f'{nm} chapters fit the screen {w}x{h}',not clip,clip)
             check(f'{nm} no station text while the example runs {w}',p.evaluate(MS)['on'])

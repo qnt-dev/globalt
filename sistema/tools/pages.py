@@ -4,7 +4,7 @@
 # Главная и три раздела — один документ с четырьмя видами и одной Землёй (переходы — полёт камеры, tools/world-tail.js).
 # Четыре файла одинаковые, разный только вид при открытии (body data-w), заголовок и описание.
 # Перед этим: tools/extract.py (главная из src/) и tools/earth_shots.py (Земля для разделов).
-import os, json, html
+import re, os, json, html
 HERE = os.path.dirname(os.path.abspath(__file__)); SYS = os.path.join(HERE, '..'); ROOT = os.path.join(SYS, '..')
 P = json.load(open(os.path.join(SYS, 'parts.json'), encoding='utf-8'))
 DATA = json.load(open(os.path.join(SYS, 'data.json'), encoding='utf-8'))
@@ -12,7 +12,7 @@ SIGN = {k: f'<svg data-s="{k}" {v}' for k, v in P['signs'].items()}
 STAR = '<svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>'
 ARR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>'
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">'
-V = '?v=29'
+V = '?v=34'
 
 # прилёт полётом камеры: класс cam ставится до первой отрисовки (earth-view.js, EV.arrived)
 CAM = '''<script data-p="{p}">try{{var c=JSON.parse(sessionStorage.getItem('gt-cam')||'null');if(c&&c.to===document.currentScript.dataset.p&&Date.now()-(c.at||0)<15000)document.documentElement.classList.add('cam')}}catch(e){{}}</script>'''
@@ -84,6 +84,44 @@ def ch(id_, num, lab, h2, voice, body, full=False):
 def steps(items):
     return f'<ol class="steps" style="--n:{len(items)}" data-r>' + ''.join(f'<li><i>{i:02d}</i><b>{t}</b><p>{p}</p></li>' for i, (t, p) in enumerate(items, 1)) + '</ol>'
 
+# «Люди», «Как мы работаем»: проявка. Человек проявляется шаг за шагом (контур, штрих, плотный штрих, фото), число «виден на N %» растёт.
+# Разметка по умолчанию — готовое состояние (100 %, фото): без скрипта читается целиком. Рисует и считает sistema/portrait.js
+# Под шагами — документ «Работаем официально»: пока идут шаги, на листе пишутся строки (по строке на шаг), на 100 % ложится оранжевая печать-ромб.
+# Шапка листа — штрих под 45°, как у портрета. Рисунок 1:1 (57×72, центр 28.5 — на оси линии шагов), линии в 1 px на полупикселях — чёткие. Строки тянет portrait.js через --d1…--d5, печать — класс .full у .pt
+DOC = '''<svg class="pt-dk" width="57" height="72" viewBox="0 0 57 72" aria-hidden="true">
+<defs><pattern id="pt-hh" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M.5 0V3"/></pattern></defs>
+<path class="sh" d="M.5 .5H42.5L56.5 14.5V71.5H.5Z"/><path class="fo" d="M42.5 .5V14.5H56.5"/>
+<rect class="ln hh" x="6" y="6" width="30" height="9" fill="url(#pt-hh)" style="transform:scaleX(var(--d1,1))"/>
+<path class="ln" d="M6 22.5H49M6 27.5H45" style="transform:scaleX(var(--d2,1))"/>
+<path class="ln" d="M6 32.5H49M6 37.5H40" style="transform:scaleX(var(--d3,1))"/>
+<path class="ln" d="M6 42.5H31" style="transform:scaleX(var(--d4,1))"/>
+<path class="sg" pathLength="1" d="M7 63c3-9 6-9 5-4s-3 5 0 3 4-7 6-6-1 5 1 5 4-3 9-3"/><path class="ln sl" d="M6 64.5H27" style="transform:scaleX(var(--d5,1))"/>
+<g class="seal"><path d="M45 47.5 57.5 60 45 72.5 32.5 60Z"/><path class="m" d="M45 52 53 60 45 68 37 60Z"/><path class="in" d="M45 56 49 60 45 64 41 60Z"/></g>
+<path class="ink" d="M45 47.5 57.5 60 45 72.5 32.5 60Z"/>
+</svg>'''
+
+# неразрывные пробелы: короткое слово не висит в конце строки («с ним», «и ставим», «за 48 ч»), тире не начинает строку
+NB = ' '
+def nb(t):
+    t = re.sub(r'(?<![\wЁё])([А-Яа-яЁёA-Za-z]{1,2}) ', lambda m: m.group(1) + NB, t)
+    return re.sub(r'(\d) ', lambda m: m.group(1) + NB, t).replace(' —', NB + '—')
+
+def portrait(items, caps):
+    items = [(t, nb(p)) for t, p in items]; caps = [nb(c) for c in caps]
+    cap = ''.join(f'<span{" class=on" if i == len(caps) - 1 else ""}>{c}</span>' for i, c in enumerate(caps))
+    pp = ''.join(f'<span{" class=on" if i == len(items) else ""}>{p}</span>' for i, (t, p) in enumerate(items, 1))   # невысокий экран: текст только текущего шага, под списком
+    li = ''.join(f'<li class="{"on" if i == len(items) else "past"}"><button type="button" class="pt-k" aria-label="Шаг {i}: {t}">{i:02d}</button><b>{t}</b><p>{p}</p></li>' for i, (t, p) in enumerate(items, 1))
+    return f'''<div class="pt full">
+ <div class="pt-st">
+  <div class="pt-s"><ol class="pt-o">{li}</ol>
+   <p class="pt-p" aria-hidden="true">{pp}</p>
+   <div class="pt-d">{DOC}<div><b>Работаем официально</b><p>Договор и закрывающие документы.</p></div></div></div>
+  <div class="pt-f"><canvas aria-hidden="true"></canvas><img class="pt-fb" src="assets/photo/p4.webp" alt="Человек, которого вы ищете" width="1300" height="1300" loading="lazy" decoding="async"></div>
+  <div class="pt-m" aria-hidden="true"><p class="pt-l">Ваш человек виден на</p><p class="pt-v"><span class="pt-n">100</span><em>%</em></p><i class="pt-h"></i><p class="pt-c">{cap}</p></div>
+ </div>
+</div>
+<div class="pt-end"><span>7 дней до первой смены · 48 ч на замену</span><a class="lnk" href="#l-svyaz">Оставить заявку <i>→</i></a></div>'''
+
 def doors(cur):
     D = [('rabota', 'Работа', 'Вакансии и помощь с трудоустройством'), ('lyudi', 'Люди', 'Подбор персонала для вашей компании'), ('klienty', 'Клиенты', 'Сайты, реклама, SMM, брендбук и логотип')]
     li = ''.join(f'<li><a href="{w}.html"' + (' aria-current="page"' if w == cur else '') + f'><span class="dsp">{t}</span><small>{"Вы здесь · " if w == cur else ""}{s}</small></a></li>' for w, t, s in D)
@@ -154,15 +192,16 @@ ly = '<main class="view" data-view="lyudi">\n' + hero('lyudi', '02', 'Люди �
     'Найдём, проверим и привезём людей на склад или производство. От заявки до первой смены.',
     hud('Оставить заявку', '#l-svyaz', 'lyudi') + '<a class="lnk" href="#l-kak">Как мы работаем <i>→</i></a>',
     [('7 <em>дней</em>', 'от заявки до первой смены'), ('1 200', 'человек на вахтах сейчас'), ('48 <em>ч</em>', 'на замену выбывшего')]) + '\n' + \
-  ch('l-kogo', '02', 'Кого подбираем', 'Склад и производство', 'Те же профессии, что ищут у нас кандидаты. Выберите одну или несколько — они встанут в заявку.',
-     f'<div class="wall" data-r>{wall}</div><p class="txt" data-r>И менеджеров по клиентам на удалённую работу.</p>'
-     '<div class="pb" data-r><span id="pb-n" aria-live="polite"></span><a class="lnk" href="#l-svyaz">К заявке <i>→</i></a></div>') + '\n' + \
-  ch('l-kak', '03', 'Как мы работаем', 'От задачи до выхода', 'Пять шагов. Сами говорим с людьми и доводим до первой смены.', steps([
+  ch('l-kak', '02', 'Как мы работаем', 'От задачи до выхода', 'Пять шагов. Сами говорим с людьми и доводим до первой смены.', portrait([
      ('Разговор', 'Кого, сколько, когда и куда. Ставка, смены, жильё.'),
      ('Вакансия', 'Пишем объявление языком кандидата и ставим туда, где его видят.'),
      ('Отбор', 'Сами звоним людям: опыт, документы, готовность ехать.'),
      ('Дорога', 'Билеты, встреча, заселение. Человек приезжает к первой смене.'),
-     ('Замена', 'Если человек ушёл — ищем замену. Отчёт по людям каждую неделю.')])) + '\n' + \
+     ('Замена', 'Если человек ушёл — ищем замену. Отчёт по людям каждую неделю.')],
+     ['Контур: знаем, кого ищем', 'Черты: знаем, где его найти', 'Лицо: говорили с ним сами', 'Человек: едет к первой смене', 'На месте. Ушёл — замена за 48 ч']), full=True) + '\n' + \
+  ch('l-kogo', '03', 'Кого подбираем', 'Склад и производство', 'Те же профессии, что ищут у нас кандидаты. Выберите одну или несколько — они встанут в заявку.',
+     f'<div class="wall" data-r>{wall}</div><p class="txt" data-r>И менеджеров по клиентам на удалённую работу.</p>'
+     '<div class="pb" data-r><span id="pb-n" aria-live="polite"></span><a class="lnk" href="#l-svyaz">К заявке <i>→</i></a></div>') + '\n' + \
   ch('l-format', '04', 'Форматы', 'Под вашу задачу', 'Условия и сроки уточняем в разговоре.',
      '<div class="fmt" data-r><div><em>30–60 смен</em><b>Вахта</b><p class="txt">Люди живут у объекта. Жильё, дорогу и замены берём на себя.</p></div>'
      '<div><em>2–8 недель</em><b>Сезонный пик</b><p class="txt">Добавим людей на распродажи, праздники и сезон.</p></div>'
@@ -253,7 +292,7 @@ VIEWS = [('index.html', 'home', 'GLOBAL TRIUMPH', 'Вакансии, подбо�
 for f, w, t, d in VIEWS:
     body = bar(None if w == 'home' else w) + '\n' + HOME + '\n' + '\n'.join(m if mw == w else m.replace('<main class="view"', '<main class="view" hidden', 1) for mw, m in [('rabota', rab), ('lyudi', ly), ('klienty', kl)])
     if w != 'home': body = body.replace('<section id="home" class="world"', '<section id="home" class="world" hidden', 1)
-    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'svc.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">')
+    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'svc.js', 'portrait.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">')
 
 # ---------- «Кейс ZERNO»: мир станций сайта целиком, под шапкой системы ----------
 kj = bar('klienty', back=True) + '''

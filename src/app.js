@@ -653,6 +653,45 @@ const NOISE = ['Лучшие цены', 'Индивидуальный подхо
 /* станции слева направо по шкале */
 const ORD = ST.map((s, i) => i).sort((a, b) => ST[a].v - ST[b].v);
 const air = { v: 1, target: 1, q: 0, cur: -1, thr: [], snd: null, built: false };
+/* ---------- автопрокрутка кейса ----------
+   В рамке страницы «Кейс ZERNO» кейс идёт сам: невидимое колесо в каждом кадре делает маленький шаг (в среднем щелчок за 0,62 с),
+   поэтому примеры и сцены едут плавно; пока ручка едет по шуму между станциями, шаг раз в 0,1 с (перелёт не тянется). Человек крутит колесо, касается примера
+   или тянет ручку — автопрокрутка ждёт и через 5 секунд тишины идёт дальше; на кнопке идёт отсчёт.
+   Кнопка слева на нижней линии, у шкалы, ставит на паузу и снимает с неё; в конце финала она предлагает смотреть сначала.
+   В начале оранжевая плашка говорит, что кейс можно листать колесом (на телефоне — пальцем).
+   У zerno.html, открытого напрямую, автопрокрутки нет: так его проверяет src/test.py.
+   Если человек просит меньше движения, кейс стоит, пока не нажмут «Смотреть» */
+const AU = { on: window.top !== window, paused: RM, wait: 0, t: 0, last: 'k', done: false, st: '', hint: 0, built: false, start: 0 };
+AU.hintOff = () => { if (AU.hint === 1) { AU.hint = 2; $('#au-hint').classList.remove('on'); } };
+AU.user = () => { if (!AU.on) return; AU.wait = performance.now() + 5000; AU.t = 0; AU.hintOff(); };
+AU.ui = () => {
+  const now = performance.now(), w = !AU.paused && !AU.done && now < AU.wait;
+  const st = AU.done ? 'end' : AU.paused ? 'off' : w ? 'w' + Math.ceil((AU.wait - now) / 1000) : 'on';
+  if (st === AU.st) return; AU.st = st;
+  const b = $('#au'); b.dataset.s = st[0] === 'w' ? 'wait' : st;
+  b.querySelector('span').textContent = st === 'end' ? 'Сначала' : st === 'off' ? 'Смотреть' : st === 'on' ? 'Пауза' : (innerWidth <= 760 ? 'Через ' : 'Сам через ') + st.slice(1);
+  b.setAttribute('aria-label', st === 'end' ? 'Смотреть кейс сначала' : st === 'off' ? 'Включить автопрокрутку кейса' : 'Поставить автопрокрутку на паузу');
+};
+AU.init = () => {
+  if (!AU.on || AU.built) return; AU.built = true;
+  const b = $('#au'); b.hidden = false; $('#klienty').classList.add('au');
+  b.addEventListener('click', () => { if (AU.done) { location.reload(); return; } AU.paused = !AU.paused; AU.wait = 0; AU.t = 0; AU.hintOff(); AU.ui(); });
+  setTimeout(() => { if (AU.hint) return; AU.hint = 1; $('#au-hint').classList.add('on'); setTimeout(AU.hintOff, 10000); }, 700);
+  AU.start = performance.now() + 4500;                   /* первые секунды кейс стоит: человек читает вступление и подсказку */
+  AU.ui();
+};
+AU.step = dt => {
+  if (!AU.on || !AU.built || world !== 'klienty') return;
+  if (window.GTFIN && GTFIN.state.u >= .999) AU.done = true;
+  const x6 = $('#x6'); $('#klienty').classList.toggle('x6v', !!x6 && x6.style.visibility === 'visible' && +x6.style.opacity > .98);   /* финал закрыл всё: кнопка встаёт поверх него */
+  AU.ui();
+  const now = performance.now();
+  if (AU.paused || AU.done || now < AU.wait || now < AU.start || $('#talk').open) { AU.t = 0; return; }
+  /* ход плавный: в каждом кадре маленький шаг колеса, в среднем один щелчок (100) за 0,62 с — пример едет непрерывно, без «шаг — стоп».
+     Пока ручка едет по шуму между станциями, шаг раз в 0,1 с: ручка сдвигается на деление за шаг при любом его размере */
+  AU.t += dt;
+  if (AU.last !== 'k' || AU.t >= .1) { const dy = 100 * AU.t / .62; AU.t = 0; AU.last = air.wheel(dy); }
+};
 const GLY = 'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЫЭЮЯ#%/*+=';
 function buildAir() {
   if (air.built) return; air.built = true;
@@ -661,32 +700,39 @@ function buildAir() {
     return `<span style="left:${x}vw;top:${y}vh;font-size:${fs}vw;--wd:${wd};animation-delay:-${i * .07}s">${t}</span>`;
   }).join('');
   $('#presets').innerHTML = ORD.map(i => `<button type="button" style="left:${ST[i].v}%" data-i="${i}" aria-pressed="false" aria-label="${ST[i].full}">${ST[i].name}</button>`).join('');
-  $$('#presets button').forEach(b => b.addEventListener('click', () => { const v = ST[+b.dataset.i].v; air.target = v; if (RM) air.v = v; $('#tun').value = v; dirty = true; }));
-  const t = $('#tun'); t.addEventListener('input', () => { air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
-  $('#klienty').addEventListener('wheel', e => {
+  $$('#presets button').forEach(b => b.addEventListener('click', () => { AU.user(); const v = ST[+b.dataset.i].v; air.target = v; if (RM) air.v = v; $('#tun').value = v; dirty = true; }));
+  const t = $('#tun'); t.addEventListener('input', () => { AU.user(); air.target = +t.value; if (RM) air.v = air.target; dirty = true; });
+  /* Колесо человека и шаг автопрокрутки ведут одно и то же. ev — настоящее событие колеса (его гасим), у шага автопрокрутки ev нет.
+     Возвращает 'k', если шаг ушёл на ручку (перелёт между станциями), иначе 'x' (шаг примера или сцены) */
+  air.wheel = (dy, ev) => {
+    const pd = () => { if (ev) ev.preventDefault(); };
     /* На станциях с примером колесо сначала ведёт пример, потом ручку */
     const ex = air.cur === 0 ? window.GTSITE : air.cur === 1 ? window.GTREK : air.cur === 2 ? window.GTSMM : air.cur === 3 ? window.GTBRD : null;
     /* У «Бренда», пока идут «Сто одинаковых» и план, колесо листает саму сцену: щелчок — шаг 0,05 хода, сцена плавно доезжает до него.
        Назад колесо так же листает сцену назад, пока пример «Бренда» стоит в начале. Пока колесо крутят, сцена сама не идёт.
        После конца сцены колесо вперёд держится ещё секунду: волна сетки успевает встать */
     if (air.cur === 3 && J.on) {
-      const dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1);
       const fw = dy > 0 && (!J.clean || J.dot < 1), bk = dy < 0 && J.k > .002 && !(window.GTBRD && GTBRD.state.u > 0);
       if (fw || bk) {
-        e.preventDefault(); dirty = true; J.idle = 0;
+        pd(); dirty = true; J.idle = 0;
         if (J.pop > 1.1 && !(fw && J.clean)) { const b = J.goal ?? J.k; J.goal = clamp(b + clamp(dy / 100, -3, 3) * .05, Math.max(0, J.k - .15), Math.min(JKMAX, J.k + .15)); }
-        return; } }
+        return 'x'; } }
     /* после конца «Сайта» колесо ведёт финал «Каждый день» (final.js); пока финал идёт, он забирает колесо раньше «Сайта» */
-    const wdy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1), fin = air.cur === 0 && window.GTFIN;
-    if (fin && GTFIN.on && GTFIN.wheel(wdy)) { e.preventDefault(); dirty = true; return; }
-    if (ex && ex.wheel(wdy)) { e.preventDefault(); dirty = true; return; }
-    if (fin && GTFIN.wheel(wdy)) { e.preventDefault(); dirty = true; return; }
+    const fin = air.cur === 0 && window.GTFIN;
+    if (fin && GTFIN.on && GTFIN.wheel(dy)) { pd(); dirty = true; return 'x'; }
+    if (ex && ex.wheel(dy)) { pd(); dirty = true; return 'x'; }
+    if (fin && GTFIN.wheel(dy)) { pd(); dirty = true; return 'x'; }
     /* ручка встаёт на каждой станции: быстрое колесо не проскакивает станцию, пока её пример не успел включиться.
        Ручка прыгает на отметку за 2,5 деления до неё: сигнал ловится за 2,1, и пример иначе забрал бы колесо, не дав ручке дойти до отметки */
-    e.preventDefault(); dirty = true; const now = performance.now(); if (now < (air.lock || 0)) return;
-    const dir = Math.sign(e.deltaY), nt = clamp(air.target + dir * 1.2, 0, 100), hit = ORD.map(i => ST[i]).find(st => (st.v - air.target) * dir > .01 && (st.v - nt) * dir <= 2.5);
+    pd(); dirty = true; const now = performance.now(); if (now < (air.lock || 0)) return 'x';
+    const dir = Math.sign(dy), nt = clamp(air.target + dir * 1.2, 0, 100), hit = ORD.map(i => ST[i]).find(st => (st.v - air.target) * dir > .01 && (st.v - nt) * dir <= 2.5);
     if (hit) { air.target = hit.v; air.lock = now + (RM ? 0 : 900); } else air.target = nt;
-    t.value = air.target; }, { passive: false });
+    t.value = air.target; return hit ? 'x' : 'k';
+  };
+  $('#klienty').addEventListener('wheel', e => { AU.user(); air.wheel(e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1), e); }, { passive: false });
+  /* касание примера, щелчок по пустому месту, перетаскивание ручки — тоже «человек сам»; кнопка паузы и ссылки внизу (звук, разделы) — нет */
+  $('#klienty').addEventListener('pointerdown', e => { if (!e.target.closest('#au, #air-foot')) AU.user(); }, true);
+  AU.init();
   $('#st-go').addEventListener('click', () => openTalk(air.cur >= 0 ? ST[air.cur].full : ''));
   $('#sound').addEventListener('click', toggleSound);
 }
@@ -1240,7 +1286,7 @@ function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now; const time = (now - T0) / 1000;
   if (!document.hidden) {
     if (world === 'home') { updateHome(RM ? 0 : dt); if (!RM || dirty) drawHome(RM ? 2 : time); }
-    else if (world === 'klienty') { updateAir(dt); const drew = !RM || dirty; if (drew) drawAir(RM ? 2 : time); }
+    else if (world === 'klienty') { AU.step(dt); updateAir(dt); const drew = !RM || dirty; if (drew) drawAir(RM ? 2 : time); }
     dirty = false;
     if (!RM && gl && !window.__fixed) { acc += now - (frame.p || now); cnt++; frame.p = now; if (cnt > 40) { const ms = acc / cnt; acc = 0; cnt = 0; if (ms > 34 && scale > .6) { scale = Math.max(.6, scale * .8); resize(); } } }
   }

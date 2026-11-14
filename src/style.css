@@ -427,6 +427,38 @@ body.ink #dial::before{background:rgba(255,255,255,calc(.64*var(--g,1)));border-
 #sound{background:none;border:0;padding:0;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:4px;color:inherit;align-self:flex-start}
 #air-foot{display:flex;flex-wrap:wrap;gap:0 22px;align-items:center;font-size:13px;font-weight:600}
 #air-foot button{color:inherit;background:none;border:0;padding:0;min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;font-weight:600;font-size:13px}
+/* автопрокрутка кейса — только в рамке страницы «Кейс ZERNO» (класс .au ставит app.js).
+   Кнопка слева на нижней линии, у шкалы: пауза, «Смотреть», отсчёт «Сам через 5», в конце «Сначала». Ширина одна при любой надписи — шкала не сдвигается.
+   В начале над нижней строкой оранжевая плашка: кейс можно листать колесом (на телефоне — пальцем) */
+#klienty.au #dial{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:clamp(12px,1.6vw,26px);align-items:end}
+#klienty.au #presets,#klienty.au #scale{grid-column:2}
+#au{grid-column:1;grid-row:1/3;align-self:end;display:flex;align-items:center;gap:9px;box-sizing:border-box;width:10.6em;height:40px;padding:0 10px;border:1px solid currentColor;background:none;color:inherit;cursor:pointer;font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:clamp(12px,1.05vw,15px);font-variation-settings:"wdth" 80;white-space:nowrap;pointer-events:auto;transition:background .2s,color .2s,border-color .2s}
+#au svg{width:14px;height:14px;flex:none}
+#au path{fill:currentColor}
+#au .i-re{fill:none;stroke:currentColor;stroke-width:1.8}
+#au .i-pl,#au .i-re{display:none}
+#au:not([data-s=on]) .i-pa{display:none}
+#au[data-s=off] .i-pl,#au[data-s=wait] .i-pl{display:block}
+#au[data-s=end] .i-re{display:block}
+#au[data-s=off],#au[data-s=end]{background:#ff5c0a;border-color:#ff5c0a;color:#000}
+#au:hover{background:#ff5c0a;border-color:#ff5c0a;color:#000}
+#au:focus-visible{outline:2px solid #ff5c0a;outline-offset:3px}
+#air-foot{position:relative}
+#au-hint{position:absolute;left:0;bottom:calc(100% + 14px);z-index:2;margin:0;display:grid;gap:6px;max-width:min(540px,calc(100vw - var(--gut) - var(--gutr)));padding:14px 18px 15px;background:#ff5c0a;color:#000;opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+#au-hint.on{opacity:1;transform:none}
+#au-hint b{font-family:var(--disp);font-weight:800;text-transform:uppercase;font-size:clamp(22px,2.3vw,36px);line-height:.95;font-variation-settings:"wdth" 70}
+#au-hint em{font-style:normal}
+#au-hint small{font-size:13px;font-weight:600;line-height:1.35}
+#au-hint .ht{display:none}
+@media (hover:none){#au-hint .hm{display:none}#au-hint .ht{display:inline}}
+#klienty:not(.au) #au-hint{display:none}
+/* финал «Каждый день» закрывает шкалу целиком; когда он открылся полностью, кнопка автопрокрутки встаёт на своё место поверх него */
+#klienty.au.x6v #air{z-index:7}
+#klienty.au.x6v #air>:not(#dial){visibility:hidden}
+#klienty.au.x6v #dial::before{display:none}
+#klienty.au.x6v #presets,#klienty.au.x6v #scale{visibility:hidden}
+@media (pointer:coarse){#au{height:52px}}
+@media (max-width:760px){#au{width:7.4em;font-size:11px;gap:6px;padding:0 7px}#au svg{width:12px;height:12px}#au-hint b{font-size:24px}#au-hint small{font-size:12.5px}}
 #klienty[data-st="0"]{background:#000}
 /* «Сайт»: вместо кнопок вопрос заказчику и лёгкая подсказка, что дальше крутить колесо или щёлкнуть */
 #st-ask,#st-hint{display:none}

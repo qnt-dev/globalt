@@ -12,7 +12,7 @@ SIGN = {k: f'<svg data-s="{k}" {v}' for k, v in P['signs'].items()}
 STAR = '<svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>'
 ARR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>'
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">'
-V = '?v=34'
+V = '?v=36'
 
 # прилёт полётом камеры: класс cam ставится до первой отрисовки (earth-view.js, EV.arrived)
 CAM = '''<script data-p="{p}">try{{var c=JSON.parse(sessionStorage.getItem('gt-cam')||'null');if(c&&c.to===document.currentScript.dataset.p&&Date.now()-(c.at||0)<15000)document.documentElement.classList.add('cam')}}catch(e){{}}</script>'''
@@ -255,11 +255,30 @@ SV = [('brend', 'Бренд', 'Имя, знак, цвет, шрифт и пра�
       ('reklama', 'Реклама', 'Поиск, карты и таргет.', ['Поиск', 'Карты', 'Таргет', 'Аналитика']),
       ('sayt', 'Сайт', 'Структура, дизайн, заказ с телефона и скорость.', ['Структура', 'Дизайн', 'Заказ', 'Скорость', 'Заявки'])]
 # на кейс ZERNO ведёт одна ссылка — кнопка в конце главы «Кейс»; услуги и кадры кейса не ссылки
-# услуги: четыре строки и рядом поле «сто одинаковых» (svc.js) — этап строки показывает, что услуга делает с вашей точкой среди ста
-svc = ''.join(f'<li tabindex="0"><i>{i:02d}</i><span class="dsp">{t}</span><p class="d">{d}</p><p class="t">{" · ".join(L)}</p></li>' for i, (k, t, d, L) in enumerate(SV, 1))
-svc = (f'<div class="sv2" data-r><ol class="svc">{svc}</ol>'
-       '<figure class="field" aria-hidden="true"><p class="fc-n"><span>Подписчики<b data-n="f">0</b></span><span>Нашли рядом<b data-n="r">0</b></span><span>Заказы<b data-n="o">0</b></span></p>'
-       '<canvas></canvas><figcaption class="fc-cap"></figcaption></figure></div>')
+# услуги: стопка (stopka.js). Глава липнет к экрану на четыре этапа: слева этапы на линии с ромбами, справа четыре плиты ложатся
+# террасой, бренд внизу; на каждой плите — настоящие работы кейса ZERNO. В финале стопка складывается в знак «Одна команда».
+# Разметка по умолчанию — готовое состояние: без скрипта читается списком
+SVB = {'brend': 'Вас узнают с одного взгляда.', 'smm': 'На вас подписываются.', 'reklama': 'Вас находят рядом, когда ищут.', 'sayt': 'Вам пишут и заказывают.'}
+svc = ''.join(f'<li><button type="button" class="sf-k" aria-label="Этап {i}: {t}">{i:02d}</button><b>{t}</b><p>{nb(SVB[k] + " " + d)}</p></li>' for i, (k, t, d, L) in enumerate(SV, 1))
+# под шагами — знак «Одна команда»: в ромб сходятся четыре провода, по одному на этап; провод загорается, когда этап пройден,
+# на 100 % знак оранжевый. Ширина 57: центр 28.5 — на оси линии шагов, линия входит в верхний угол ромба (stopka.js, класс .full).
+# Три контура и сердцевина — как у знака, в который складывается стопка: четыре уровня — четыре этапа
+TEAM = '''<svg class="sf-tk" width="57" height="57" viewBox="0 0 57 57" aria-hidden="true">
+<path class="st" d="M28.5 0V14"/>
+<path class="w w1" d="M3 34H8.5"/><path class="w w2" d="M6 12 18.5 24"/><path class="w w3" d="M51 12 38.5 24"/><path class="w w4" d="M54 34H48.5"/>
+<rect class="t w1" x="0" y="32" width="4" height="4"/><rect class="t w2" x="3" y="9" width="4" height="4"/><rect class="t w3" x="50" y="9" width="4" height="4"/><rect class="t w4" x="53" y="32" width="4" height="4"/>
+<path class="o" d="M28.5 14 48.5 34 28.5 54 8.5 34Z"/><path class="m" d="M28.5 19.2 43.3 34 28.5 48.8 13.7 34Z"/><path class="m" d="M28.5 24 38.5 34 28.5 44 18.5 34Z"/><path class="c" d="M28.5 28.6 33.9 34 28.5 39.4 23.1 34Z"/>
+</svg>'''
+SVP = ''.join(f'<span{" class=on" if i == 1 else ""}>{nb(SVB[k] + " " + d)}</span>' for i, (k, t, d, L) in enumerate(SV, 1))   # невысокий экран: текст только текущего шага
+svc = (f'''<div class="sf">
+ <div class="sf-st">
+  <div class="sf-v" aria-hidden="true"></div>
+  <div class="sf-s"><ol class="sf-o">{svc}</ol>
+   <p class="sf-p" aria-hidden="true">{SVP}</p>
+   <div class="sf-d">{TEAM}<div><b>Одна команда на\u00a0все четыре этапа</b><p>От имени до\u00a0первого заказа.</p></div></div></div>
+ </div>
+</div>
+<div class="sf-end"><span>Можно заказать один этап или все четыре</span><a class="lnk" href="#k-svyaz">Обсудить проект <i>→</i></a></div>''')
 CASE = [('brend', 'Бренд', 'имя и знак'), ('smm', 'SMM', 'первый месяц'), ('reklama', 'Реклама', 'рядом с вами'), ('sayt', 'Сайт', 'заказ за минуту'), ('final', 'Каждый день', 'финал кейса')]
 case = ''.join(f'<div><span class="im"><img src="sistema/img/kejs-{k}.webp" alt="{t}: кадр из кейса ZERNO" loading="lazy"></span><b>{t}</b><small>{s}</small></div>' for k, t, s in CASE)
 kl = '<main class="view" data-view="klienty">\n' + hero('klienty', '03', 'Клиенты · маркетинг',
@@ -267,7 +286,7 @@ kl = '<main class="view" data-view="klienty">\n' + hero('klienty', '03', 'Кли
     'Бренд, соцсети, реклама и сайт. Одна команда ведёт бизнес от имени до первого заказа.',
     hud('Обсудить проект', '#k-svyaz', 'klienty') + '<a class="lnk" href="#k-uslugi">Что мы делаем <i>→</i></a>',
     [('Бренд', 'имя, знак, правила'), ('SMM', 'план и контент'), ('Реклама', 'поиск, карты, таргет'), ('Сайт', 'заказ с телефона')], f4=True) + '\n' + \
-  ch('k-uslugi', '02', 'Услуги', 'Четыре этапа', 'Каждый можно заказать отдельно. Вместе они работают сильнее.', svc) + '\n' + \
+  ch('k-uslugi', '02', 'Услуги', 'Четыре этапа', 'Каждый можно заказать отдельно. Вместе они работают сильнее.', svc, full=True) + '\n' + \
   ch('k-keys', '03', 'Кейс', 'Кофейня ZERNO', 'Мы придумали кофейню с нуля и провели её через все четыре этапа. Каждый этап можно покрутить вживую.',
      f'<div class="case" data-r>{case}</div>' + hud('Открыть кейс', 'kejs-zerno.html', 'klienty')) + '\n' + \
   ch('k-kak', '04', 'Как работаем', 'Без сюрпризов', 'Цена и сроки известны до начала работы.', steps([
@@ -292,7 +311,7 @@ VIEWS = [('index.html', 'home', 'GLOBAL TRIUMPH', 'Вакансии, подбо�
 for f, w, t, d in VIEWS:
     body = bar(None if w == 'home' else w) + '\n' + HOME + '\n' + '\n'.join(m if mw == w else m.replace('<main class="view"', '<main class="view" hidden', 1) for mw, m in [('rabota', rab), ('lyudi', ly), ('klienty', kl)])
     if w != 'home': body = body.replace('<section id="home" class="world"', '<section id="home" class="world" hidden', 1)
-    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'svc.js', 'portrait.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">')
+    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'stopka.js', 'portrait.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">')
 
 # ---------- «Кейс ZERNO»: мир станций сайта целиком, под шапкой системы ----------
 kj = bar('klienty', back=True) + '''

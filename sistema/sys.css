@@ -425,26 +425,148 @@ body.nogl .hero-bg{opacity:1}
 
 /* ---------- «Клиенты»: четыре услуги и кейс ---------- */
 .facts.f4{grid-template-columns:repeat(4,minmax(0,1fr))}
-/* услуги: четыре строки слева, справа поле «сто одинаковых» (svc.js). Строка этапа белая и широкая, пройденные этапы светлее — этапы копятся.
-   Каждое слово стоит одно в своей строке и не переносится: рост в ширину ничего не двигает */
-.sv2{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,4fr);gap:var(--col);align-items:stretch}
-.svc{margin:0;padding:0;list-style:none;border-bottom:1px solid var(--ln)}
-.svc li{position:relative;display:grid;grid-template-columns:3ch minmax(0,1fr);column-gap:14px;row-gap:9px;padding:clamp(18px,2.6vh,28px) 0;border-top:1px solid var(--ln);cursor:default;outline:none}
-.svc li::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:var(--or);transform:scaleX(var(--p,0));transform-origin:0 50%}
-.svc li>i{grid-row:1/4;font:500 12px var(--mono);letter-spacing:.1em;color:var(--or);font-style:normal;padding-top:.7em}
-.svc .dsp{font-size:clamp(40px,4.4vw,88px);color:#4a4a4e;white-space:nowrap;transition:font-variation-settings .6s cubic-bezier(.2,.9,.2,1),color .3s}
-.svc .d{margin:0;font:400 15px/1.45 var(--text);color:var(--i4);transition:color .3s}
-.svc .t{margin:0;font:500 11px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#38383c;transition:color .3s}
-.svc li.past .dsp{color:#8a8a90}
-.svc li.on .dsp{color:#fff;--wd:78}
-.svc li.on .d{color:var(--i2)}
-.svc li.on .t{color:var(--i3)}
-.svc li:focus-visible .dsp{text-decoration:underline;text-decoration-color:var(--or);text-underline-offset:.12em;text-decoration-thickness:2px}
-.field{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:14px;margin:0;padding:16px 0;border-top:1px solid var(--ln);border-bottom:1px solid var(--ln)}
-.field canvas{display:block;width:100%;height:100%;min-height:280px}
-.fc-n{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0;font:500 11px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--i4)}
-.fc-n b{font-weight:500;color:#fff;margin-left:8px;display:inline-block;min-width:2ch}
-.fc-cap{font:500 12px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--i2);min-height:2.8em}
+/* ---------- услуги: стопка (stopka.js). Глава липнет к экрану, пока идут четыре этапа. Слева этапы на линии с ромбами,
+   как на «Людях»; справа четыре графитовые плиты ложатся террасой, бренд внизу, на каждой — настоящие работы кейса ZERNO.
+   В финале стопка складывается в знак «Одна команда». Сцена — слой .sk поверх .sf-v, его место и размер задаёт stopka.js.
+   Меняются только сцена, цвет и прозрачность — ни размеры, ни места элементов страницы не меняются ---------- */
+.sf{position:relative}
+.sf.js{height:calc(100svh + 480svh)}
+.sf-st{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--col);box-sizing:border-box;height:100svh;padding:calc(var(--hh) + 16px) 0 28px}
+.sf.js .sf-st{position:sticky;top:0}
+.sf-s{grid-column:1/5;grid-row:1;position:relative;z-index:1;display:grid;align-content:center}
+.sf-v{grid-column:5/13;grid-row:1}
+.sf-o{position:relative;display:grid;row-gap:clamp(18px,4vh,44px);margin:0;padding:0 0 0 52px;list-style:none}
+.sf-s::before,.sf-s::after{content:"";position:absolute;left:28px;top:var(--lt,7px);height:var(--lh,calc(100% - 7px));width:1px;background:var(--ln)}
+.sf-s::after{background:var(--or);transform:scaleY(var(--f,1));transform-origin:50% 0}
+.sf-o li{position:relative;display:grid;justify-items:start;gap:8px;cursor:pointer}
+.sf-k{position:relative;min-height:24px;padding:0;background:none;border:0;font:500 12px/1 var(--mono);letter-spacing:.14em;color:var(--or);cursor:pointer}
+.sf-k::before{content:"";position:absolute;left:-30px;top:5px;width:13px;height:13px;box-sizing:border-box;background:#000;border:1px solid #4c4c50;transform:rotate(45deg);transition:background .3s,border-color .3s}
+.sf-o li.past .sf-k::before,.sf-o li.on .sf-k::before,.sf:not(.js) .sf-k::before{background:var(--or);border-color:var(--or)}
+.sf-o b{font:800 clamp(28px,2.6vw,46px)/.92 var(--disp);font-variation-settings:"wdth" 56;text-transform:uppercase;color:#55555a;transition:color .3s}
+.sf-o p{margin:0;max-width:27em;font:400 14.5px/1.55 var(--text);color:#5e5e63;transition:color .3s}
+.sf-o li.past b{color:#8a8a90}.sf-o li.past p{color:var(--i3)}
+.sf-o li.on b,.sf-o li:hover b,.sf:not(.js) .sf-o b{color:#fff}.sf-o li.on p,.sf:not(.js) .sf-o p{color:var(--i2)}
+.sf-k:focus-visible{outline:none;text-decoration:underline;text-underline-offset:4px}
+/* «Одна команда» под шагами: линия шагов входит в верхний угол ромба; провода загораются по этапам (.l1….l4), на 100 % знак оранжевый */
+.sf-d{display:grid;grid-template-columns:57px minmax(0,1fr);column-gap:24px;align-items:center;margin:clamp(16px,3vh,36px) 0 0}
+.sf-tk{display:block;overflow:visible}
+.sf-tk path,.sf-tk rect{transition:stroke .3s,fill .3s}
+.sf-tk .st{fill:none;stroke:var(--ln)}
+.sf-tk .w{fill:none;stroke:#4c4c50}.sf-tk .t{fill:#4c4c50}
+.sf-tk .o{fill:#000;stroke:#8a8a90}.sf-tk .m{fill:none;stroke:#4c4c50}.sf-tk .c{fill:#4c4c50}
+.sf-tk.l1 path.w1,.sf-tk.l2 path.w2,.sf-tk.l3 path.w3,.sf-tk.l4 path.w4{stroke:var(--or)}
+.sf-tk.l1 rect.w1,.sf-tk.l2 rect.w2,.sf-tk.l3 rect.w3,.sf-tk.l4 rect.w4{fill:var(--or)}
+.sf.full .sf-tk .st,.sf.full .sf-tk .o,.sf.full .sf-tk .m{stroke:var(--or)}.sf.full .sf-tk .c{fill:var(--or)}
+.sf:not(.js) .sf-tk path.w{stroke:var(--or)}.sf:not(.js) .sf-tk rect.t,.sf:not(.js) .sf-tk .c{fill:var(--or)}.sf:not(.js) .sf-tk .o,.sf:not(.js) .sf-tk .m{stroke:var(--or)}
+.sf-d b{display:block;text-wrap:balance;font:800 clamp(18px,1.45vw,26px)/1.02 var(--disp);font-variation-settings:"wdth" 56;text-transform:uppercase;color:#8a8a90;transition:color .3s}
+.sf-d p{margin:7px 0 0;font:400 14.5px/1.45 var(--text);color:var(--i3)}
+.sf.full .sf-d b,.sf:not(.js) .sf-d b{color:#fff}
+/* невысокий экран (класс .cmp ставит stopka.js, когда шаги с текстами и знак не входят по высоте): шаги — «номер · название»,
+   текст только текущего шага под списком, в одной ячейке; высота не зависит от шага */
+.sf-p{display:none}
+.sf.cmp .sf-o{row-gap:clamp(8px,1.5vh,14px)}
+.sf.cmp .sf-o li{grid-template-columns:40px minmax(0,1fr);align-items:center;gap:0}
+.sf.cmp .sf-o p{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sf.cmp .sf-p{display:grid;margin:clamp(12px,2vh,20px) 0 0;padding-left:92px;font:400 14.5px/1.5 var(--text);color:var(--i2)}
+.sf.cmp .sf-d{column-gap:35px}   /* текст «Одной команды» — на одной линии с этапами компактного списка */
+.sf.cmp .sf-p span{grid-area:1/1;opacity:0;transition:opacity .35s}
+.sf.cmp .sf-p span.on{opacity:1}
+.sf-end{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:12px 30px;margin-top:clamp(18px,3vh,32px);padding-top:16px;border-top:1px solid var(--ln)}
+.sf-end span{font:500 12px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--i3)}
+@media (max-width:1100px) and (min-width:761px){.sf-o p{font-size:13.5px}}
+/* совсем низкое окно: сцена не прилипает, этапы проходят, пока стопка идёт через экран (ноутбук 1280×720 — обычная глава, компактный список) */
+@media (min-width:761px) and (max-height:480px){.sf.js{height:auto}.sf.js .sf-st{position:relative;height:auto;min-height:600px}}
+/* телефон и высокий планшет: сцена сверху, этапы в одну линию снизу и текст только текущего */
+@media (max-width:760px),(min-width:761px) and (max-aspect-ratio:4/5){
+  .sf.js{height:calc(100svh + 440svh)}
+  .sf-st{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;row-gap:8px;padding:calc(var(--hh) + 6px) 0 14px}
+  .sf-v{grid-column:1;grid-row:1}
+  .sf-s{grid-column:1;grid-row:2}
+  .sf.js .sf-o{grid-template-columns:repeat(4,minmax(0,1fr));column-gap:0;row-gap:6px;padding:22px 0 0}
+  .sf-s::before,.sf-s::after{display:none}
+  .sf-o::before,.sf-o::after{content:"";position:absolute;left:0;right:0;top:6px;height:1px;background:var(--ln)}
+  .sf-o::after{background:var(--or);transform:scaleX(var(--f,1));transform-origin:0 50%}
+  .sf.js .sf-o li{display:contents}
+  .sf-k{grid-row:1;justify-self:start;min-height:34px;font-size:11px;text-align:left}
+  .sf-o li:nth-child(1) .sf-k{grid-column:1}.sf-o li:nth-child(2) .sf-k{grid-column:2}.sf-o li:nth-child(3) .sf-k{grid-column:3}.sf-o li:nth-child(4) .sf-k{grid-column:4}
+  .sf-k::before{left:0;top:-22px}
+  .sf-o b{grid-row:2;grid-column:1/-1;font-size:30px;justify-self:start}
+  .sf-o p{grid-row:3;grid-column:1/-1;min-height:3.1em;font-size:13.5px}
+  .sf.js .sf-o li b,.sf.js .sf-o li p{opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s,color .3s}
+  .sf.js .sf-o li.on b,.sf.js .sf-o li.on p{opacity:1;visibility:visible}
+  .sf-d{grid-template-columns:40px minmax(0,1fr);column-gap:16px;margin:12px 0 0}
+  .sf-tk{width:40px;height:40px}
+  .sf-d b{font-size:18px}.sf-d p{margin-top:4px;font-size:13px}
+  .sf-end{grid-template-columns:1fr;gap:10px}
+  .sf-end .lnk{justify-self:start}
+}
+/* ---------- стопка: 3D-сцена из граней (CSS 3D), картинки работ — в sistema/img/uslugi ---------- */
+.sk{position:absolute;z-index:0;pointer-events:none;overflow:hidden}
+.sf:not(.js) .sk{display:none}
+.sk-v{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.sk-o,.sk-w,.sk-b,.sk-p,.sk-wg{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.sk-f{position:absolute;box-sizing:border-box;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.sk-fl{display:none}
+/* свечение пола — плоское, в экранных координатах; к своему краю гаснет до чёрного, поэтому нигде не обрезается */
+.sk-gl{position:absolute;pointer-events:none;background:radial-gradient(closest-side,#161619 0%,#111113 40%,rgba(13,13,15,.6) 64%,rgba(0,0,0,0) 100%)}
+.sk-bt{background:rgba(0,0,0,.92);box-shadow:0 0 22px 10px rgba(0,0,0,.85)}
+/* плита: графит на ступень светлее, светлая кромка сверху, у текущей — оранжевая */
+.sk-top{background:linear-gradient(172deg,#262629 0%,#222226 45%,#1e1e21 100%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14)}
+.sk-o.cur .sk-top{box-shadow:inset 0 0 0 2px #ff5c0a}
+.sk-fr{background:linear-gradient(180deg,#1b1b1e 0%,#131316 100%);border-top:2px solid rgba(255,255,255,.17);box-shadow:inset 1px 0 0 #2a2a2e,inset -1px 0 0 #2a2a2e;overflow:hidden}
+.sk-o.cur .sk-fr{border-top-color:#ff5c0a}
+.sk-sd{background:linear-gradient(180deg,#121215 0%,#101013 100%);border-top:2px solid rgba(255,255,255,.1);box-shadow:inset 1px 0 0 #2a2a2e,inset -1px 0 0 #2a2a2e}
+.sk-o.cur .sk-sd{border-top-color:rgba(255,92,10,.75)}
+/* торец: номер и этап оранжевым моно, крупно — следствие, вырезанное в графите; у текущей горит белым */
+.sk-n{position:absolute;inset:0;display:flex;align-items:center;gap:26px;padding:0 34px;white-space:nowrap}
+.sk-n i{font:500 15px/1 var(--mono);font-style:normal;letter-spacing:1.6px;text-transform:uppercase;color:#ff5c0a;opacity:.55}
+.sk-n b{font:800 46px/1 var(--disp);font-variation-settings:"wdth" 70;text-transform:uppercase;letter-spacing:1px;color:#0c0c0e;text-shadow:0 1px 0 rgba(255,255,255,.075),0 -1px 0 rgba(0,0,0,.7);transition:color .35s}
+.sk-o.lit .sk-n b{color:#fff;text-shadow:none}
+.sk-o.lit .sk-n i,.sk-o.cur .sk-n i{opacity:1}
+.sk-o.past .sk-n b{color:#4c4c50;text-shadow:0 -1px 0 rgba(0,0,0,.6)}
+.sk.mob .sk-n{gap:18px;padding:0 24px}
+.sk.mob .sk-n i{font-size:20px;letter-spacing:1.2px}
+.sk.mob .sk-n b{font-size:46px;font-variation-settings:"wdth" 56}
+/* работы: тонкие плиты с картинкой */
+.sk-i{overflow:hidden;background:#0b0b0e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.sk-pt{position:absolute;overflow:hidden}
+.sk-fd{position:absolute;top:0;right:0;bottom:0;width:22%;background:linear-gradient(90deg,rgba(11,11,14,0),#0b0b0e 92%)}
+.sk-e{background:#0b0b0c;border-top:1px solid rgba(255,255,255,.16)}
+.sk-e2{background:#070708;border-top-color:rgba(255,255,255,.08)}
+.sk-sh{background:rgba(0,0,0,.55);box-shadow:0 0 18px 8px rgba(0,0,0,.45)}
+.sk-gr{background:#0c0c0e;box-shadow:inset 0 1px 0 rgba(0,0,0,.9),inset 0 -1px 0 rgba(255,255,255,.08)}   /* паз под доской */
+.sk-ao{background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0))}                                  /* тень у основания доски */
+.sk-ss{background:rgba(0,0,0,.9);box-shadow:0 0 30px 16px rgba(0,0,0,.75)}
+/* сторис-опрос ZERNO: вёрстка из src/smm.css, единица --u = 1% ширины доски */
+@font-face{font-family:"SkTektur";src:url(../assets/tektur-500.woff2) format("woff2");font-weight:500;font-display:swap}
+.sk-st{position:absolute;inset:0;color:#fff;font-family:Montserrat,"Segoe UI",Arial,sans-serif;background:radial-gradient(ellipse 120% 70% at 50% 35%,#2b2228,#0e0d10 70%)}
+.sk-st .s-pr{position:absolute;left:calc(var(--u)*4);right:calc(var(--u)*4);top:calc(var(--u)*3);display:flex;gap:calc(var(--u)*1.5)}
+.sk-st .s-pr i{position:relative;flex:1;height:max(2px,calc(var(--u)*.8));background:#ffffff40;overflow:hidden}
+.sk-st .s-pr i::after{content:"";position:absolute;inset:0;background:#fff;transform-origin:0 50%;transform:scaleX(var(--p,0))}
+.sk-st .s-hd{position:absolute;left:calc(var(--u)*4);top:calc(var(--u)*7);display:flex;align-items:center;gap:calc(var(--u)*2.6);font-size:calc(var(--u)*4.2);white-space:nowrap}
+.sk-st .s-av{width:calc(var(--u)*9);height:calc(var(--u)*9);border-radius:50%;background:#df1f12;display:grid;place-items:center}
+.sk-st .s-av svg{width:calc(var(--u)*5.4);height:calc(var(--u)*5.4)}
+.sk-st .s-hd b{font-weight:600}
+.sk-st .s-hd small{color:#ffffffb8;font-size:calc(var(--u)*3.8)}
+.sk-st p{position:absolute;left:calc(var(--u)*8);right:calc(var(--u)*8);top:30%;margin:0;text-align:center;font:500 calc(var(--u)*7)/1.14 SkTektur,Montserrat,sans-serif;text-transform:uppercase}
+.sk-st .s-pl{position:absolute;left:calc(var(--u)*10);right:calc(var(--u)*10);top:52%;display:grid;gap:calc(var(--u)*3)}
+.sk-st .s-pl span{position:relative;display:flex;justify-content:space-between;padding:calc(var(--u)*3.4) calc(var(--u)*4);background:#ffffff14;font-size:calc(var(--u)*4.6);overflow:hidden}
+.sk-st .s-pl span::before{content:"";position:absolute;inset:0;background:#df1f12;transform-origin:0 50%;transform:scaleX(var(--v))}
+.sk-st .s-pl span+span::before{background:#ffffff4d}
+.sk-st .s-pl b,.sk-st .s-pl em{position:relative;font-style:normal;font-weight:600}
+/* подписи на поверхности плиты */
+.sk-lb{position:absolute;left:0;top:-8px;font:500 16px/1 var(--mono);letter-spacing:1.8px;text-transform:uppercase;color:#8a8a90;white-space:nowrap;backface-visibility:hidden}
+.sk-lb::before{content:"";display:inline-block;width:8px;height:8px;margin-right:12px;background:#ff5c0a;transform:translateY(-2px) rotate(45deg)}
+.sk.mob .sk-lb{font-size:22px}
+.sk.mob .sk-b-lb{display:none}   /* на телефоне у доски подписи нет: между доской и лежащей работой для неё мало места */
+/* финал «Знак»: цвета плит задаёт stopka.js по прокрутке; заливка сердцевины — чистый оранжевый, разливается от центра;
+   провода — оранжевые полосы, растут от знака наружу */
+.sk-cf{background:#ff5c0a}
+.sk-wr{background:#ff5c0a;transform-origin:100% 50%}
+.sk-wt{background:#ff5c0a}
+/* в финале этап слева загорается, когда легла его плита. На телефоне подпись текущего этапа уходит в тень — главная «Одна команда» */
+.sf .sf-o li.sk-l b{color:#fff}
+@media (max-width:760px),(min-width:761px) and (max-aspect-ratio:4/5){.sf.sk-all .sf-o li.on b,.sf.sk-all .sf-o li.on p{color:#4c4c50}}
 /* кадры кейса — не ссылки: в кейс ведёт одна кнопка под ними */
 .case{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:34px}
 .case>div{display:grid;gap:10px;color:#fff}
@@ -506,13 +628,6 @@ body.kejs #bar::before{opacity:1;background:linear-gradient(rgba(0,0,0,.72),rgba
   .facts.f4{grid-template-columns:1fr 1fr}
   .facts.f4>div:nth-child(3){grid-column:auto;border-top:1px solid var(--ln)}
   .facts.f4>div:nth-child(4){border-top:1px solid var(--ln)}
-  /* телефон: поле сверху, квадратное; под ним строки */
-  .sv2{grid-template-columns:1fr;gap:18px}
-  .field{order:-1;border-bottom:0;padding-bottom:0}
-  .field canvas{height:auto;aspect-ratio:1/1;min-height:0}
-  .fc-cap{min-height:2.8em}
-  .svc li{padding:16px 0}
-  .svc .dsp{font-size:min(13vw,60px)}
   .case{grid-template-columns:1fr 1fr}
   .case>div:last-child{grid-column:1/-1}
   .pk li{grid-template-columns:minmax(0,1fr) 92px 34px;gap:10px}

@@ -1,5 +1,5 @@
 import base64, json, os, sys
-# собирает zerno.html — прежний сайт целиком. Он нужен только странице «Кейс ZERNO» (kejs-zerno.html): она показывает в рамке его мир «Клиенты»
+# собирает zerno.html — прежний сайт целиком. Он нужен только странице «Кейс ZERNO» (kejs-zerno.html): она показывает в рамке его мир «Маркетинг»
 # (станции Бренд, SMM, Реклама, Сайт и финал). Сам сайт теперь — страницы системы в корне, их собирает sistema/tools/pages.py.
 # Другое имя файла можно передать для пробной сборки: python src/build.py proba.html
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'zerno.html'
@@ -12,12 +12,12 @@ small = os.path.join(AS, 'science-gothic-2axis.woff2')
 if not os.path.exists(small):
     f = TTFont(os.path.join(AS, 'science-gothic.woff2')); f = instancer.instantiateVariableFont(f, {'CTRS': 0, 'slnt': 0}); f.flavor = 'woff2'; f.save(small)
     print('font', os.path.getsize(small) // 1024, 'KB')
-# Tektur: буквы кофейни ZERNO в примерах станций «Клиентов». Свободная лицензия OFL, текст в assets/tektur-OFL.txt. В сайт идёт одно начертание 500
+# Tektur: буквы кофейни ZERNO в примерах станций «Маркетинга». Свободная лицензия OFL, текст в assets/tektur-OFL.txt. В сайт идёт одно начертание 500
 tek = os.path.join(AS, 'tektur-500.woff2')
 if not os.path.exists(tek):
     f = TTFont(os.path.join(AS, 'tektur.ttf')); f = instancer.instantiateVariableFont(f, {'wght': 500, 'wdth': 100}); f.flavor = 'woff2'; f.save(tek)
     print('tektur', os.path.getsize(tek) // 1024, 'KB')
-# примеры станций «Клиентов» (Бренд, SMM, Реклама, Сайт) и финал мира (final) идут перед app.js, потому что app.js их вызывает
+# примеры станций «Маркетинга» (Бренд, SMM, Реклама, Сайт) и финал мира (final) идут перед app.js, потому что app.js их вызывает
 css = read('style.css') + ''.join(read(n + '.css') for n in ('reklama', 'smm', 'brend', 'site', 'final', 'reel'))
 js = '\n'.join(read(n + '.js') for n in ('reklama', 'smm', 'brend', 'site', 'final', 'sonar', 'app'))
 # лента профессий идёт отдельным скриптом после основного: у неё своё замыкание, с сайтом она связана через window.__reel

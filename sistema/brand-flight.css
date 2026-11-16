@@ -1,0 +1,29 @@
+/* The clients page owns the scroll; the frame owns only the brand scene. */
+.brand-chapter{padding-top:110px;background:linear-gradient(#090c12 0,#090c12 calc(100% - 180px),#000 100%);scroll-margin-top:75px}
+.brand-chapter .ch-h{margin-bottom:45px}
+.brand-chapter .lab>b{color:#a4b1ff}
+.brand-jumps{display:flex;flex-wrap:wrap;gap:28px;padding:0 0 28px;border-bottom:1px solid #ffffff26;margin-bottom:32px}
+.brand-jumps a{font:10px/1.5 'JetBrains Mono',monospace;letter-spacing:.06em;color:#c0c9e8;text-decoration:none;text-transform:uppercase}
+.brand-jumps a:hover{color:#fff}.brand-jumps a span{color:#747eaa;margin-right:10px}
+.bf-flight{position:relative;background:#090c12}
+.bf-flight.js{height:max(6000px,700svh)}
+.bf-controls{position:sticky;top:96px;height:40px;margin-bottom:-40px;z-index:3;display:flex;align-items:flex-start;justify-content:flex-end;padding:0 26px;pointer-events:none}
+.bf-talk{position:absolute;right:26px;top:calc(100svh - 190px);transform:translateY(var(--flight-exit,0px));pointer-events:auto;display:flex;align-items:center;gap:44px;padding:22px 26px;background:#141b32;color:#f3f4ff;text-decoration:none;font:600 15px/1 Montserrat,Arial,sans-serif;border:1px solid #c7d1ff55}
+.bf-talk[hidden]{display:none}.bf-talk span{font:25px/1 Arial}.bf-talk:hover{background:#3025d9}
+.bf-sticky{position:relative;width:100%;min-height:70svh;background:#090c12}
+.bf-flight.js .bf-sticky{position:sticky;top:0;height:100svh;overflow:clip}
+.bf-frame{display:block;width:100%;height:100%;border:0;opacity:0;transition:opacity .4s}
+.bf-flight.loaded .bf-frame{opacity:1}
+.bf-placeholder{position:absolute;inset:0;display:grid;place-content:center;gap:20px;text-align:center;color:#dce2f7;pointer-events:none}
+.bf-placeholder b{font:800 clamp(60px,10vw,170px)/1 Science,Arial,sans-serif;letter-spacing:-.06em}
+.bf-placeholder span{font:11px 'JetBrains Mono',monospace;color:#9faad0;text-transform:uppercase;letter-spacing:.09em}
+.bf-flight.loaded .bf-placeholder{display:none}
+.bf-final-anchor{position:absolute;left:0;top:calc(100% - 100svh);width:1px;height:1px;pointer-events:none;scroll-margin-top:0}
+.brand-exit{display:flex;align-items:center;justify-content:space-between;gap:30px;padding-top:30px;padding-bottom:45px}
+.brand-exit p{font:400 14px/1.5 Montserrat,Arial,sans-serif;max-width:560px;color:#a9b2cb;margin:0}
+.brand-exit a{font:11px 'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;color:#e2e7f7;text-decoration:none;white-space:nowrap}
+.brand-exit a span{margin-left:28px;font-size:20px}
+.bf-noscript{display:block;padding:40px;color:#fff}
+@media(max-width:760px){.brand-chapter{padding-top:65px}.brand-jumps{gap:18px}.brand-jumps a{font-size:9px}.brand-exit{flex-direction:column;align-items:flex-start;padding-top:25px}.brand-exit p{font-size:12px}.bf-flight.js{height:6500px}}
+@media(prefers-reduced-motion:reduce){.bf-frame{transition:none}}
+@media(max-width:760px){.bf-talk{top:calc(100svh - 305px);right:18px;padding:18px 22px;font-size:13px;gap:35px}}

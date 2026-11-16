@@ -10,7 +10,7 @@ with sync_playwright() as pw:
     b = pw.chromium.launch(channel='chrome', headless=False, args=['--use-angle=d3d11', '--enable-gpu'])
     c = b.new_context(viewport={'width': vw, 'height': vh}, is_mobile=mob, has_touch=mob); p = c.new_page(); E = []
     p.on('pageerror', lambda e: E.append('ERR ' + str(e)[:300])); p.on('console', lambda m: E.append(m.text[:300]) if m.type == 'error' else None)
-    for f in ['index.html', 'rabota.html', 'lyudi.html', 'klienty.html']:
+    for f in ['index.html', 'rabota.html', 'lyudi.html', 'marketing.html']:
         p.goto(f'{U}{f}?t={time.time()}', wait_until='load'); time.sleep(3)
         print(f, 'вид', p.evaluate('__gt.view()'), 'Земля', p.evaluate('__gt.earth()'), 'заголовок', p.title(), 'ошибки', E[:2]); E.clear()
         p.screenshot(path=f'{OUT}/{vw}_direct_{f[:-5]}.png')

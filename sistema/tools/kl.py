@@ -36,7 +36,7 @@ with sync_playwright() as pw:
         p.evaluate("document.getElementById('l-svyaz').scrollIntoView()"); time.sleep(1.2)
         p.screenshot(path=f'{OUT}/{vw}_form.png')
         # «Клиенты»: клетки первого экрана — одинаковый отступ текста от своей линии; ссылки на кейс
-        p.goto(f'{U}klienty.html?t={time.time()}', wait_until='load'); time.sleep(3)
+        p.goto(f'{U}marketing.html?t={time.time()}', wait_until='load'); time.sleep(3)
         pads = p.evaluate("""() => [...document.querySelectorAll('main.view:not([hidden]) .facts>div')].map(d => { const b = d.getBoundingClientRect(), t = d.querySelector('b').getBoundingClientRect();
             return [Math.round(b.left), Math.round(t.left - b.left), getComputedStyle(d).borderLeftWidth]; })""")
         print(vw, 'facts [cell left, text offset, line]', pads)

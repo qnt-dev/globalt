@@ -16,7 +16,7 @@ with sync_playwright() as pw:
         p = c.new_page(); E = []
         p.on('pageerror', lambda e: E.append('ERR ' + str(e)[:200]))
         p.on('console', lambda m: E.append(m.text[:200]) if m.type == 'error' else None)
-        p.goto(f'{U}klienty.html?t={time.time()}', wait_until='load'); time.sleep(2.5)
+        p.goto(f'{U}marketing.html?t={time.time()}', wait_until='load'); time.sleep(2.5)
         p.evaluate("document.getElementById('k-uslugi').scrollIntoView({behavior:'instant'})"); time.sleep(1.5)
         rows = []; rel0 = None; moved = []
         for q in QS:

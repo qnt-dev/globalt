@@ -12,7 +12,7 @@
 /* место слова задаёт его обычная ширина: невидимая копия. Видимое слово меняет ширину поверх неё, поэтому соседи не сдвигаются */
 #hub .hub-t .w0{display:block;visibility:hidden;white-space:nowrap;font-variation-settings:"wdth" 56}
 #hub .hub-t .w1,#hub .hub-t .w2{position:absolute;top:4px;white-space:nowrap;font-variation-settings:"wdth" var(--wd);transition:font-variation-settings .6s cubic-bezier(.2,.9,.2,1),color .5s}
-/* Работа растёт влево, Клиенты вправо, Люди в обе стороны: туда, где есть место */
+/* Работа растёт влево, Маркетинг вправо, Люди в обе стороны: туда, где есть место */
 #hub .hub-t button:nth-child(1) .w1,#hub .hub-t button:nth-child(1) .w2{right:2px}
 #hub .hub-t button:nth-child(2) .w1,#hub .hub-t button:nth-child(2) .w2{left:50%;transform:translateX(-50%)}
 #hub .hub-t button:nth-child(3) .w1,#hub .hub-t button:nth-child(3) .w2{left:2px}

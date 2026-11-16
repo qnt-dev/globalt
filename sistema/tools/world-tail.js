@@ -1,11 +1,11 @@
-/* ---------- Макет: одна страница, четыре вида (главная, «Работа», «Люди», «Клиенты») и одна Земля ----------
+/* ---------- Макет: одна страница, четыре вида (главная, «Работа», «Люди», «Маркетинг») и одна Земля ----------
    Вставляется в конец home.js скриптом tools/extract.py: ему нужны переменные главной (S, gl, cv, home, hub, pick, unpick, updateHome…).
    Земля не перезагружается между видами: переход — полёт камеры по той же Земле, адрес меняется через history (rabota.html и др.).
    Земля не останавливается: на главной крутится сама (3° в секунду) или стоит на выбранном слове, в разделе — 0,5° в секунду.
    Полёт ведёт это вращение: старт с той же скорости, посадка на той же скорости, после посадки Земля просто продолжает. */
-const URLS = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'klienty.html' };
+const URLS = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'marketing.html' };
 const TITLES = { home: 'GLOBAL TRIUMPH', rabota: 'Работа вахтой — GLOBAL TRIUMPH', lyudi: 'Подбор персонала — GLOBAL TRIUMPH', klienty: 'Маркетинг для бизнеса — GLOBAL TRIUMPH' };
-const VOF = f => ({ '': 'home', 'index.html': 'home', 'rabota.html': 'rabota', 'lyudi.html': 'lyudi', 'klienty.html': 'klienty' })[f];
+const VOF = f => ({ '': 'home', 'index.html': 'home', 'rabota.html': 'rabota', 'lyudi.html': 'lyudi', 'marketing.html': 'klienty', 'klienty.html': 'klienty' })[f];
 const DIR = location.pathname.replace(/[^/]*$/, '');
 const EG = gl ? new EV.EarthGL(gl) : null;
 const MAINS = {}; document.querySelectorAll('main.view').forEach(m => { MAINS[m.dataset.view] = m; });

@@ -117,11 +117,11 @@ addEventListener('resize', resize);
 
 /* ---------- ГЛАВНАЯ: Земля ведёт в разделы ---------- */
 /* У каждого раздела своё место на Земле, и Земля поворачивается к нему: Работа — Казахстан и Урал, где объекты вахты, Люди — Москва и Европа,
-   Клиенты — Индия, Китай и Восточная Азия. c — цвет кнопки «Перейти»: оранжевые огни, белые облака, голубой воздух */
+    Маркетинг — Индия, Китай и Восточная Азия. c — цвет кнопки «Перейти»: оранжевые огни, белые облака, голубой воздух */
 const HUB = [
   { w: 'rabota', n: 'Работа', s: 'Вакансии и помощь с трудоустройством', v: [66, 36, -.2], c: '#ff5c0a' },
   { w: 'lyudi', n: 'Люди', s: 'Подбор персонала для вашей компании', v: [37, 48, -.2], c: '#fff' },
-  { w: 'klienty', n: 'Клиенты', s: 'Сайты, реклама, SMM, брендбук и логотип', v: [100, 28, -.2], c: '#8ec3ff' }
+   { w: 'klienty', n: 'Маркетинг', s: 'Сайты, реклама, SMM, брендбук и логотип', v: [100, 28, -.2], c: '#8ec3ff' }
 ];
 /* k — выбранный раздел (-1: не выбран, Земля медленно вращается), v — поворот Земли, vel — инерция после вращения рукой, lat — широта, к которой Земля возвращается, dv — доля перехода «Распад» */
 const S = { k: -1, v: [40, 30, -.2], vel: 0, lat: 30, drag: 0, dv: 0 };
@@ -319,14 +319,14 @@ function dustRise(from, done) {
 }
 function dustSwap(w, done) { veilRun(1, 0, 560, () => { show(w); requestAnimationFrame(() => veilRun(0, 1, 700, () => { veil.style.display = 'none'; done(); })); }); }
 
-/* ---------- Макет: одна страница, четыре вида (главная, «Работа», «Люди», «Клиенты») и одна Земля ----------
+/* ---------- Макет: одна страница, четыре вида (главная, «Работа», «Люди», «Маркетинг») и одна Земля ----------
    Вставляется в конец home.js скриптом tools/extract.py: ему нужны переменные главной (S, gl, cv, home, hub, pick, unpick, updateHome…).
    Земля не перезагружается между видами: переход — полёт камеры по той же Земле, адрес меняется через history (rabota.html и др.).
    Земля не останавливается: на главной крутится сама (3° в секунду) или стоит на выбранном слове, в разделе — 0,5° в секунду.
    Полёт ведёт это вращение: старт с той же скорости, посадка на той же скорости, после посадки Земля просто продолжает. */
-const URLS = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'klienty.html' };
+const URLS = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'marketing.html' };
 const TITLES = { home: 'GLOBAL TRIUMPH', rabota: 'Работа вахтой — GLOBAL TRIUMPH', lyudi: 'Подбор персонала — GLOBAL TRIUMPH', klienty: 'Маркетинг для бизнеса — GLOBAL TRIUMPH' };
-const VOF = f => ({ '': 'home', 'index.html': 'home', 'rabota.html': 'rabota', 'lyudi.html': 'lyudi', 'klienty.html': 'klienty' })[f];
+const VOF = f => ({ '': 'home', 'index.html': 'home', 'rabota.html': 'rabota', 'lyudi.html': 'lyudi', 'marketing.html': 'klienty', 'klienty.html': 'klienty' })[f];
 const DIR = location.pathname.replace(/[^/]*$/, '');
 const EG = gl ? new EV.EarthGL(gl) : null;
 const MAINS = {}; document.querySelectorAll('main.view').forEach(m => { MAINS[m.dataset.view] = m; });

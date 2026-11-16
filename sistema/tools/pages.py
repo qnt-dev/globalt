@@ -1,5 +1,5 @@
 # Сборка страниц макета «Одна система» (вариант А). Общие части (голова, шапка, меню, три двери, подвал) одни на все страницы.
-# python sistema/tools/pages.py — пишет index.html, rabota.html, lyudi.html, klienty.html, kejs-zerno.html в корень сайта.
+# python sistema/tools/pages.py — пишет страницы и совместимый редирект klienty.html.
 # Стили, скрипты и картинки системы лежат в sistema/, общие файлы (шрифт, знак, фото, карты Земли) — в assets/.
 # Главная и три раздела — один документ с четырьмя видами и одной Землёй (переходы — полёт камеры, tools/world-tail.js).
 # Четыре файла одинаковые, разный только вид при открытии (body data-w), заголовок и описание.
@@ -12,7 +12,10 @@ SIGN = {k: f'<svg data-s="{k}" {v}' for k, v in P['signs'].items()}
 STAR = '<svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06-.06 1 0 .06.06 0 1-.06.06-1 0-.06-.06 0-1Z"/></svg>'
 ARR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>'
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">'
-V = '?v=36'
+V = '?v=39'
+
+def page_url(w):
+    return 'marketing.html' if w == 'klienty' else f'{w}.html'
 
 # прилёт полётом камеры: класс cam ставится до первой отрисовки (earth-view.js, EV.arrived)
 CAM = '''<script data-p="{p}">try{{var c=JSON.parse(sessionStorage.getItem('gt-cam')||'null');if(c&&c.to===document.currentScript.dataset.p&&Date.now()-(c.at||0)<15000)document.documentElement.classList.add('cam')}}catch(e){{}}</script>'''
@@ -38,14 +41,14 @@ def head(title, desc, extra_css='', p='home'):
 </head>'''
 
 def bar(cur=None, back=None):
-    a = lambda w, t: f'<a href="{w}.html"' + (' aria-current="page"' if w == cur else '') + f'>{STAR}{t}</a>'
-    nq = (f'<span class="nq"><a href="klienty.html">{STAR}← Клиенты</a> · Кейс ZERNO</span>' if back else
-          f'<span class="nq">Ищете {a("rabota", "работу")}, {a("lyudi", "людей")} или {a("klienty", "клиентов")}?</span>')
-    items = [('index', '00', 'Главная', 'к началу сайта'), ('rabota', '01', 'Работа', 'вакансии вахтой'), ('lyudi', '02', 'Люди', 'подбор персонала'), ('klienty', '03', 'Клиенты', 'сайт, бренд, реклама, SMM')]
-    li = ''.join(f'<li><a href="{w}.html"' + (' aria-current="page"' if w == cur else '') + f'><i>{n}</i><b>{t}</b><small>{s}</small>{ARR}</a></li>' for w, n, t, s in items)
+    a = lambda w, t: f'<a href="{page_url(w)}"' + (' aria-current="page"' if w == cur else '') + f'>{STAR}{t}</a>'
+    nq = (f'<span class="nq"><a href="marketing.html">{STAR}← Маркетинг</a> · Кейс ZERNO</span>' if back else
+          f'<span class="nq">{a("rabota", "Работа")} · {a("lyudi", "Люди")} · {a("klienty", "Маркетинг")}</span>')
+    items = [('index', '00', 'Главная', 'к началу сайта'), ('rabota', '01', 'Работа', 'вакансии вахтой'), ('lyudi', '02', 'Люди', 'подбор персонала'), ('klienty', '03', 'Маркетинг', 'сайт, бренд, реклама, SMM')]
+    li = ''.join(f'<li><a href="{page_url(w)}"' + (' aria-current="page"' if w == cur else '') + f'><i>{n}</i><b>{t}</b><small>{s}</small>{ARR}</a></li>' for w, n, t, s in items)
     li += f'<li><button type="button" data-talk><i>04</i><b>Напишите нам</b><small>обсудить задачу</small>{ARR}</button></li>'
     return f'''<div id="bar">
-  <nav id="nav" aria-label="Что вы ищете">{nq}</nav>
+  <nav id="nav" aria-label="Разделы сайта">{nq}</nav>
   <div id="mn" data-open="false">
     <button type="button" id="mn-chip" aria-expanded="false" aria-controls="mn-panel"><i aria-hidden="true"></i><span>Меню</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg></button>
     <div id="mn-panel" role="dialog" aria-label="Меню"><ol class="mn-list">{li}</ol>
@@ -123,8 +126,8 @@ def portrait(items, caps):
 <div class="pt-end"><span>7 дней до первой смены · 48 ч на замену</span><a class="lnk" href="#l-svyaz">Оставить заявку <i>→</i></a></div>'''
 
 def doors(cur):
-    D = [('rabota', 'Работа', 'Вакансии и помощь с трудоустройством'), ('lyudi', 'Люди', 'Подбор персонала для вашей компании'), ('klienty', 'Клиенты', 'Сайты, реклама, SMM, брендбук и логотип')]
-    li = ''.join(f'<li><a href="{w}.html"' + (' aria-current="page"' if w == cur else '') + f'><span class="dsp">{t}</span><small>{"Вы здесь · " if w == cur else ""}{s}</small></a></li>' for w, t, s in D)
+    D = [('rabota', 'Работа', 'Вакансии и помощь с трудоустройством'), ('lyudi', 'Люди', 'Подбор персонала для вашей компании'), ('klienty', 'Маркетинг', 'Сайты, реклама, SMM, брендбук и логотип')]
+    li = ''.join(f'<li><a href="{page_url(w)}"' + (' aria-current="page"' if w == cur else '') + f'><span class="dsp">{t}</span><small>{"Вы здесь · " if w == cur else ""}{s}</small></a></li>' for w, t, s in D)
     return f'''<footer class="doors wrap">
   <p class="q">Что вы ищете?</p>
   <ul>{li}</ul>
@@ -134,7 +137,7 @@ def doors(cur):
 MK = '<div class="mk" aria-hidden="true"><b>Макет</b> · вариант А · одна система</div>'
 VEIL = '<canvas id="veil" aria-hidden="true"></canvas>'
 TALK = '''<dialog id="talk" aria-label="О чём поговорим"><div class="in"><button type="button" id="talk-x">Закрыть ✕</button><h2 class="dsp">О чём поговорим?</h2>
-<a href="rabota.html#r-svyaz">Ищу работу<small>01 →</small></a><a href="lyudi.html#l-svyaz">Нужны люди<small>02 →</small></a><a href="klienty.html#k-svyaz">Нужны клиенты<small>03 →</small></a></div></dialog>'''
+<a href="rabota.html#r-svyaz">Ищу работу<small>01 →</small></a><a href="lyudi.html#l-svyaz">Нужны люди<small>02 →</small></a><a href="marketing.html#k-svyaz">Нужен маркетинг<small>03 →</small></a></div></dialog>'''
 
 def page(name, title, desc, w, body, scripts, extra_css='', cls=''):
     scripts = ['sec.js', 'earth-view.js'] + scripts
@@ -249,44 +252,23 @@ ly = '<main class="view" data-view="lyudi">\n' + hero('lyudi', '02', 'Люди �
 })();
 </script>'''
 
-# ---------- «Клиенты» ----------
-SV = [('brend', 'Бренд', 'Имя, знак, цвет, шрифт и правила.', ['Имя', 'Знак', 'Цвет', 'Шрифт', 'Брендбук']),
-      ('smm', 'SMM', 'План, съёмка, посты, сторис и Reels.', ['План', 'Съёмка', 'Посты', 'Reels', 'Отчёт']),
-      ('reklama', 'Реклама', 'Поиск, карты и таргет.', ['Поиск', 'Карты', 'Таргет', 'Аналитика']),
-      ('sayt', 'Сайт', 'Структура, дизайн, заказ с телефона и скорость.', ['Структура', 'Дизайн', 'Заказ', 'Скорость', 'Заявки'])]
-# на кейс ZERNO ведёт одна ссылка — кнопка в конце главы «Кейс»; услуги и кадры кейса не ссылки
-# услуги: стопка (stopka.js). Глава липнет к экрану на четыре этапа: слева этапы на линии с ромбами, справа четыре плиты ложатся
-# террасой, бренд внизу; на каждой плите — настоящие работы кейса ZERNO. В финале стопка складывается в знак «Одна команда».
-# Разметка по умолчанию — готовое состояние: без скрипта читается списком
-SVB = {'brend': 'Вас узнают с одного взгляда.', 'smm': 'На вас подписываются.', 'reklama': 'Вас находят рядом, когда ищут.', 'sayt': 'Вам пишут и заказывают.'}
-svc = ''.join(f'<li><button type="button" class="sf-k" aria-label="Этап {i}: {t}">{i:02d}</button><b>{t}</b><p>{nb(SVB[k] + " " + d)}</p></li>' for i, (k, t, d, L) in enumerate(SV, 1))
-# под шагами — знак «Одна команда»: в ромб сходятся четыре провода, по одному на этап; провод загорается, когда этап пройден,
-# на 100 % знак оранжевый. Ширина 57: центр 28.5 — на оси линии шагов, линия входит в верхний угол ромба (stopka.js, класс .full).
-# Три контура и сердцевина — как у знака, в который складывается стопка: четыре уровня — четыре этапа
-TEAM = '''<svg class="sf-tk" width="57" height="57" viewBox="0 0 57 57" aria-hidden="true">
-<path class="st" d="M28.5 0V14"/>
-<path class="w w1" d="M3 34H8.5"/><path class="w w2" d="M6 12 18.5 24"/><path class="w w3" d="M51 12 38.5 24"/><path class="w w4" d="M54 34H48.5"/>
-<rect class="t w1" x="0" y="32" width="4" height="4"/><rect class="t w2" x="3" y="9" width="4" height="4"/><rect class="t w3" x="50" y="9" width="4" height="4"/><rect class="t w4" x="53" y="32" width="4" height="4"/>
-<path class="o" d="M28.5 14 48.5 34 28.5 54 8.5 34Z"/><path class="m" d="M28.5 19.2 43.3 34 28.5 48.8 13.7 34Z"/><path class="m" d="M28.5 24 38.5 34 28.5 44 18.5 34Z"/><path class="c" d="M28.5 28.6 33.9 34 28.5 39.4 23.1 34Z"/>
-</svg>'''
-SVP = ''.join(f'<span{" class=on" if i == 1 else ""}>{nb(SVB[k] + " " + d)}</span>' for i, (k, t, d, L) in enumerate(SV, 1))   # невысокий экран: текст только текущего шага
-svc = (f'''<div class="sf">
- <div class="sf-st">
-  <div class="sf-v" aria-hidden="true"></div>
-  <div class="sf-s"><ol class="sf-o">{svc}</ol>
-   <p class="sf-p" aria-hidden="true">{SVP}</p>
-   <div class="sf-d">{TEAM}<div><b>Одна команда на\u00a0все четыре этапа</b><p>От имени до\u00a0первого заказа.</p></div></div></div>
- </div>
-</div>
-<div class="sf-end"><span>Можно заказать один этап или все четыре</span><a class="lnk" href="#k-svyaz">Обсудить проект <i>→</i></a></div>''')
+# ---------- «Маркетинг» ----------
+# Services use the brand ribbon; the former orange stack is no longer generated.
+
 CASE = [('brend', 'Бренд', 'имя и знак'), ('smm', 'SMM', 'первый месяц'), ('reklama', 'Реклама', 'рядом с вами'), ('sayt', 'Сайт', 'заказ за минуту'), ('final', 'Каждый день', 'финал кейса')]
+BRAND_FLIGHT = '''<section class="brand-chapter" id="k-uslugi" aria-labelledby="k-brend-h">
+ <div class="wrap" id="k-brend"><div class="ch-h g"><p class="lab"><b>02</b>Услуги · Бренд</p><div class="hd"><h2 class="dsp dots" id="k-brend-h">От характера к системе</h2><p class="voice">Смысл, знак, графика и носители. Посмотрите, как они становятся одним целым.</p></div></div>
+ <nav class="brand-jumps" aria-label="Просмотр бренда"><a href="#k-brend-flight"><span>01</span>Пролёт по бренду</a><a href="#k-brend-final"><span>02</span>Одно целое</a><a href="#k-svyaz"><span>03</span>Обсудить задачу ↗</a></nav></div>
+ <div class="bf-flight" id="k-brend-flight"><div class="bf-controls"><a class="bf-talk" href="#k-svyaz" hidden>Обсудить бренд <span>↗</span></a></div><div class="bf-sticky"><iframe class="bf-frame" title="Бренд GLOBAL TRIUMPH: смысл, знак, графика и носители" data-src="studies/brand-flight/?embed=1" scrolling="no"></iframe><div class="bf-placeholder" aria-hidden="true"><b>БРЕНД</b><span>От смысла к форме.</span></div><noscript><p class="bf-noscript">Для просмотра 3D-пролёта включите JavaScript.</p></noscript></div><div class="bf-final-anchor" id="k-brend-final" aria-hidden="true"></div></div>
+ <div class="brand-exit wrap"><p>Единая система помогает узнавать вас на сайте, в рекламе, на вывеске и в каждом новом формате.</p><a href="#k-keys">Посмотреть применение в кейсе <span>↘</span></a></div>
+</section>'''
 case = ''.join(f'<div><span class="im"><img src="sistema/img/kejs-{k}.webp" alt="{t}: кадр из кейса ZERNO" loading="lazy"></span><b>{t}</b><small>{s}</small></div>' for k, t, s in CASE)
-kl = '<main class="view" data-view="klienty">\n' + hero('klienty', '03', 'Клиенты · маркетинг',
+kl = '<main class="view" data-view="klienty">\n' + hero('klienty', '03', 'Маркетинг',
     '<span class="wide">Вас услышат</span><span>среди ста одинаковых</span>',
     'Бренд, соцсети, реклама и сайт. Одна команда ведёт бизнес от имени до первого заказа.',
     hud('Обсудить проект', '#k-svyaz', 'klienty') + '<a class="lnk" href="#k-uslugi">Что мы делаем <i>→</i></a>',
     [('Бренд', 'имя, знак, правила'), ('SMM', 'план и контент'), ('Реклама', 'поиск, карты, таргет'), ('Сайт', 'заказ с телефона')], f4=True) + '\n' + \
-  ch('k-uslugi', '02', 'Услуги', 'Четыре этапа', 'Каждый можно заказать отдельно. Вместе они работают сильнее.', svc, full=True) + '\n' + \
+  BRAND_FLIGHT + '\n' + \
   ch('k-keys', '03', 'Кейс', 'Кофейня ZERNO', 'Мы придумали кофейню с нуля и провели её через все четыре этапа. Каждый этап можно покрутить вживую.',
      f'<div class="case" data-r>{case}</div>' + hud('Открыть кейс', 'kejs-zerno.html', 'klienty')) + '\n' + \
   ch('k-kak', '04', 'Как работаем', 'Без сюрпризов', 'Цена и сроки известны до начала работы.', steps([
@@ -307,25 +289,34 @@ kl = '<main class="view" data-view="klienty">\n' + hero('klienty', '03', 'Кли
 VIEWS = [('index.html', 'home', 'GLOBAL TRIUMPH', 'Вакансии, подбор персонала и маркетинг. GLOBAL TRIUMPH сводит тех, кто ищет друг друга.'),
          ('rabota.html', 'rabota', 'Работа вахтой — GLOBAL TRIUMPH', 'Вахта на складах и заводах: жильё бесплатно, аванс каждую неделю.'),
          ('lyudi.html', 'lyudi', 'Подбор персонала — GLOBAL TRIUMPH', 'Люди на склад и производство: от заявки до первой смены.'),
-         ('klienty.html', 'klienty', 'Маркетинг для бизнеса — GLOBAL TRIUMPH', 'Бренд, соцсети, реклама и сайт одной командой.')]
+         ('marketing.html', 'klienty', 'Маркетинг для бизнеса — GLOBAL TRIUMPH', 'Бренд, соцсети, реклама и сайт одной командой.')]
 for f, w, t, d in VIEWS:
     body = bar(None if w == 'home' else w) + '\n' + HOME + '\n' + '\n'.join(m if mw == w else m.replace('<main class="view"', '<main class="view" hidden', 1) for mw, m in [('rabota', rab), ('lyudi', ly), ('klienty', kl)])
     if w != 'home': body = body.replace('<section id="home" class="world"', '<section id="home" class="world" hidden', 1)
-    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'stopka.js', 'portrait.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">')
+    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'portrait.js', 'brand-flight.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">\n<link rel="stylesheet" href="sistema/brand-flight.css?v=3">')
+
+# Старые ссылки сохраняют поисковые параметры и якорь, но открывают новое имя раздела.
+with open(os.path.join(ROOT, 'klienty.html'), 'w', encoding='utf-8') as legacy:
+    legacy.write('''<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Маркетинг — GLOBAL TRIUMPH</title>
+<script>location.replace('marketing.html' + location.search + location.hash);</script>
+<noscript><meta http-equiv="refresh" content="0;url=marketing.html"></noscript>
+</head><body><a href="marketing.html">Маркетинг — GLOBAL TRIUMPH</a></body></html>''')
 
 # ---------- «Кейс ZERNO»: мир станций сайта целиком, под шапкой системы ----------
 kj = bar('klienty', back=True) + '''
 <main><h1 class="vh">Кейс: кофейня ZERNO</h1><iframe id="world" title="Кейс ZERNO: бренд, SMM, реклама, сайт" src="zerno.html#klienty" allow="autoplay"></iframe></main>
 <script>
-/* мир «Клиенты» с сайта как он есть. Своя шапка сайта в нём спрятана: сверху шапка системы. #brend, #smm, #reklama, #sayt — сразу на станцию */
+/* мир «Маркетинг» с сайта как он есть. Своя шапка сайта в нём спрятана: сверху шапка системы. #brend, #smm, #reklama, #sayt — сразу на станцию */
 (() => {
   const f = document.getElementById('world'), ST = { sayt: 0, final: 0, reklama: 1, smm: 2, brend: 3 };
   f.addEventListener('load', () => {
     const d = f.contentDocument; if (!d) return;
     const s = d.createElement('style'); s.textContent = '#bar{display:none!important}'; d.head.appendChild(s);
     const k = location.hash.slice(1); if (k in ST) setTimeout(() => { const b = d.querySelector('#presets button[data-i="' + ST[k] + '"]'); if (b) b.click(); }, 900);
-    /* из кейса нет дороги в прежний сайт: «Ищете людей?», «Ищете работу?» ведут на новые страницы, «Обсудить…» — к разговору на «Клиентах» */
-    const NEW = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'klienty.html' }, TALK = 'klienty.html#k-svyaz';
+    /* из кейса нет дороги в прежний сайт: «Ищете людей?», «Ищете работу?» ведут на новые страницы, «Обсудить…» — к разговору в «Маркетинге» */
+    const NEW = { home: 'index.html', rabota: 'rabota.html', lyudi: 'lyudi.html', klienty: 'marketing.html' }, TALK = 'marketing.html#k-svyaz';
     d.addEventListener('click', e => {
       const g = e.target.closest('[data-go]'), t = e.target.closest('#st-go, #x6-go, [data-talk], #contact-open'); if (!g && !t) return;
       e.preventDefault(); e.stopPropagation(); location.href = g ? (NEW[g.dataset.go] || 'index.html') : TALK;

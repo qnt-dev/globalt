@@ -14,7 +14,7 @@ with sync_playwright() as pw:
         p = c.new_page(); E = []
         p.on('pageerror', lambda e: E.append('ERR ' + str(e)[:200]))
         p.on('console', lambda m: E.append(m.text[:200]) if m.type == 'error' else None)
-        p.goto(f'{U}klienty.html?t={time.time()}', wait_until='load'); time.sleep(2.5)
+        p.goto(f'{U}marketing.html?t={time.time()}', wait_until='load'); time.sleep(2.5)
         p.evaluate("document.getElementById('k-uslugi').scrollIntoView()"); time.sleep(.3)
         p.evaluate("scrollBy(0, document.querySelector('.sv2').getBoundingClientRect().top - (innerWidth > 760 ? 90 : 70))"); time.sleep(1.5)
         g0 = p.evaluate(G); moved = set()

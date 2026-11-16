@@ -1,10 +1,10 @@
 # сайт в корне: каждая страница открывается без битых файлов (404), без ошибок, со шрифтом и живой Землёй;
-# «Кейс ZERNO» показывает мир «Клиенты» из zerno.html. Запуск: python sistema/tools/root.py (сервер на 4391 из корня репозитория)
+# «Кейс ZERNO» показывает мир «Маркетинг» из zerno.html. Запуск: python sistema/tools/root.py (сервер на 4391 из корня репозитория)
 import time, os, sys
 from playwright.sync_api import sync_playwright
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'root'); os.makedirs(OUT, exist_ok=True)
 U = 'http://127.0.0.1:4391/'
-PAGES = ['index.html', 'rabota.html', 'lyudi.html', 'klienty.html', 'kejs-zerno.html']
+PAGES = ['index.html', 'rabota.html', 'lyudi.html', 'marketing.html', 'kejs-zerno.html']
 bad = 0
 with sync_playwright() as pw:
     b = pw.chromium.launch(channel='chrome', headless=False, args=['--use-angle=d3d11', '--enable-gpu'])

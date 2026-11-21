@@ -46,7 +46,9 @@ open(os.path.join(SYS, 'home.js'), 'w', encoding='utf-8').write('/* СКОПИР
 # разметка главной: шапка и сама главная из body.html, знаки разделов оттуда же
 body = open(os.path.join(ROOT, 'src', 'body.html'), encoding='utf-8').read()
 bar = body[body.index('<div id="bar">'):body.index('<section id="home"')]
-homeh = body[body.index('<section id="home"'):body.index('<section id="rabota"')]
-signs = dict(re.findall(r'<svg data-s="(\w+)" (viewBox="[^"]+" fill="currentColor">.*?</svg>)', homeh, re.S))
+sign_start = body.index('<template id="section-signs">')
+homeh = body[body.index('<section id="home"'):sign_start]
+sign_markup = body[sign_start:body.index('</template>', sign_start)]
+signs = dict(re.findall(r'<svg data-s="(\w+)" (viewBox="[^"]+" fill="currentColor">.*?</svg>)', sign_markup, re.S))
 open(os.path.join(SYS, 'parts.json'), 'w', encoding='utf-8').write(__import__('json').dumps({'bar': bar, 'home': homeh, 'signs': signs}, ensure_ascii=False))
 print('base', len('\n'.join(base)), 'home.css', len('\n'.join(home)), 'home.js', len(code), 'signs', list(signs))

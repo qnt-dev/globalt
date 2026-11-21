@@ -27,39 +27,38 @@
 #hub .hub-t .w2{color:#6aa6ff2e;mix-blend-mode:screen;pointer-events:none}
 #hub .hub-t button.on .w2{color:#94c2ff5c}
 #hub .hub-s{margin:0;min-height:1.4em;font:500 clamp(14px,1.1vw,17px) var(--text);color:#d0d0d0;transition:opacity .18s}
-/* кнопка «Перейти» компактнее: слово того же размера, поля меньше */
-#hub .hub-go{min-height:44px;padding:4px 22px;text-decoration:none;transition:opacity .3s,visibility .3s,filter .2s}
 #hub .hub-go.off{opacity:0;visibility:hidden}
-/* вместо стрелки знак фирменной графики раздела: Работа — летящие звёзды, Люди — «глаз», Клиенты — орбита с двумя звёздами.
-   Знак чёрный, как текст, высотой с заглавные буквы; кнопка показывает знак того раздела, куда ведёт */
-#hub .hub-go{gap:10px}
-#hub .hub-go .go-s{display:inline-flex;height:1.05em}
-#hub .hub-go .go-s svg{display:none;height:100%;width:auto;max-width:2.4em}
+/* Кнопка показывает фирменный знак выбранного раздела. */
 #hub .hub-go[data-go=rabota] svg[data-s=rabota],#hub .hub-go[data-go=lyudi] svg[data-s=lyudi],#hub .hub-go[data-go=klienty] svg[data-s=klienty]{display:block}
 @property --dr{syntax:"<length>";inherits:true;initial-value:6px}
 /* точки: буквы вырастают из сетки точек */
 #hub .hub-t button.play{animation:fx-dots .95s cubic-bezier(.55,0,.45,1) both}
 #hub .hub-t button.play .w1,#hub .hub-t button.play .w2{-webkit-mask:radial-gradient(circle,#000 var(--dr),#0000 calc(var(--dr) + .7px)) 0 0/7px 7px;mask:radial-gradient(circle,#000 var(--dr),#0000 calc(var(--dr) + .7px)) 0 0/7px 7px}
 @keyframes fx-dots{from{--dr:0px}to{--dr:5.2px}}
-/* кнопка: всегда белая, цвет ложится плитками слева направо, когда кнопка появляется */
-/* «Перейти»: белая кнопка в рамке HUD (образец пользователя). Тело белое, углы срезаны там же, где у рамки треугольники;
-   рамка снаружи кнопки рисуется SVG (app.js hubFrame). Знак раздела чёрный на белом, его квадрат отделён прозрачным прорезом:
-   тело кнопки и плитки появления — маска --bm из app.js; пока её нет, тело срезано по углам */
-#hub .hub-go{position:relative;isolation:isolate;min-height:48px;padding:4px 7px 4px 24px;gap:16px;background:none;color:#000}
-#hub .hub-go:hover{background:none}
-#hub .hub-go::before{content:'';position:absolute;inset:0;z-index:-2;background:var(--c0,#fff);clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);transition:filter .2s}
-#hub .hub-go::before,#hub .hub-go .tiles{-webkit-mask:var(--bm,none) 0 0/100% 100% no-repeat;mask:var(--bm,none) 0 0/100% 100% no-repeat}
-#hub .hub-go:hover::before{filter:brightness(.9)}
-#hub .hub-go .tiles{clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
-#hub .hub-go .hf{position:absolute;left:-7px;top:-7px;width:calc(100% + 14px);height:calc(100% + 14px);overflow:visible;pointer-events:none}
-#hub .hub-go .hf .o{fill:none;stroke:#ffffffb8;stroke-width:1.2}
-#hub .hub-go .hf .t{fill:#fff}
-#hub .hub-go .hf .a{fill:none;stroke:#fff;stroke-width:2.2;transition:transform .35s cubic-bezier(.2,.9,.2,1)}
-#hub .hub-go:hover .hf .a1{transform:translateX(14px)}
-#hub .hub-go:hover .hf .a2{transform:translateX(-14px)}
-#hub .hub-go .go-s{width:34px;height:34px;flex:none;display:grid;place-items:center;color:#000}
-#hub .hub-go .go-s svg{height:19px;max-width:27px;transition:transform .25s}
-#hub .hub-go:hover .go-s svg{transform:scale(1.1)}
+/* Тонкая рамка при выборе раздела. Белая заливка появляется при наведении на ссылку. */
+#hub .hub-go{
+  position:relative;isolation:isolate;min-height:44px;padding:4px 8px 4px 15px;gap:10px;
+  background:none;color:#f3f5fa;font-size:16px;text-decoration:none;
+  transition:opacity .3s,visibility .3s,color .2s;
+}
+#hub .hub-go::before{
+  content:'';position:absolute;inset:0;z-index:-1;background:transparent;transition:background-color .2s;
+  clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
+  -webkit-mask:var(--bm,none) 0 0/100% 100% no-repeat;mask:var(--bm,none) 0 0/100% 100% no-repeat;
+}
+#hub .hub-go:focus-visible{outline:1px solid #fff;outline-offset:7px}
+#hub .hub-go .hf{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);overflow:visible;pointer-events:none}
+#hub .hub-go .hf .o{fill:none;stroke:#ffffff9c;stroke-width:1}
+#hub .hub-go .hf .t{fill:#ffffffb8}
+#hub .hub-go .hf .a{fill:none;stroke:#ffffffb8;stroke-width:1.2;transition:transform .35s cubic-bezier(.2,.9,.2,1)}
+#hub .hub-go .go-s{width:26px;height:26px;flex:none;display:grid;place-items:center}
+#hub .hub-go .go-s svg{display:none;width:20px;height:14px}
+@media (hover:hover){
+  #hub .hub-go:hover{color:#10141b}
+  #hub .hub-go:hover::before{background:#fff}
+  #hub .hub-go:hover .hf .a1{transform:translateX(8px)}
+  #hub .hub-go:hover .hf .a2{transform:translateX(-8px)}
+}
 /* появление: линия рамки прорисовывается, треугольники вырастают из углов, отрезки и квадрат знака проступают */
 #hub .hub-go .hf.draw .o{stroke-dasharray:var(--p);animation:hf-draw .55s cubic-bezier(.3,.7,.3,1) both}
 #hub .hub-go .hf.draw .t{transform-box:fill-box;animation:hf-pop .22s .42s cubic-bezier(.3,1.4,.5,1) both}
@@ -70,9 +69,6 @@
 @keyframes hf-draw{from{stroke-dashoffset:var(--p)}to{stroke-dashoffset:0}}
 @keyframes hf-pop{from{transform:scale(0)}}
 @keyframes hf-in{from{opacity:0}}
-#hub .hub-go .tiles{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-#hub .hub-go .tiles i{position:absolute;width:13px;height:14px;background:var(--cn);animation:bt-tile .24s cubic-bezier(.3,.7,.3,1) both}
-@keyframes bt-tile{from{transform:scale(.2) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
 /* бегущая строка компаний вдоль нижнего края Земли */
 #cis{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transition:opacity .3s}
 #cis text{font:600 13px var(--text);letter-spacing:.22em;text-transform:uppercase}

@@ -153,44 +153,38 @@ function drawHome(time) {
 }
 /* выбранное слово вырастает из мелкой сетки точек, как печатный растр */
 const dotsIn = i => { tabs.forEach(x => x.classList.remove('play')); if (RM) return; void tabs[i].offsetWidth; tabs[i].classList.add('play'); };
-/* кнопка «Перейти» белая, как раньше: главная держит один строгий характер на каждом шаге. Белое ложится мелкими плитками слева направо, когда кнопка появляется.
-   Снаружи — рамка HUD по образцу: линия со срезами, белые треугольники в левом верхнем и правом нижнем углах, светлые отрезки крест-накрест:
-   сверху у левого угла, снизу у правого. Рамку рисует SVG по размеру кнопки (на 7 пикселей шире с каждой стороны); при появлении линия прорисовывается.
-   Знак раздела — чёрный на белом, его квадрат отделён от кнопки прозрачным прорезом в 3 пикселя: белое тело кнопки — маска (--bm) */
-const tiles = document.createElement('span'); tiles.className = 'tiles'; tiles.setAttribute('aria-hidden', 'true'); hubGo.prepend(tiles);
+/* Рамка рисуется по размеру кнопки. Маска отделяет знак от основной заливки. */
 const SVGN = 'http://www.w3.org/2000/svg', hf = document.createElementNS(SVGN, 'svg');
 hf.setAttribute('class', 'hf'); hf.setAttribute('aria-hidden', 'true'); hubGo.prepend(hf);
 function hubFrame() {
-  const W = hubGo.offsetWidth + 14, H = hubGo.offsetHeight + 14;
-  if (W <= 14 || H <= 14) return;
-  const t = 14, q = .75, L = Math.round(W * .3);
+  const w = hubGo.offsetWidth, h = hubGo.offsetHeight;
+  if (!w || !h) return;
+  const W = w + 8, H = h + 8, t = 10, q = .75, L = Math.round(W * .24);
   hf.setAttribute('viewBox', `0 0 ${W} ${H}`);
   hf.innerHTML = `<path class="o" d="M${t} ${q}H${W - q}V${H - t}L${W - t} ${H - q}H${q}V${t}Z"/>` +
     `<path class="t t1" d="M0 0H${t}L0 ${t}Z"/><path class="t t2" d="M${W} ${H}H${W - t}L${W} ${H - t}Z"/>` +
     `<path class="a a1" d="M${t + 6} ${q}H${t + 6 + L}"/><path class="a a2" d="M${W - t - 6} ${H - q}H${W - t - 6 - L}"/>`;
   hf.style.setProperty('--p', (2 * (W + H) - (4 - 2 * Math.SQRT2) * t).toFixed(1));
-  /* белое тело: срезы в левом верхнем и правом нижнем углах, вокруг квадрата знака прорез g. Квадрат и прорез со срезами справа сверху и слева снизу */
-  const w = W - 14, h = H - 14, gs = hubGo.querySelector('.go-s'), x = gs.offsetLeft, y = gs.offsetTop, S = gs.offsetWidth, c = 6, g = 3, C = c + g * (2 - Math.SQRT2);
+  const gs = hubGo.querySelector('.go-s'), x = gs.offsetLeft, y = gs.offsetTop, S = gs.offsetWidth, c = 5, g = 2, C = c + g * (2 - Math.SQRT2);
   const sq = (x, y, s, k) => `M${x} ${y}H${x + s - k}L${x + s} ${y + k}V${y + s}H${x + k}L${x} ${y + s - k}Z`;
   const m = `<svg xmlns="${SVGN}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path fill="#fff" fill-rule="evenodd" d="M7 0H${w}V${h - 7}L${w - 7} ${h}H0V7Z${sq(x - g, y - g, S + 2 * g, C)}${sq(x, y, S, c)}"/></svg>`;
   hubGo.style.setProperty('--bm', `url("data:image/svg+xml,${encodeURIComponent(m)}")`);
 }
-function paint() {
-  const c = '#fff'; clearTimeout(hubGo._t); hubFrame();
-  if (hubGo.classList.contains('off')) hubGo.style.setProperty('--c0', 'transparent');
-  if (RM) { hubGo.style.setProperty('--c0', c); return; }
-  hf.classList.remove('draw'); hubGo.classList.remove('draw'); void hubGo.offsetWidth; hf.classList.add('draw'); hubGo.classList.add('draw');
-  const r = hubGo.getBoundingClientRect(), cw = 12, ch = 13, nx = Math.ceil(r.width / cw), ny = Math.ceil(r.height / ch); let h = '';
-  for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) h += `<i style="left:${x * cw}px;top:${y * ch}px;animation-delay:${Math.round(x * 22 + Math.random() * 70)}ms"></i>`;
-  tiles.style.setProperty('--cn', c); tiles.innerHTML = h;
-  hubGo._t = setTimeout(() => { hubGo.style.setProperty('--c0', c); tiles.innerHTML = ''; }, nx * 22 + 70 + 260);
+function drawHubButton() {
+  hubFrame();
+  if (RM) return;
+  hf.classList.remove('draw');
+  hubGo.classList.remove('draw');
+  void hubGo.offsetWidth;
+  hf.classList.add('draw');
+  hubGo.classList.add('draw');
 }
 if (window.ResizeObserver) new ResizeObserver(hubFrame).observe(hubGo);
 function hubSay(t) { hubS.style.opacity = 0; setTimeout(() => { hubS.textContent = t; hubS.style.opacity = ''; }, RM ? 0 : 180); }
 function pick(k) {
   k = clamp(k, 0, 2); clearTimeout(hub._off); if (S.k === k) return; S.k = k; S.lat = 30; S.vel = 0;
   tabs.forEach((b, i) => { b.classList.toggle('on', i === k); b.setAttribute('aria-selected', i === k); });
-  dotsIn(k); hubSay(HUB[k].s); paint(k); hubGo.dataset.go = HUB[k].w; hubGo.href = '#' + HUB[k].w; hubGo.classList.remove('off'); dirty = true;
+  dotsIn(k); hubSay(HUB[k].s); hubGo.dataset.go = HUB[k].w; hubGo.href = '#' + HUB[k].w; hubGo.classList.remove('off'); drawHubButton(); dirty = true;
 }
 /* человек увёл указатель и ещё не решил: выбор снимается, Земля снова вращается с того же места */
 function unpick() { S.k = -1; tabs.forEach(b => { b.classList.remove('on'); b.setAttribute('aria-selected', false); }); hubSay('Что вы ищете?'); hubGo.classList.add('off'); }

@@ -13,6 +13,7 @@ STAR = '<svg class="st" viewBox="-1 -1 2 2" aria-hidden="true"><path d="M0-1Q.06
 ARR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>'
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">'
 V = '?v=39'
+HOME_V = '?v=43'
 
 def page_url(w):
     return 'marketing.html' if w == 'klienty' else f'{w}.html'
@@ -141,7 +142,8 @@ TALK = '''<dialog id="talk" aria-label="О чём поговорим"><div class
 
 def page(name, title, desc, w, body, scripts, extra_css='', cls=''):
     scripts = ['sec.js', 'earth-view.js'] + scripts
-    out = head(title, desc, extra_css, w) + f'\n<body data-w="{w}"{(" class=" + chr(34) + cls + chr(34)) if cls else ""}>\n' + body + f'\n{TALK}\n{VEIL}\n' + ''.join(f'<script src="sistema/{s}{V}"></script>\n' for s in scripts) + '</body>\n</html>\n'
+    script_tags = ''.join(f'<script src="sistema/{s}{HOME_V if s == "home.js" else V}"></script>\n' for s in scripts)
+    out = head(title, desc, extra_css, w) + f'\n<body data-w="{w}"{(" class=" + chr(34) + cls + chr(34)) if cls else ""}>\n' + body + f'\n{TALK}\n{VEIL}\n' + script_tags + '</body>\n</html>\n'
     open(os.path.join(ROOT, name), 'w', encoding='utf-8').write(out); print(name, len(out) // 1024, 'KB')
 
 # ---------- главная: та же, что на сайте ----------
@@ -293,7 +295,7 @@ VIEWS = [('index.html', 'home', 'GLOBAL TRIUMPH', 'Вакансии, подбо�
 for f, w, t, d in VIEWS:
     body = bar(None if w == 'home' else w) + '\n' + HOME + '\n' + '\n'.join(m if mw == w else m.replace('<main class="view"', '<main class="view" hidden', 1) for mw, m in [('rabota', rab), ('lyudi', ly), ('klienty', kl)])
     if w != 'home': body = body.replace('<section id="home" class="world"', '<section id="home" class="world" hidden', 1)
-    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'portrait.js', 'brand-flight.js'], f'\n<link rel="stylesheet" href="sistema/home.css{V}">\n<link rel="stylesheet" href="sistema/brand-flight.css?v=3">')
+    page(f, t, d, w, body, ['home.js', 'sys.js', 'rabota.js', 'portrait.js', 'brand-flight.js'], f'\n<link rel="stylesheet" href="sistema/home.css{HOME_V}">\n<link rel="stylesheet" href="sistema/brand-flight.css?v=3">')
 
 # Старые ссылки сохраняют поисковые параметры и якорь, но открывают новое имя раздела.
 with open(os.path.join(ROOT, 'klienty.html'), 'w', encoding='utf-8') as legacy:
